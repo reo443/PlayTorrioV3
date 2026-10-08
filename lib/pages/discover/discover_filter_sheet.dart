@@ -137,7 +137,8 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
 
   /// Cinemeta's "New" (year) catalog names its year options "genre" —
   /// detect 4-digit year values so they don't pollute the genre list.
-  static bool _yearLike(String s) => RegExp(r'^(19|20)\d{2}$').hasMatch(s.trim());
+  static bool _yearLike(String s) =>
+      RegExp(r'^(19|20)\d{2}$').hasMatch(s.trim());
 
   bool _catalogSupportsGenres(DiscoverCatalogEntry entry) {
     if (entry.catalog.getExtra('genre') == null) return false;
@@ -169,12 +170,18 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
     _sortKey = widget.sortKey;
     _sortDescending = widget.sortDescending;
 
-    _yearFromCtrl = TextEditingController(text: widget.minYear?.toString() ?? '');
+    _yearFromCtrl = TextEditingController(
+      text: widget.minYear?.toString() ?? '',
+    );
     _yearToCtrl = TextEditingController(text: widget.maxYear?.toString() ?? '');
     _ratingMinCtrl = TextEditingController(text: _fmtDouble(widget.minRating));
     _ratingMaxCtrl = TextEditingController(text: _fmtDouble(widget.maxRating));
-    _durationMinCtrl = TextEditingController(text: widget.minDuration?.toString() ?? '');
-    _durationMaxCtrl = TextEditingController(text: widget.maxDuration?.toString() ?? '');
+    _durationMinCtrl = TextEditingController(
+      text: widget.minDuration?.toString() ?? '',
+    );
+    _durationMaxCtrl = TextEditingController(
+      text: widget.maxDuration?.toString() ?? '',
+    );
   }
 
   @override
@@ -208,16 +215,24 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
     var count = 0;
     if (_selectedGenres.isNotEmpty) count++;
     if (_sortKey != null) count++;
-    if (_yearFromCtrl.text.trim().isNotEmpty || _yearToCtrl.text.trim().isNotEmpty) count++;
-    if (_ratingMinCtrl.text.trim().isNotEmpty || _ratingMaxCtrl.text.trim().isNotEmpty) count++;
-    if (_durationMinCtrl.text.trim().isNotEmpty || _durationMaxCtrl.text.trim().isNotEmpty) count++;
+    if (_yearFromCtrl.text.trim().isNotEmpty ||
+        _yearToCtrl.text.trim().isNotEmpty)
+      count++;
+    if (_ratingMinCtrl.text.trim().isNotEmpty ||
+        _ratingMaxCtrl.text.trim().isNotEmpty)
+      count++;
+    if (_durationMinCtrl.text.trim().isNotEmpty ||
+        _durationMaxCtrl.text.trim().isNotEmpty)
+      count++;
     return count;
   }
 
   void _onTypeSelected(String type) {
     if (type == _type) return;
 
-    final catalogs = widget.catalogs.where((c) => c.catalog.type == type).toList();
+    final catalogs = widget.catalogs
+        .where((c) => c.catalog.type == type)
+        .toList();
     final prev = _entry;
 
     // Keep the layout consistent when switching type: prefer the same
@@ -241,7 +256,8 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
         }
       }
     }
-    match ??= catalogs
+    match ??=
+        catalogs
             .where((c) => c.catalog.selectableExtras.isNotEmpty)
             .firstOrNull ??
         catalogs.firstOrNull;
@@ -307,7 +323,9 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
 
     var minDuration = _parseInt(_durationMinCtrl.text);
     var maxDuration = _parseInt(_durationMaxCtrl.text);
-    if (minDuration != null && maxDuration != null && minDuration > maxDuration) {
+    if (minDuration != null &&
+        maxDuration != null &&
+        minDuration > maxDuration) {
       final t = minDuration;
       minDuration = maxDuration;
       maxDuration = t;
@@ -335,128 +353,164 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.of(context).size.height * 0.82;
+    final mq = MediaQuery.of(context);
+    final keyboardInset = mq.viewInsets.bottom;
+    final maxHeight = (mq.size.height * 0.82).clamp(
+      0.0,
+      mq.size.height - keyboardInset - 16,
+    );
     final genres = _allGenres;
     final genreSupported = _entry != null && _catalogSupportsGenres(_entry!);
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: Container(
-        color: const Color(0xFF12151E),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxHeight),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(2),
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: Container(
+          color: const Color(0xFF12151E),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 10),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 14, 12, 0),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.tune_rounded, color: _accent, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Filters',
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 12, 0),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.tune_rounded,
+                          color: _accent,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Filters',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                _entry?.catalog.name ?? 'Catalog',
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 11.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white70,
+                            size: 20,
+                          ),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    height: 20,
+                  ),
+
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                      physics: const ClampingScrollPhysics(),
+                      children: [
+                        _buildTypeSection(),
+                        _buildSortSection(),
+                        if (genres.isNotEmpty && genreSupported)
+                          _buildGenreSection(genres),
+                        _buildReleaseDateSection(),
+                        _buildRatingSection(),
+                        _buildDurationSection(),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _clearAll,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white70,
+                              side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                            ),
+                            icon: const Icon(
+                              Icons.filter_alt_off_outlined,
+                              size: 17,
+                            ),
+                            label: const Text(
+                              'Clear All',
                               style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
                               ),
                             ),
-                            Text(
-                              _entry?.catalog.name ?? 'Catalog',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton.icon(
+                            onPressed: _apply,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _accent,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                            ),
+                            icon: const Icon(Icons.check_rounded, size: 18),
+                            label: Text(
+                              _activeCount > 0
+                                  ? 'Apply ($_activeCount Active)'
+                                  : 'Apply',
                               style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13.5,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                ),
-                Divider(color: Colors.white.withValues(alpha: 0.06), height: 20),
-
-                Flexible(
-                  child: ListView(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-                    physics: const ClampingScrollPhysics(),
-                    children: [
-                      _buildTypeSection(),
-                      _buildSortSection(),
-                      if (genres.isNotEmpty && genreSupported)
-                        _buildGenreSection(genres),
-                      _buildReleaseDateSection(),
-                      _buildRatingSection(),
-                      _buildDurationSection(),
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _clearAll,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white70,
-                            side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                          ),
-                          icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
-                          label: const Text(
-                            'Clear All',
-                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton.icon(
-                          onPressed: _apply,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _accent,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                          ),
-                          icon: const Icon(Icons.check_rounded, size: 18),
-                          label: Text(
-                            _activeCount > 0 ? 'Apply ($_activeCount Active)' : 'Apply',
-                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -544,17 +598,23 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: enabled ? _accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
+            color: enabled
+                ? _accent.withValues(alpha: 0.15)
+                : Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: enabled ? _accent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.08),
+              color: enabled
+                  ? _accent.withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.08),
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                desc ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                desc
+                    ? Icons.arrow_downward_rounded
+                    : Icons.arrow_upward_rounded,
                 size: 14,
                 color: enabled ? const Color(0xFF9D85FF) : Colors.white30,
               ),
@@ -671,9 +731,13 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
                 child: _buildInput(
                   controller: _ratingMinCtrl,
                   label: 'Min',
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d{0,1})?$')),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d{0,2}(\.\d{0,1})?$'),
+                    ),
                   ],
                 ),
               ),
@@ -682,9 +746,13 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
                 child: _buildInput(
                   controller: _ratingMaxCtrl,
                   label: 'Max',
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d{0,1})?$')),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d{0,2}(\.\d{0,1})?$'),
+                    ),
                   ],
                 ),
               ),
@@ -742,10 +810,16 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
       style: const TextStyle(color: Colors.white, fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
+        labelStyle: TextStyle(
+          color: Colors.white.withValues(alpha: 0.5),
+          fontSize: 12,
+        ),
         filled: true,
         fillColor: const Color(0xFF0D1017),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
