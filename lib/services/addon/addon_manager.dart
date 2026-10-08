@@ -577,7 +577,7 @@ class AddonManager {
       case 'top':
         return 'Popular $typeLabel';
       case 'year':
-        return 'New $typeLabel';
+        return 'New $typeLabel (By Year)';
       case 'imdbRating':
         return 'Top Rated $typeLabel';
       default:

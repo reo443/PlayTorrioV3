@@ -52,6 +52,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
   int? _maxYear;
   double? _minRating;
 
+  // Client-side sorting
+  String? _sortKey; // null | 'trending' | 'popularity' | 'score' | 'date'
+  bool _sortDescending = true;
+
   final List<Movie> _items = [];
   bool _isLoading = false;
   bool _hasMore = true;
@@ -62,7 +66,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   final TextEditingController _searchController = TextEditingController();
 
   final ScrollController _scrollController = ScrollController();
-  final ScrollController _filtersScrollController = ScrollController();
 
   @override
   void initState() {
@@ -79,7 +82,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _filtersScrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -162,21 +164,69 @@ class _DiscoverPageState extends State<DiscoverPage> {
     _checkAndLoadCatalog();
   }
 
-  List<({InstalledAddon addon, AddonCatalog catalog})> get _currentTypeCatalogs {
-    return _allCatalogs.where((c) => c.catalog.type == _selectedType).toList();
-  }
-
-  // ── Client-side filter helpers ──
+  // ── Client-side filter & sort helpers ──
   static int? _extractYear(String? s) {
     if (s == null || s.isEmpty) return null;
     final m = RegExp(r'(19|20)\d{2}').firstMatch(s);
     return m != null ? int.tryParse(m.group(0)!) : null;
   }
 
+  static double? _ratingOf(Movie m) => double.tryParse(m.imdbRating ?? '');
+
   bool get _hasClientFilters => _minYear != null || _maxYear != null || _minRating != null;
 
-  List<Movie> get _visibleItems =>
-      _hasClientFilters ? _items.where(_matchesClientFilters).toList() : _items;
+  double? _trendingScore(Movie m) {
+    final rating = _ratingOf(m);
+    if (rating == null) return null;
+    final y = _extractYear(m.year);
+    final now = DateTime.now().year;
+    var bonus = 0.0;
+    if (y != null) {
+      final age = (now - y).clamp(0, 99);
+      if (age < 5) bonus = (5 - age) * 0.2;
+    }
+    return rating + bonus;
+  }
+
+  int _cmpNullsLast(double? va, double? vb) {
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    return _sortDescending ? vb.compareTo(va) : va.compareTo(vb);
+  }
+
+  int _compareBySort(Movie a, Movie b) {
+    switch (_sortKey) {
+      case 'trending':
+        return _cmpNullsLast(_trendingScore(a), _trendingScore(b));
+      case 'popularity':
+        return _cmpNullsLast(
+          a.popularity ?? _ratingOf(a),
+          b.popularity ?? _ratingOf(b),
+        );
+      case 'score':
+        return _cmpNullsLast(_ratingOf(a), _ratingOf(b));
+      case 'date':
+        return _cmpNullsLast(
+          _extractYear(a.year)?.toDouble(),
+          _extractYear(b.year)?.toDouble(),
+        );
+      default:
+        return 0;
+    }
+  }
+
+  List<Movie> get _visibleItems {
+    if (!_hasClientFilters && _sortKey == null) return _items;
+    var items = List<Movie>.of(_items);
+    if (_hasClientFilters) {
+      items = items.where(_matchesClientFilters).toList();
+    }
+    if (_sortKey != null) {
+      items.sort(_compareBySort);
+    }
+    return items;
+  }
 
   bool _matchesClientFilters(Movie m) {
     if (_minYear != null || _maxYear != null) {
@@ -194,6 +244,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   int get _activeFilterCount {
     var count = _selectedExtras.length;
+    if (_sortKey != null) count++;
     if (_minYear != null || _maxYear != null) count++;
     if (_minRating != null) count++;
     return count;
@@ -208,20 +259,29 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   void _applyFilters(DiscoverFilterResult result) {
+    final typeChanged = result.type != _selectedType;
+    final catalogChanged = result.catalogEntry != _selectedCatalogEntry;
     final extrasChanged = !_mapsEqual(_selectedExtras, result.extras);
+    final needsReload = typeChanged || catalogChanged || extrasChanged;
+
     setState(() {
-      if (extrasChanged) {
+      if (needsReload) {
+        _selectedType = result.type;
+        _selectedCatalogEntry = result.catalogEntry;
         _selectedExtras.clear();
         _selectedExtras.addAll(result.extras);
         _searchQuery = '';
         _isSearching = false;
         _searchController.clear();
       }
+      _sortKey = result.sortKey;
+      _sortDescending = result.sortDescending;
       _minYear = result.minYear;
       _maxYear = result.maxYear;
       _minRating = result.minRating;
     });
-    if (extrasChanged) {
+
+    if (needsReload) {
       _checkAndLoadCatalog();
     } else {
       _ensureScreenFilled();
@@ -234,6 +294,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
       _minYear = null;
       _maxYear = null;
       _minRating = null;
+      _sortKey = null;
+      _sortDescending = true;
       if (hadExtras) {
         _selectedExtras.clear();
         _searchQuery = '';
@@ -248,26 +310,17 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
   }
 
-  void _removeYearFilter() {
-    setState(() {
-      _minYear = null;
-      _maxYear = null;
-    });
-    _ensureScreenFilled();
-  }
-
-  void _removeRatingFilter() {
-    setState(() => _minRating = null);
-    _ensureScreenFilled();
-  }
-
   void _openFilterSheet() {
-    final catalog = _selectedCatalogEntry?.catalog;
-    if (catalog == null) return;
+    if (_selectedCatalogEntry == null) return;
     showDiscoverFilterSheet(
       context: context,
-      catalog: catalog,
+      availableTypes: _availableTypes,
+      selectedType: _selectedType,
+      catalogs: _allCatalogs,
+      selectedCatalogEntry: _selectedCatalogEntry!,
       selectedExtras: _selectedExtras,
+      sortKey: _sortKey,
+      sortDescending: _sortDescending,
       minYear: _minYear,
       maxYear: _maxYear,
       minRating: _minRating,
@@ -285,31 +338,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   bool get _areRequiredExtrasSatisfied => _missingRequiredExtras.isEmpty;
-
-  void _onTypeChanged(String type) {
-    if (_selectedType == type) return;
-    setState(() {
-      _selectedType = type;
-      _selectedCatalogEntry = _allCatalogs.where((c) => c.catalog.type == type).firstOrNull;
-      _selectedExtras.clear();
-      _searchQuery = '';
-      _isSearching = false;
-      _searchController.clear();
-    });
-    _checkAndLoadCatalog();
-  }
-
-  void _onCatalogChanged(({InstalledAddon addon, AddonCatalog catalog}) entry) {
-    if (_selectedCatalogEntry == entry) return;
-    setState(() {
-      _selectedCatalogEntry = entry;
-      _selectedExtras.clear();
-      _searchQuery = '';
-      _isSearching = false;
-      _searchController.clear();
-    });
-    _checkAndLoadCatalog();
-  }
 
   void _onExtraOptionSelected(String extraName, String? value) {
     if (_selectedExtras[extraName] == value) return;
@@ -503,10 +531,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
     final sizing = MovieCardSizing.fromWidth(screenWidth);
 
     final toolbarH = isCompactScreen ? 46.0 : kToolbarHeight;
-    final selectorH = isCompactScreen ? 44.0 : 50.0;
-    final extrasH = isCompactScreen ? 42.0 : 48.0;
 
-    final headerHeight = topPadding + toolbarH + selectorH + extrasH;
+    final headerHeight = topPadding + toolbarH;
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
@@ -526,8 +552,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
               topPadding,
               isCompactScreen: isCompactScreen,
               toolbarH: toolbarH,
-              selectorH: selectorH,
-              extrasH: extrasH,
             ),
           ),
 
@@ -892,8 +916,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     double topPadding, {
     bool isCompactScreen = false,
     double toolbarH = kToolbarHeight,
-    double selectorH = 50.0,
-    double extrasH = 48.0,
   }) {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isDesktop = screenWidth >= 800;
@@ -981,172 +1003,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         tooltip: 'Search catalog',
                         onPressed: () => setState(() => _isSearching = true),
                       ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-              ),
 
-              // ── Type and Catalog Selector Row ──
-              Container(
-                height: selectorH,
-                padding: EdgeInsets.symmetric(horizontal: isNarrow ? 10 : 16),
-                child: Row(
-                  children: [
-                    // Type selector popup/dropdown
-                    if (_availableTypes.isNotEmpty) ...[
-                      PopupMenuButton<String>(
-                        tooltip: 'Content Type',
-                        constraints: const BoxConstraints(maxHeight: 360),
-                        color: const Color(0xFF15171F),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                        ),
-                        onSelected: _onTypeChanged,
-                        itemBuilder: (context) => _availableTypes
-                            .map(
-                              (t) => PopupMenuItem<String>(
-                                value: t,
-                                child: Text(
-                                  '${t[0].toUpperCase()}${t.substring(1)}',
-                                  style: TextStyle(
-                                    color: t == _selectedType ? const Color(0xFF7C5CFF) : Colors.white,
-                                    fontWeight: t == _selectedType ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isNarrow ? 10 : 14,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF7C5CFF).withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFF7C5CFF).withValues(alpha: 0.4)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${_selectedType[0].toUpperCase()}${_selectedType.substring(1)}',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: isNarrow ? 12 : 13,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 18),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: isNarrow ? 6 : 10),
-                    ],
-
-                    // Catalog selector horizontal scroll
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        child: Row(
-                          children: _currentTypeCatalogs.map((entry) {
-                            final isSelected = _selectedCatalogEntry == entry;
-                            final name = AddonManager.instance.catalogDisplayName(entry.catalog);
-                            final hasReq = entry.catalog.hasRequiredExtra;
-
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: GestureDetector(
-                                onTap: () => _onCatalogChanged(entry),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: isNarrow ? 11 : 14,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? const Color(0xFF7C5CFF)
-                                        : Colors.white.withValues(alpha: 0.08),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? const Color(0xFF7C5CFF)
-                                          : Colors.white.withValues(alpha: 0.12),
-                                    ),
-                                    boxShadow: isSelected
-                                        ? [
-                                            BoxShadow(
-                                              color: const Color(0xFF7C5CFF).withValues(alpha: 0.3),
-                                              blurRadius: 8,
-                                            )
-                                          ]
-                                        : null,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        name,
-                                        style: TextStyle(
-                                          color: isSelected ? Colors.white : Colors.white70,
-                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                          fontSize: isNarrow ? 12 : 13,
-                                        ),
-                                      ),
-                                      if (hasReq) ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                          decoration: BoxDecoration(
-                                            color: isSelected ? Colors.white24 : Colors.amber.withValues(alpha: 0.25),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            'Custom',
-                                            style: TextStyle(
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: isSelected ? Colors.white : Colors.amber,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // ── Filters Row ──
-              SizedBox(
-                height: extrasH,
-                child: Row(
-                  children: [
-                    SizedBox(width: isNarrow ? 10 : 16),
+                    // Filters button
                     _buildFilterButton(isNarrow),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: _filtersScrollController,
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(8, 0, 12, 0),
-                        child: Row(
-                          children: _buildActiveFilterChips(),
-                        ),
-                      ),
-                    ),
+                    const SizedBox(width: 12),
                   ],
                 ),
               ),
@@ -1211,82 +1071,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 ),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildActiveFilterChips() {
-    final chips = <Widget>[];
-
-    for (final entry in _selectedExtras.entries) {
-      chips.add(
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: _buildActiveChip(
-            '${entry.key[0].toUpperCase()}${entry.key.substring(1)}: ${entry.value}',
-            () => _onExtraOptionSelected(entry.key, null),
-          ),
-        ),
-      );
-    }
-
-    if (_minYear != null || _maxYear != null) {
-      chips.add(
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: _buildActiveChip(
-            'Year: ${_minYear?.toString() ?? 'Any'}–${_maxYear?.toString() ?? 'Any'}',
-            _removeYearFilter,
-          ),
-        ),
-      );
-    }
-
-    if (_minRating != null) {
-      chips.add(
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: _buildActiveChip(
-            'Rating: ${_minRating!.toStringAsFixed(0)}+',
-            _removeRatingFilter,
-          ),
-        ),
-      );
-    }
-
-    return chips;
-  }
-
-  Widget _buildActiveChip(String label, VoidCallback onRemove) {
-    return GestureDetector(
-      onTap: onRemove,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFF7C5CFF).withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF7C5CFF).withValues(alpha: 0.4)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 180),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 11.5,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.close_rounded, size: 13, color: Colors.white70),
           ],
         ),
       ),

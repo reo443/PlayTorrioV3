@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 
 import '../../models/addon/addon.dart';
+import '../../services/addon/addon_manager.dart';
+
+typedef DiscoverCatalogEntry = ({InstalledAddon addon, AddonCatalog catalog});
 
 class DiscoverFilterResult {
+  final String type;
+  final DiscoverCatalogEntry? catalogEntry;
   final Map<String, String> extras;
+  final String? sortKey;
+  final bool sortDescending;
   final int? minYear;
   final int? maxYear;
   final double? minRating;
 
   const DiscoverFilterResult({
+    required this.type,
+    this.catalogEntry,
     required this.extras,
+    this.sortKey,
+    this.sortDescending = true,
     this.minYear,
     this.maxYear,
     this.minRating,
@@ -18,8 +29,13 @@ class DiscoverFilterResult {
 
 Future<void> showDiscoverFilterSheet({
   required BuildContext context,
-  required AddonCatalog catalog,
+  required List<String> availableTypes,
+  required String selectedType,
+  required List<DiscoverCatalogEntry> catalogs,
+  required DiscoverCatalogEntry selectedCatalogEntry,
   required Map<String, String> selectedExtras,
+  String? sortKey,
+  bool sortDescending = true,
   int? minYear,
   int? maxYear,
   double? minRating,
@@ -31,8 +47,13 @@ Future<void> showDiscoverFilterSheet({
     backgroundColor: Colors.transparent,
     constraints: const BoxConstraints(maxWidth: 620),
     builder: (ctx) => _DiscoverFilterSheet(
-      catalog: catalog,
+      availableTypes: availableTypes,
+      selectedType: selectedType,
+      catalogs: catalogs,
+      selectedCatalogEntry: selectedCatalogEntry,
       selectedExtras: selectedExtras,
+      sortKey: sortKey,
+      sortDescending: sortDescending,
       minYear: minYear,
       maxYear: maxYear,
       minRating: minRating,
@@ -42,16 +63,26 @@ Future<void> showDiscoverFilterSheet({
 }
 
 class _DiscoverFilterSheet extends StatefulWidget {
-  final AddonCatalog catalog;
+  final List<String> availableTypes;
+  final String selectedType;
+  final List<DiscoverCatalogEntry> catalogs;
+  final DiscoverCatalogEntry selectedCatalogEntry;
   final Map<String, String> selectedExtras;
+  final String? sortKey;
+  final bool sortDescending;
   final int? minYear;
   final int? maxYear;
   final double? minRating;
   final void Function(DiscoverFilterResult result) onApply;
 
   const _DiscoverFilterSheet({
-    required this.catalog,
+    required this.availableTypes,
+    required this.selectedType,
+    required this.catalogs,
+    required this.selectedCatalogEntry,
     required this.selectedExtras,
+    this.sortKey,
+    this.sortDescending = true,
     this.minYear,
     this.maxYear,
     this.minRating,
@@ -65,29 +96,42 @@ class _DiscoverFilterSheet extends StatefulWidget {
 class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
   static const _accent = Color(0xFF7C5CFF);
 
+  static const _sortOptions = {
+    'trending': 'Trending',
+    'popularity': 'Popularity',
+    'score': 'Score',
+    'date': 'Date',
+  };
+
+  late String _type;
+  DiscoverCatalogEntry? _entry;
   late final Map<String, String> _extras;
-  late int? _minYear;
-  late int? _maxYear;
-  late double? _minRating;
+  String? _sortKey;
+  late bool _sortDescending;
+  int? _minYear;
+  int? _maxYear;
+  double? _minRating;
   final Map<String, TextEditingController> _textControllers = {};
 
-  List<CatalogExtra> get _visibleExtras => widget.catalog.extra
-      .where((e) => e.name != 'skip' && (e.name != 'search' || e.isRequired))
-      .toList();
+  List<CatalogExtra> get _visibleExtras => _entry?.catalog.extra
+          .where((e) => e.name != 'skip' && (e.name != 'search' || e.isRequired))
+          .toList() ??
+      const <CatalogExtra>[];
+
+  List<DiscoverCatalogEntry> get _catalogsForType =>
+      widget.catalogs.where((c) => c.catalog.type == _type).toList();
 
   @override
   void initState() {
     super.initState();
+    _type = widget.selectedType;
+    _entry = widget.selectedCatalogEntry;
     _extras = Map<String, String>.from(widget.selectedExtras);
+    _sortKey = widget.sortKey;
+    _sortDescending = widget.sortDescending;
     _minYear = widget.minYear;
     _maxYear = widget.maxYear;
     _minRating = widget.minRating;
-    for (final extra in _visibleExtras) {
-      if (extra.options.isEmpty) {
-        _textControllers[extra.name] =
-            TextEditingController(text: _extras[extra.name] ?? '');
-      }
-    }
   }
 
   @override
@@ -100,14 +144,50 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
 
   int get _activeCount {
     var count = _extras.length;
+    if (_sortKey != null) count++;
     if (_minYear != null || _maxYear != null) count++;
     if (_minRating != null) count++;
     return count;
   }
 
+  void _onTypeSelected(String type) {
+    if (type == _type) return;
+    setState(() {
+      _type = type;
+      _entry = _catalogsForType.firstOrNull;
+      _extras.clear();
+      _resetTextControllers();
+    });
+  }
+
+  void _onCatalogSelected(DiscoverCatalogEntry entry) {
+    if (entry == _entry) return;
+    setState(() {
+      _entry = entry;
+      _extras.clear();
+      _resetTextControllers();
+    });
+  }
+
+  void _resetTextControllers() {
+    for (final c in _textControllers.values) {
+      c.dispose();
+    }
+    _textControllers.clear();
+  }
+
+  TextEditingController _controllerFor(String extraName) {
+    return _textControllers.putIfAbsent(
+      extraName,
+      () => TextEditingController(text: _extras[extraName] ?? ''),
+    );
+  }
+
   void _clearAll() {
     setState(() {
       _extras.clear();
+      _sortKey = null;
+      _sortDescending = true;
       _minYear = null;
       _maxYear = null;
       _minRating = null;
@@ -129,7 +209,11 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
     Navigator.of(context).pop();
     widget.onApply(
       DiscoverFilterResult(
+        type: _type,
+        catalogEntry: _entry,
         extras: Map<String, String>.from(_extras),
+        sortKey: _sortKey,
+        sortDescending: _sortDescending,
         minYear: _minYear,
         maxYear: _maxYear,
         minRating: _minRating,
@@ -180,7 +264,7 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
                               ),
                             ),
                             Text(
-                              widget.catalog.name ?? 'Catalog',
+                              _entry?.catalog.name ?? 'Catalog',
                               style: const TextStyle(
                                 color: Colors.white54,
                                 fontSize: 11.5,
@@ -206,6 +290,9 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
                     physics: const ClampingScrollPhysics(),
                     children: [
+                      _buildTypeSection(),
+                      _buildCatalogSection(),
+                      _buildSortSection(),
                       if (_visibleExtras.isNotEmpty) ...[
                         _buildSectionHeader('CATALOG FILTERS'),
                         const SizedBox(height: 12),
@@ -285,6 +372,141 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
     );
   }
 
+  Widget _buildTypeSection() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('CONTENT TYPE'),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: widget.availableTypes.map((t) {
+              final isSelected = t == _type;
+              return _buildChoiceChip(
+                label: t[0].toUpperCase() + t.substring(1),
+                selected: isSelected,
+                onSelected: () => _onTypeSelected(t),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCatalogSection() {
+    final catalogs = _catalogsForType;
+    if (catalogs.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('SOURCE / CATALOG'),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: catalogs.map((entry) {
+              final isSelected = entry == _entry;
+              final hasReq = entry.catalog.hasRequiredExtra;
+              return _buildChoiceChip(
+                label: AddonManager.instance.catalogDisplayName(entry.catalog),
+                selected: isSelected,
+                onSelected: () => _onCatalogSelected(entry),
+                trailingBadge: hasReq ? 'Custom' : null,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSortSection() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: _buildSectionHeader('SORT BY')),
+              _buildOrderToggle(),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildChoiceChip(
+                label: 'Default',
+                selected: _sortKey == null,
+                onSelected: () => setState(() => _sortKey = null),
+              ),
+              ..._sortOptions.entries.map(
+                (opt) => _buildChoiceChip(
+                  label: opt.value,
+                  selected: _sortKey == opt.key,
+                  onSelected: () => setState(() => _sortKey = opt.key),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderToggle() {
+    final enabled = _sortKey != null;
+    final desc = _sortDescending;
+
+    return Tooltip(
+      message: desc ? 'High to Low (Descending)' : 'Low to High (Ascending)',
+      child: InkWell(
+        onTap: enabled
+            ? () => setState(() => _sortDescending = !_sortDescending)
+            : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: enabled ? _accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: enabled ? _accent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.08),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                desc ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                size: 14,
+                color: enabled ? const Color(0xFF9D85FF) : Colors.white30,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                desc ? 'DSC' : 'ASC',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: enabled ? const Color(0xFF9D85FF) : Colors.white30,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildExtraSection(CatalogExtra extra) {
     final current = _extras[extra.name];
 
@@ -346,7 +568,7 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
             )
           else
             TextField(
-              controller: _textControllers[extra.name],
+              controller: _controllerFor(extra.name),
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Enter ${extra.name}...',
@@ -483,9 +705,33 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
     required String label,
     required bool selected,
     required VoidCallback onSelected,
+    String? trailingBadge,
   }) {
     return ChoiceChip(
-      label: Text(label),
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          if (trailingBadge != null) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: selected ? Colors.white24 : Colors.amber.withValues(alpha: 0.25),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                trailingBadge,
+                style: TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w800,
+                  color: selected ? Colors.white : Colors.amber,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
       selected: selected,
       selectedColor: _accent.withValues(alpha: 0.25),
       backgroundColor: const Color(0xFF0D1017),

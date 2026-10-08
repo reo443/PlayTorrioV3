@@ -6,6 +6,7 @@ class Movie {
   final String type;
   final String addonBaseUrl;
   final String? imdbRating;
+  final double? popularity;
 
   Movie({
     required this.id,
@@ -15,6 +16,7 @@ class Movie {
     required this.type,
     required this.addonBaseUrl,
     this.imdbRating,
+    this.popularity,
   });
 
   /// Whether this movie represents a collection or franchise item.
@@ -36,6 +38,13 @@ class Movie {
       ratingStr = json['vote_average'].toString();
     }
 
+    double? popularity;
+    if (json['popularity'] is num) {
+      popularity = (json['popularity'] as num).toDouble();
+    } else {
+      popularity = double.tryParse(json['popularity']?.toString() ?? '');
+    }
+
     return Movie(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Unknown',
@@ -44,6 +53,7 @@ class Movie {
       type: json['type']?.toString() ?? 'movie',
       addonBaseUrl: addonBaseUrl,
       imdbRating: ratingStr,
+      popularity: popularity,
     );
   }
 }
