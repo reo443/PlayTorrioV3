@@ -63,6 +63,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
   bool _hasMore = true;
   String? _error;
 
+  // Per-genre skip offsets for multi-genre fan-out pagination
+  final Map<String, int> _genreSkip = {};
+
   String _searchQuery = '';
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -445,6 +448,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _hasMore = true;
         _error = null;
       });
+      _genreSkip.clear();
     }
 
     if (!_hasMore) return;
@@ -454,11 +458,19 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     try {
       List<Movie> newItems = [];
+      var fetchedCount = 0;
 
       final params = Map<String, String>.from(_selectedExtras);
       if (_searchQuery.isNotEmpty) {
         params['search'] = _searchQuery;
       }
+
+      final selectedGenres = (params['genre'] ?? '')
+          .split(',')
+          .map((g) => g.trim())
+          .where((g) => g.isNotEmpty)
+          .toList();
+      final isMultiGenre = selectedGenres.length > 1 && _searchQuery.isEmpty;
 
       if (_isSearching && _searchQuery.isNotEmpty && !entry.catalog.supportsSkip) {
         newItems = await MetadataService.search(
@@ -467,7 +479,43 @@ class _DiscoverPageState extends State<DiscoverPage> {
           catalogId: entry.catalog.id,
           query: _searchQuery,
         );
+        fetchedCount = newItems.length;
         _hasMore = false;
+      } else if (isMultiGenre) {
+        // Addons like Cinemeta only accept a single genre per request —
+        // fan out one request per genre and merge + dedupe client-side.
+        final results = await Future.wait(
+          selectedGenres.map((g) async {
+            try {
+              final movies = await MetadataService.fetchCatalog(
+                baseUrl: entry.addon.baseUrl,
+                type: entry.catalog.type,
+                catalogId: entry.catalog.id,
+                extraParams: {...params, 'genre': g},
+                skip: entry.catalog.supportsSkip ? (_genreSkip[g] ?? 0) : 0,
+              );
+              return (g, movies);
+            } catch (_) {
+              return (g, <Movie>[]);
+            }
+          }),
+        );
+
+        final existingIds = _items.map((m) => m.id).toSet();
+        final batchIds = <String>{};
+        for (final (genre, movies) in results) {
+          _genreSkip[genre] = (_genreSkip[genre] ?? 0) + movies.length;
+          fetchedCount += movies.length;
+          for (final m in movies) {
+            if (existingIds.contains(m.id) || batchIds.contains(m.id)) continue;
+            batchIds.add(m.id);
+            newItems.add(m);
+          }
+        }
+
+        if (!entry.catalog.supportsSkip || fetchedCount < 10) {
+          _hasMore = false;
+        }
       } else {
         newItems = await MetadataService.fetchCatalog(
           baseUrl: entry.addon.baseUrl,
@@ -476,6 +524,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           extraParams: params.isNotEmpty ? params : null,
           skip: entry.catalog.supportsSkip ? _items.length : 0,
         );
+        fetchedCount = newItems.length;
 
         if (!entry.catalog.supportsSkip) {
           _hasMore = false;
@@ -489,7 +538,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           _hasMore = false;
         } else {
           _items.addAll(newItems);
-          if (newItems.length < 10) {
+          if (fetchedCount < 10) {
             _hasMore = false;
           }
         }
