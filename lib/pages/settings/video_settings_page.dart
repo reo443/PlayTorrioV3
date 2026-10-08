@@ -520,6 +520,113 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                 },
               ),
 
+              // ── Section: Touch Gestures ──
+              const SizedBox(height: 28),
+              Text(
+                'TOUCH GESTURES',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  color: palette.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<bool>(
+                valueListenable: PlayerSettings.enablePlayerGestures,
+                builder: (context, gestures, _) {
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: gestures
+                          ? palette.primaryColor.withValues(alpha: 0.08)
+                          : const Color(0xFF0E121B),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: gestures
+                            ? palette.primaryColor
+                            : Colors.white.withValues(alpha: 0.08),
+                        width: gestures ? 1.5 : 1.0,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: gestures
+                                ? palette.primaryColor.withValues(alpha: 0.20)
+                                : Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.swipe_rounded,
+                            color: gestures ? palette.primaryColor : Colors.white70,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Player Touch Gestures',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: (gestures ? const Color(0xFF10B981) : Colors.white30)
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      gestures ? 'Enabled' : 'Disabled',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: gestures ? const Color(0xFF10B981) : Colors.white54,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 5),
+                              const Text(
+                                'Swipe up/down on the left side of the player to change brightness, the right side to change volume, and long-press to fast-forward. Disable if you trigger these accidentally. (Tap to show controls always stays on.)',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Colors.white54,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Switch.adaptive(
+                          value: gestures,
+                          activeColor: palette.primaryColor,
+                          onChanged: (val) {
+                            PlayerSettings.setEnablePlayerGestures(val);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+
               const SizedBox(height: 32),
             ],
           ),

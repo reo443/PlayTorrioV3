@@ -1430,6 +1430,7 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _handleLongPressStart(LongPressStartDetails details) {
+    if (!_gesturesEnabled) return;
     if (_isLocked || _isLoading) return;
     if (_activeMenu != null) return;
 
@@ -1465,7 +1466,10 @@ class _PlayerScreenState extends State<PlayerScreen>
     setState(() {});
   }
 
+  bool get _gesturesEnabled => PlayerSettings.enablePlayerGestures.value;
+
   void _handleVerticalDragStart(DragStartDetails details) {
+    if (!_gesturesEnabled) return;
     if (_isLocked || _isLoading) return;
     if (_activeMenu != null) return;
 
@@ -1649,13 +1653,13 @@ class _PlayerScreenState extends State<PlayerScreen>
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 onTap: _handleScreenTap,
-                onLongPressStart: _handleLongPressStart,
-                onLongPressEnd: _handleLongPressEnd,
-                onLongPressCancel: _handleLongPressCancel,
-                onVerticalDragStart: _handleVerticalDragStart,
-                onVerticalDragUpdate: _handleVerticalDragUpdate,
-                onVerticalDragEnd: _handleVerticalDragEnd,
-                onVerticalDragCancel: _handleVerticalDragCancel,
+                onLongPressStart: _gesturesEnabled ? _handleLongPressStart : null,
+                onLongPressEnd: _gesturesEnabled ? _handleLongPressEnd : null,
+                onLongPressCancel: _gesturesEnabled ? _handleLongPressCancel : null,
+                onVerticalDragStart: _gesturesEnabled ? _handleVerticalDragStart : null,
+                onVerticalDragUpdate: _gesturesEnabled ? _handleVerticalDragUpdate : null,
+                onVerticalDragEnd: _gesturesEnabled ? _handleVerticalDragEnd : null,
+                onVerticalDragCancel: _gesturesEnabled ? _handleVerticalDragCancel : null,
                 child: _buildPlayerBody(),
               ),
             ),

@@ -170,6 +170,7 @@ abstract final class PlayerSettings {
   static const _keyUseLibass = 'player_use_libass';
   static const _keyEnableSurfaceProducer = 'player_enable_surface_producer';
   static const _keyPlayerVolume = 'player_saved_volume';
+  static const _keyEnablePlayerGestures = 'player_enable_gestures';
 
   // Hardcoded engine defaults — not user-configurable
   // autoResyncOnStall and hardwareAudioClock are kept as ValueNotifiers for
@@ -182,6 +183,9 @@ abstract final class PlayerSettings {
 
   /// Android Direct Surface (SurfaceProducer / SurfaceView) toggle. Default: false (off).
   static final ValueNotifier<bool> enableSurfaceProducer = ValueNotifier<bool>(false);
+
+  /// Touch gestures in the video player (swipe for brightness/volume, long-press speed boost). Default: true.
+  static final ValueNotifier<bool> enablePlayerGestures = ValueNotifier<bool>(true);
 
   /// Hardware acceleration mode for video decoding. Default: autoSafe.
   static final ValueNotifier<HardwareAccelerationMode> hwdecMode =
@@ -283,6 +287,7 @@ abstract final class PlayerSettings {
     subAssOverride.value = prefs.getString(_keySubAssOverride) ?? 'no';
     useLibass.value = prefs.getBool(_keyUseLibass) ?? false;
     enableSurfaceProducer.value = prefs.getBool(_keyEnableSurfaceProducer) ?? false;
+    enablePlayerGestures.value = prefs.getBool(_keyEnablePlayerGestures) ?? true;
 
     // Load Hardware Decoding Preference
     final hwdecModeStr = prefs.getString(_keyHwdecMode);
@@ -1156,6 +1161,13 @@ abstract final class PlayerSettings {
     enableSurfaceProducer.value = val;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyEnableSurfaceProducer, val);
+    _notify();
+  }
+
+  static Future<void> setEnablePlayerGestures(bool val) async {
+    enablePlayerGestures.value = val;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyEnablePlayerGestures, val);
     _notify();
   }
 
