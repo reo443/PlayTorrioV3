@@ -10,6 +10,7 @@ import '../../services/theme/dock_settings.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/movie/movie_card.dart';
+import 'discover_filter_sheet.dart';
 
 class DiscoverPage extends StatefulWidget {
   final String? query;
@@ -45,6 +46,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   ({InstalledAddon addon, AddonCatalog catalog})? _selectedCatalogEntry;
   final Map<String, String> _selectedExtras = {};
+
+  // Client-side filters (applied locally to loaded items)
+  int? _minYear;
+  int? _maxYear;
+  double? _minRating;
 
   final List<Movie> _items = [];
   bool _isLoading = false;
@@ -160,10 +166,113 @@ class _DiscoverPageState extends State<DiscoverPage> {
     return _allCatalogs.where((c) => c.catalog.type == _selectedType).toList();
   }
 
-  bool get _hasVisibleExtras {
-    if (_selectedCatalogEntry == null) return false;
-    return _selectedCatalogEntry!.catalog.extra.any((e) =>
-        e.name != 'skip' && (e.name != 'search' || e.isRequired));
+  // ── Client-side filter helpers ──
+  static int? _extractYear(String? s) {
+    if (s == null || s.isEmpty) return null;
+    final m = RegExp(r'(19|20)\d{2}').firstMatch(s);
+    return m != null ? int.tryParse(m.group(0)!) : null;
+  }
+
+  bool get _hasClientFilters => _minYear != null || _maxYear != null || _minRating != null;
+
+  List<Movie> get _visibleItems =>
+      _hasClientFilters ? _items.where(_matchesClientFilters).toList() : _items;
+
+  bool _matchesClientFilters(Movie m) {
+    if (_minYear != null || _maxYear != null) {
+      final y = _extractYear(m.year);
+      if (y == null) return false;
+      if (_minYear != null && y < _minYear!) return false;
+      if (_maxYear != null && y > _maxYear!) return false;
+    }
+    if (_minRating != null) {
+      final r = double.tryParse(m.imdbRating ?? '');
+      if (r == null || r < _minRating!) return false;
+    }
+    return true;
+  }
+
+  int get _activeFilterCount {
+    var count = _selectedExtras.length;
+    if (_minYear != null || _maxYear != null) count++;
+    if (_minRating != null) count++;
+    return count;
+  }
+
+  static bool _mapsEqual(Map<String, String> a, Map<String, String> b) {
+    if (a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
+    }
+    return true;
+  }
+
+  void _applyFilters(DiscoverFilterResult result) {
+    final extrasChanged = !_mapsEqual(_selectedExtras, result.extras);
+    setState(() {
+      if (extrasChanged) {
+        _selectedExtras.clear();
+        _selectedExtras.addAll(result.extras);
+        _searchQuery = '';
+        _isSearching = false;
+        _searchController.clear();
+      }
+      _minYear = result.minYear;
+      _maxYear = result.maxYear;
+      _minRating = result.minRating;
+    });
+    if (extrasChanged) {
+      _checkAndLoadCatalog();
+    } else {
+      _ensureScreenFilled();
+    }
+  }
+
+  void _clearAllFilters() {
+    final hadExtras = _selectedExtras.isNotEmpty;
+    setState(() {
+      _minYear = null;
+      _maxYear = null;
+      _minRating = null;
+      if (hadExtras) {
+        _selectedExtras.clear();
+        _searchQuery = '';
+        _isSearching = false;
+        _searchController.clear();
+      }
+    });
+    if (hadExtras) {
+      _checkAndLoadCatalog();
+    } else {
+      _ensureScreenFilled();
+    }
+  }
+
+  void _removeYearFilter() {
+    setState(() {
+      _minYear = null;
+      _maxYear = null;
+    });
+    _ensureScreenFilled();
+  }
+
+  void _removeRatingFilter() {
+    setState(() => _minRating = null);
+    _ensureScreenFilled();
+  }
+
+  void _openFilterSheet() {
+    final catalog = _selectedCatalogEntry?.catalog;
+    if (catalog == null) return;
+    showDiscoverFilterSheet(
+      context: context,
+      catalog: catalog,
+      selectedExtras: _selectedExtras,
+      minYear: _minYear,
+      maxYear: _maxYear,
+      minRating: _minRating,
+      onApply: _applyFilters,
+    );
   }
 
   List<CatalogExtra> get _missingRequiredExtras {
@@ -325,14 +434,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       });
 
       // Auto load more if screen not filled yet
-      if (_hasMore && !_isLoading) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || !_scrollController.hasClients) return;
-          if (_scrollController.position.maxScrollExtent <= 0) {
-            _loadItems();
-          }
-        });
-      }
+      _ensureScreenFilled();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -340,6 +442,17 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _isLoading = false;
       });
     }
+  }
+
+  void _ensureScreenFilled() {
+    if (!_hasMore || _isLoading) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_hasMore || _isLoading) return;
+      if (!_scrollController.hasClients) return;
+      if (_scrollController.position.maxScrollExtent <= 0) {
+        _loadItems();
+      }
+    });
   }
 
   void _onSearchSubmitted(String query) {
@@ -389,12 +502,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     final sizing = MovieCardSizing.fromWidth(screenWidth);
 
-    final hasExtras = _hasVisibleExtras;
     final toolbarH = isCompactScreen ? 46.0 : kToolbarHeight;
     final selectorH = isCompactScreen ? 44.0 : 50.0;
     final extrasH = isCompactScreen ? 42.0 : 48.0;
 
-    final headerHeight = topPadding + toolbarH + selectorH + (hasExtras ? extrasH : 0);
+    final headerHeight = topPadding + toolbarH + selectorH + extrasH;
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
@@ -412,7 +524,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
             right: 0,
             child: _buildHeader(
               topPadding,
-              hasExtras,
               isCompactScreen: isCompactScreen,
               toolbarH: toolbarH,
               selectorH: selectorH,
@@ -503,6 +614,45 @@ class _DiscoverPageState extends State<DiscoverPage> {
       );
     }
 
+    final visibleItems = _visibleItems;
+
+    if (visibleItems.isEmpty) {
+      if (_hasMore) {
+        return const Center(
+          child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
+        );
+      }
+      return Center(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(20, topOffset + 30, 20, 100),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.filter_alt_off_rounded, size: 48, color: Colors.white.withValues(alpha: 0.3)),
+              const SizedBox(height: 12),
+              const Text(
+                'No titles match your active filters',
+                style: TextStyle(color: Colors.white54, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF7C5CFF),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _clearAllFilters,
+                icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
+                label: const Text('Clear Filters'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final screenWidth = MediaQuery.sizeOf(context).width;
     final columns = ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /
             (sizing.cardWidth + sizing.spacing))
@@ -525,14 +675,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
         crossAxisSpacing: sizing.spacing,
         mainAxisSpacing: sizing.spacing,
       ),
-      itemCount: _items.length + (_hasMore ? 1 : 0),
+      itemCount: visibleItems.length + (_hasMore ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index == _items.length) {
+        if (index == visibleItems.length) {
           return const Center(
             child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
           );
         }
-        return MovieCard(movie: _items[index]);
+        return MovieCard(movie: visibleItems[index]);
       },
     );
   }
@@ -739,8 +889,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Widget _buildHeader(
-    double topPadding,
-    bool hasExtras, {
+    double topPadding, {
     bool isCompactScreen = false,
     double toolbarH = kToolbarHeight,
     double selectorH = 50.0,
@@ -980,153 +1129,165 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 ),
               ),
 
-              // ── Extra Selectors Row (Genre, Tag, Sort, Performer, etc.) ──
-              if (hasExtras) ...[
-                SizedBox(
-                  height: extrasH,
-                  child: ListView(
-                    controller: _filtersScrollController,
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: isNarrow ? 10 : 16, vertical: 6),
-                    physics: const BouncingScrollPhysics(),
-                    children: _selectedCatalogEntry!.catalog.extra.map((extra) {
-                      if (extra.name == 'skip' || (extra.name == 'search' && !extra.isRequired)) {
-                        return const SizedBox.shrink();
-                      }
-
-                      final currentVal = _selectedExtras[extra.name];
-                      final isReq = extra.isRequired;
-                      final isSelected = currentVal != null && currentVal.isNotEmpty;
-
-                      // Dropdown for extras with predefined options
-                      if (extra.options.isNotEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: PopupMenuButton<String?>(
-                            tooltip: extra.name,
-                            constraints: const BoxConstraints(maxHeight: 360),
-                            color: const Color(0xFF15171F),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                            ),
-                            onSelected: (val) => _onExtraOptionSelected(extra.name, val),
-                            itemBuilder: (context) => [
-                              if (!isReq)
-                                PopupMenuItem<String?>(
-                                  value: null,
-                                  child: Text('All ${extra.name}', style: const TextStyle(color: Colors.white)),
-                                ),
-                              ...extra.options.map(
-                                (opt) => PopupMenuItem<String?>(
-                                  value: opt,
-                                  child: Text(
-                                    opt,
-                                    style: TextStyle(
-                                      color: opt == currentVal ? const Color(0xFF7C5CFF) : Colors.white,
-                                      fontWeight: opt == currentVal ? FontWeight.bold : FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isNarrow ? 10 : 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFF7C5CFF)
-                                    : (isReq ? Colors.amber.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.08)),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? const Color(0xFF7C5CFF)
-                                      : (isReq ? Colors.amber.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.12)),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '${extra.name.toUpperCase()}: ${currentVal ?? (isReq ? "Required *" : "All")}',
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : (isReq ? Colors.amber : Colors.white.withValues(alpha: 0.8)),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: isNarrow ? 11.5 : 12,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Icon(
-                                    Icons.arrow_drop_down,
-                                    size: 18,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : (isReq ? Colors.amber : Colors.white70),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-
-                      // Text input chip for freeform extras (or search if isRequired)
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
-                          onTap: () => _showCustomExtraDialog(extra.name),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isNarrow ? 10 : 14,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF7C5CFF)
-                                  : (isReq ? Colors.amber.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.08)),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF7C5CFF)
-                                    : (isReq ? Colors.amber.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.12)),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${extra.name.toUpperCase()}: ${currentVal ?? (isReq ? "Required *" : "Enter")}',
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : (isReq ? Colors.amber : Colors.white.withValues(alpha: 0.8)),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: isNarrow ? 11.5 : 12,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.edit_rounded,
-                                  size: 14,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : (isReq ? Colors.amber : Colors.white70),
-                                ),
-                              ],
-                            ),
-                          ),
+              // ── Filters Row ──
+              SizedBox(
+                height: extrasH,
+                child: Row(
+                  children: [
+                    SizedBox(width: isNarrow ? 10 : 16),
+                    _buildFilterButton(isNarrow),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        controller: _filtersScrollController,
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(8, 0, 12, 0),
+                        child: Row(
+                          children: _buildActiveFilterChips(),
                         ),
-                      );
-                    }).toList(),
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(bool isNarrow) {
+    final count = _activeFilterCount;
+    final hasActive = count > 0;
+
+    return GestureDetector(
+      onTap: _openFilterSheet,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: isNarrow ? 10 : 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: hasActive
+              ? const Color(0xFF7C5CFF)
+              : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: hasActive
+                ? const Color(0xFF7C5CFF)
+                : Colors.white.withValues(alpha: 0.12),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.tune_rounded,
+              size: 15,
+              color: hasActive ? Colors.white : Colors.white70,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              'Filters',
+              style: TextStyle(
+                color: hasActive ? Colors.white : Colors.white70,
+                fontWeight: FontWeight.bold,
+                fontSize: isNarrow ? 12 : 13,
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildActiveFilterChips() {
+    final chips = <Widget>[];
+
+    for (final entry in _selectedExtras.entries) {
+      chips.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: _buildActiveChip(
+            '${entry.key[0].toUpperCase()}${entry.key.substring(1)}: ${entry.value}',
+            () => _onExtraOptionSelected(entry.key, null),
+          ),
+        ),
+      );
+    }
+
+    if (_minYear != null || _maxYear != null) {
+      chips.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: _buildActiveChip(
+            'Year: ${_minYear?.toString() ?? 'Any'}–${_maxYear?.toString() ?? 'Any'}',
+            _removeYearFilter,
+          ),
+        ),
+      );
+    }
+
+    if (_minRating != null) {
+      chips.add(
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: _buildActiveChip(
+            'Rating: ${_minRating!.toStringAsFixed(0)}+',
+            _removeRatingFilter,
+          ),
+        ),
+      );
+    }
+
+    return chips;
+  }
+
+  Widget _buildActiveChip(String label, VoidCallback onRemove) {
+    return GestureDetector(
+      onTap: onRemove,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF7C5CFF).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF7C5CFF).withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 180),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11.5,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.close_rounded, size: 13, color: Colors.white70),
+          ],
         ),
       ),
     );
