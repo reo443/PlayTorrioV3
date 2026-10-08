@@ -41,7 +41,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   // Full Discover state
   List<({InstalledAddon addon, AddonCatalog catalog})> _allCatalogs = [];
-  List<String> _availableTypes = [];
   String _selectedType = 'movie';
 
   ({InstalledAddon addon, AddonCatalog catalog})? _selectedCatalogEntry;
@@ -51,9 +50,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
   int? _minYear;
   int? _maxYear;
   double? _minRating;
+  double? _maxRating;
+  int? _minDuration;
+  int? _maxDuration;
 
   // Client-side sorting
-  String? _sortKey; // null | 'trending' | 'popularity' | 'score' | 'date'
+  String? _sortKey; // null | 'title' | 'trending' | 'popularity' | 'score'
   bool _sortDescending = true;
 
   final List<Movie> _items = [];
@@ -156,7 +158,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     setState(() {
       _allCatalogs = catalogs;
-      _availableTypes = sortedTypes;
       _selectedType = initialType;
       _selectedCatalogEntry = initialEntry;
     });
@@ -173,7 +174,13 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   static double? _ratingOf(Movie m) => double.tryParse(m.imdbRating ?? '');
 
-  bool get _hasClientFilters => _minYear != null || _maxYear != null || _minRating != null;
+  bool get _hasClientFilters =>
+      _minYear != null ||
+      _maxYear != null ||
+      _minRating != null ||
+      _maxRating != null ||
+      _minDuration != null ||
+      _maxDuration != null;
 
   double? _trendingScore(Movie m) {
     final rating = _ratingOf(m);
@@ -197,6 +204,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   int _compareBySort(Movie a, Movie b) {
     switch (_sortKey) {
+      case 'title':
+        final an = a.name.toLowerCase();
+        final bn = b.name.toLowerCase();
+        return _sortDescending ? bn.compareTo(an) : an.compareTo(bn);
       case 'trending':
         return _cmpNullsLast(_trendingScore(a), _trendingScore(b));
       case 'popularity':
@@ -206,11 +217,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
         );
       case 'score':
         return _cmpNullsLast(_ratingOf(a), _ratingOf(b));
-      case 'date':
-        return _cmpNullsLast(
-          _extractYear(a.year)?.toDouble(),
-          _extractYear(b.year)?.toDouble(),
-        );
       default:
         return 0;
     }
@@ -235,9 +241,17 @@ class _DiscoverPageState extends State<DiscoverPage> {
       if (_minYear != null && y < _minYear!) return false;
       if (_maxYear != null && y > _maxYear!) return false;
     }
-    if (_minRating != null) {
+    if (_minRating != null || _maxRating != null) {
       final r = double.tryParse(m.imdbRating ?? '');
-      if (r == null || r < _minRating!) return false;
+      if (r == null) return false;
+      if (_minRating != null && r < _minRating!) return false;
+      if (_maxRating != null && r > _maxRating!) return false;
+    }
+    if (_minDuration != null || _maxDuration != null) {
+      final d = m.runtime;
+      if (d == null) return false;
+      if (_minDuration != null && d < _minDuration!) return false;
+      if (_maxDuration != null && d > _maxDuration!) return false;
     }
     return true;
   }
@@ -246,7 +260,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
     var count = _selectedExtras.length;
     if (_sortKey != null) count++;
     if (_minYear != null || _maxYear != null) count++;
-    if (_minRating != null) count++;
+    if (_minRating != null || _maxRating != null) count++;
+    if (_minDuration != null || _maxDuration != null) count++;
     return count;
   }
 
@@ -259,9 +274,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   void _applyFilters(DiscoverFilterResult result) {
+    final newExtras = <String, String>{};
+    if (result.genres.isNotEmpty) {
+      newExtras['genre'] = result.genres.join(',');
+    }
+
     final typeChanged = result.type != _selectedType;
     final catalogChanged = result.catalogEntry != _selectedCatalogEntry;
-    final extrasChanged = !_mapsEqual(_selectedExtras, result.extras);
+    final extrasChanged = !_mapsEqual(_selectedExtras, newExtras);
     final needsReload = typeChanged || catalogChanged || extrasChanged;
 
     setState(() {
@@ -269,7 +289,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _selectedType = result.type;
         _selectedCatalogEntry = result.catalogEntry;
         _selectedExtras.clear();
-        _selectedExtras.addAll(result.extras);
+        _selectedExtras.addAll(newExtras);
         _searchQuery = '';
         _isSearching = false;
         _searchController.clear();
@@ -279,6 +299,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
       _minYear = result.minYear;
       _maxYear = result.maxYear;
       _minRating = result.minRating;
+      _maxRating = result.maxRating;
+      _minDuration = result.minDuration;
+      _maxDuration = result.maxDuration;
     });
 
     if (needsReload) {
@@ -294,6 +317,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
       _minYear = null;
       _maxYear = null;
       _minRating = null;
+      _maxRating = null;
+      _minDuration = null;
+      _maxDuration = null;
       _sortKey = null;
       _sortDescending = true;
       if (hadExtras) {
@@ -312,18 +338,27 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   void _openFilterSheet() {
     if (_selectedCatalogEntry == null) return;
+    final genres = _selectedExtras['genre']
+            ?.split(',')
+            .map((g) => g.trim())
+            .where((g) => g.isNotEmpty)
+            .toList() ??
+        <String>[];
+
     showDiscoverFilterSheet(
       context: context,
-      availableTypes: _availableTypes,
       selectedType: _selectedType,
       catalogs: _allCatalogs,
       selectedCatalogEntry: _selectedCatalogEntry!,
-      selectedExtras: _selectedExtras,
+      selectedGenres: genres,
       sortKey: _sortKey,
       sortDescending: _sortDescending,
       minYear: _minYear,
       maxYear: _maxYear,
       minRating: _minRating,
+      maxRating: _maxRating,
+      minDuration: _minDuration,
+      maxDuration: _maxDuration,
       onApply: _applyFilters,
     );
   }

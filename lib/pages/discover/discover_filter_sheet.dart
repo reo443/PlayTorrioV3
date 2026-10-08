@@ -1,44 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/addon/addon.dart';
-import '../../services/addon/addon_manager.dart';
 
 typedef DiscoverCatalogEntry = ({InstalledAddon addon, AddonCatalog catalog});
 
 class DiscoverFilterResult {
   final String type;
   final DiscoverCatalogEntry? catalogEntry;
-  final Map<String, String> extras;
-  final String? sortKey;
+  final List<String> genres;
+  final String? sortKey; // null | 'title' | 'trending' | 'popularity' | 'score'
   final bool sortDescending;
   final int? minYear;
   final int? maxYear;
   final double? minRating;
+  final double? maxRating;
+  final int? minDuration;
+  final int? maxDuration;
 
   const DiscoverFilterResult({
     required this.type,
     this.catalogEntry,
-    required this.extras,
+    required this.genres,
     this.sortKey,
     this.sortDescending = true,
     this.minYear,
     this.maxYear,
     this.minRating,
+    this.maxRating,
+    this.minDuration,
+    this.maxDuration,
   });
 }
 
 Future<void> showDiscoverFilterSheet({
   required BuildContext context,
-  required List<String> availableTypes,
   required String selectedType,
   required List<DiscoverCatalogEntry> catalogs,
   required DiscoverCatalogEntry selectedCatalogEntry,
-  required Map<String, String> selectedExtras,
+  required List<String> selectedGenres,
   String? sortKey,
   bool sortDescending = true,
   int? minYear,
   int? maxYear,
   double? minRating,
+  double? maxRating,
+  int? minDuration,
+  int? maxDuration,
   required void Function(DiscoverFilterResult result) onApply,
 }) {
   return showModalBottomSheet(
@@ -47,45 +55,51 @@ Future<void> showDiscoverFilterSheet({
     backgroundColor: Colors.transparent,
     constraints: const BoxConstraints(maxWidth: 620),
     builder: (ctx) => _DiscoverFilterSheet(
-      availableTypes: availableTypes,
       selectedType: selectedType,
       catalogs: catalogs,
       selectedCatalogEntry: selectedCatalogEntry,
-      selectedExtras: selectedExtras,
+      selectedGenres: selectedGenres,
       sortKey: sortKey,
       sortDescending: sortDescending,
       minYear: minYear,
       maxYear: maxYear,
       minRating: minRating,
+      maxRating: maxRating,
+      minDuration: minDuration,
+      maxDuration: maxDuration,
       onApply: onApply,
     ),
   );
 }
 
 class _DiscoverFilterSheet extends StatefulWidget {
-  final List<String> availableTypes;
   final String selectedType;
   final List<DiscoverCatalogEntry> catalogs;
   final DiscoverCatalogEntry selectedCatalogEntry;
-  final Map<String, String> selectedExtras;
+  final List<String> selectedGenres;
   final String? sortKey;
   final bool sortDescending;
   final int? minYear;
   final int? maxYear;
   final double? minRating;
+  final double? maxRating;
+  final int? minDuration;
+  final int? maxDuration;
   final void Function(DiscoverFilterResult result) onApply;
 
   const _DiscoverFilterSheet({
-    required this.availableTypes,
     required this.selectedType,
     required this.catalogs,
     required this.selectedCatalogEntry,
-    required this.selectedExtras,
+    required this.selectedGenres,
     this.sortKey,
     this.sortDescending = true,
     this.minYear,
     this.maxYear,
     this.minRating,
+    this.maxRating,
+    this.minDuration,
+    this.maxDuration,
     required this.onApply,
   });
 
@@ -97,126 +111,224 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
   static const _accent = Color(0xFF7C5CFF);
 
   static const _sortOptions = {
+    'title': 'Title',
     'trending': 'Trending',
     'popularity': 'Popularity',
     'score': 'Score',
-    'date': 'Date',
   };
+
+  static const _typeOptions = {'movie': 'Movie', 'series': 'Series'};
 
   late String _type;
   DiscoverCatalogEntry? _entry;
-  late final Map<String, String> _extras;
+  late final List<String> _selectedGenres;
   String? _sortKey;
   late bool _sortDescending;
-  int? _minYear;
-  int? _maxYear;
-  double? _minRating;
-  final Map<String, TextEditingController> _textControllers = {};
 
-  List<CatalogExtra> get _visibleExtras => _entry?.catalog.extra
-          .where((e) => e.name != 'skip' && (e.name != 'search' || e.isRequired))
-          .toList() ??
-      const <CatalogExtra>[];
+  late final TextEditingController _yearFromCtrl;
+  late final TextEditingController _yearToCtrl;
+  late final TextEditingController _ratingMinCtrl;
+  late final TextEditingController _ratingMaxCtrl;
+  late final TextEditingController _durationMinCtrl;
+  late final TextEditingController _durationMaxCtrl;
 
   List<DiscoverCatalogEntry> get _catalogsForType =>
       widget.catalogs.where((c) => c.catalog.type == _type).toList();
+
+  /// Cinemeta's "New" (year) catalog names its year options "genre" —
+  /// detect 4-digit year values so they don't pollute the genre list.
+  static bool _yearLike(String s) => RegExp(r'^(19|20)\d{2}$').hasMatch(s.trim());
+
+  bool _catalogSupportsGenres(DiscoverCatalogEntry entry) {
+    if (entry.catalog.getExtra('genre') == null) return false;
+    final options = entry.catalog.genres;
+    final nonYear = options.where((g) => !_yearLike(g)).length;
+    return nonYear * 2 >= options.length;
+  }
+
+  List<String> get _allGenres {
+    final seen = <String>{};
+    final list = <String>[];
+    for (final entry in _catalogsForType) {
+      for (final g in entry.catalog.genres) {
+        final trimmed = g.trim();
+        if (trimmed.isNotEmpty && !_yearLike(trimmed) && seen.add(trimmed)) {
+          list.add(trimmed);
+        }
+      }
+    }
+    return list;
+  }
 
   @override
   void initState() {
     super.initState();
     _type = widget.selectedType;
     _entry = widget.selectedCatalogEntry;
-    _extras = Map<String, String>.from(widget.selectedExtras);
+    _selectedGenres = List<String>.from(widget.selectedGenres);
     _sortKey = widget.sortKey;
     _sortDescending = widget.sortDescending;
-    _minYear = widget.minYear;
-    _maxYear = widget.maxYear;
-    _minRating = widget.minRating;
+
+    _yearFromCtrl = TextEditingController(text: widget.minYear?.toString() ?? '');
+    _yearToCtrl = TextEditingController(text: widget.maxYear?.toString() ?? '');
+    _ratingMinCtrl = TextEditingController(text: _fmtDouble(widget.minRating));
+    _ratingMaxCtrl = TextEditingController(text: _fmtDouble(widget.maxRating));
+    _durationMinCtrl = TextEditingController(text: widget.minDuration?.toString() ?? '');
+    _durationMaxCtrl = TextEditingController(text: widget.maxDuration?.toString() ?? '');
   }
 
   @override
   void dispose() {
-    for (final c in _textControllers.values) {
-      c.dispose();
-    }
+    _yearFromCtrl.dispose();
+    _yearToCtrl.dispose();
+    _ratingMinCtrl.dispose();
+    _ratingMaxCtrl.dispose();
+    _durationMinCtrl.dispose();
+    _durationMaxCtrl.dispose();
     super.dispose();
   }
 
+  static String _fmtDouble(double? v) {
+    if (v == null) return '';
+    if (v == v.roundToDouble()) return v.round().toString();
+    return v.toString();
+  }
+
+  static int? _parseInt(String s) {
+    final v = int.tryParse(s.trim());
+    return (v != null && v > 0) ? v : null;
+  }
+
+  static double? _parseDouble(String s) {
+    final v = double.tryParse(s.trim());
+    return (v != null && v > 0) ? v : null;
+  }
+
   int get _activeCount {
-    var count = _extras.length;
+    var count = 0;
+    if (_selectedGenres.isNotEmpty) count++;
     if (_sortKey != null) count++;
-    if (_minYear != null || _maxYear != null) count++;
-    if (_minRating != null) count++;
+    if (_yearFromCtrl.text.trim().isNotEmpty || _yearToCtrl.text.trim().isNotEmpty) count++;
+    if (_ratingMinCtrl.text.trim().isNotEmpty || _ratingMaxCtrl.text.trim().isNotEmpty) count++;
+    if (_durationMinCtrl.text.trim().isNotEmpty || _durationMaxCtrl.text.trim().isNotEmpty) count++;
     return count;
   }
 
   void _onTypeSelected(String type) {
     if (type == _type) return;
+
+    final catalogs = widget.catalogs.where((c) => c.catalog.type == type).toList();
+    final prev = _entry;
+
+    // Keep the layout consistent when switching type: prefer the same
+    // addon + catalog id, then the same addon, then a catalog that has
+    // selectable extras, before falling back to the first catalog.
+    DiscoverCatalogEntry? match;
+    if (prev != null) {
+      for (final c in catalogs) {
+        if (c.addon.manifest.id == prev.addon.manifest.id &&
+            c.catalog.id == prev.catalog.id) {
+          match = c;
+          break;
+        }
+      }
+    }
+    if (match == null && prev != null) {
+      for (final c in catalogs) {
+        if (c.addon.manifest.id == prev.addon.manifest.id) {
+          match = c;
+          break;
+        }
+      }
+    }
+    match ??= catalogs
+            .where((c) => c.catalog.selectableExtras.isNotEmpty)
+            .firstOrNull ??
+        catalogs.firstOrNull;
+
     setState(() {
       _type = type;
-      _entry = _catalogsForType.firstOrNull;
-      _extras.clear();
-      _resetTextControllers();
+      _entry = match;
+      _selectedGenres.clear();
     });
   }
 
-  void _onCatalogSelected(DiscoverCatalogEntry entry) {
-    if (entry == _entry) return;
+  void _onSortSelected(String key) {
     setState(() {
-      _entry = entry;
-      _extras.clear();
-      _resetTextControllers();
+      if (_sortKey == key) {
+        _sortKey = null;
+      } else {
+        _sortKey = key;
+        _sortDescending = key != 'title';
+      }
     });
   }
 
-  void _resetTextControllers() {
-    for (final c in _textControllers.values) {
-      c.dispose();
-    }
-    _textControllers.clear();
-  }
-
-  TextEditingController _controllerFor(String extraName) {
-    return _textControllers.putIfAbsent(
-      extraName,
-      () => TextEditingController(text: _extras[extraName] ?? ''),
-    );
+  void _toggleGenre(String genre) {
+    setState(() {
+      if (_selectedGenres.contains(genre)) {
+        _selectedGenres.remove(genre);
+      } else {
+        _selectedGenres.add(genre);
+      }
+    });
   }
 
   void _clearAll() {
     setState(() {
-      _extras.clear();
+      _selectedGenres.clear();
       _sortKey = null;
       _sortDescending = true;
-      _minYear = null;
-      _maxYear = null;
-      _minRating = null;
-      for (final c in _textControllers.values) {
-        c.clear();
-      }
+      _yearFromCtrl.clear();
+      _yearToCtrl.clear();
+      _ratingMinCtrl.clear();
+      _ratingMaxCtrl.clear();
+      _durationMinCtrl.clear();
+      _durationMaxCtrl.clear();
     });
   }
 
   void _apply() {
-    for (final entry in _textControllers.entries) {
-      final text = entry.value.text.trim();
-      if (text.isEmpty) {
-        _extras.remove(entry.key);
-      } else {
-        _extras[entry.key] = text;
-      }
+    var minYear = _parseInt(_yearFromCtrl.text);
+    var maxYear = _parseInt(_yearToCtrl.text);
+    if (minYear != null && maxYear != null && minYear > maxYear) {
+      final t = minYear;
+      minYear = maxYear;
+      maxYear = t;
     }
+
+    var minRating = _parseDouble(_ratingMinCtrl.text);
+    var maxRating = _parseDouble(_ratingMaxCtrl.text);
+    if (minRating != null && maxRating != null && minRating > maxRating) {
+      final t = minRating;
+      minRating = maxRating;
+      maxRating = t;
+    }
+
+    var minDuration = _parseInt(_durationMinCtrl.text);
+    var maxDuration = _parseInt(_durationMaxCtrl.text);
+    if (minDuration != null && maxDuration != null && minDuration > maxDuration) {
+      final t = minDuration;
+      minDuration = maxDuration;
+      maxDuration = t;
+    }
+
     Navigator.of(context).pop();
     widget.onApply(
       DiscoverFilterResult(
         type: _type,
         catalogEntry: _entry,
-        extras: Map<String, String>.from(_extras),
+        genres: (_entry != null && _catalogSupportsGenres(_entry!))
+            ? List<String>.from(_selectedGenres)
+            : const <String>[],
         sortKey: _sortKey,
         sortDescending: _sortDescending,
-        minYear: _minYear,
-        maxYear: _maxYear,
-        minRating: _minRating,
+        minYear: minYear,
+        maxYear: maxYear,
+        minRating: minRating,
+        maxRating: maxRating,
+        minDuration: minDuration,
+        maxDuration: maxDuration,
       ),
     );
   }
@@ -224,6 +336,8 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
   @override
   Widget build(BuildContext context) {
     final maxHeight = MediaQuery.of(context).size.height * 0.82;
+    final genres = _allGenres;
+    final genreSupported = _entry != null && _catalogSupportsGenres(_entry!);
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -291,22 +405,12 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
                     physics: const ClampingScrollPhysics(),
                     children: [
                       _buildTypeSection(),
-                      _buildCatalogSection(),
                       _buildSortSection(),
-                      if (_visibleExtras.isNotEmpty) ...[
-                        _buildSectionHeader('CATALOG FILTERS'),
-                        const SizedBox(height: 12),
-                        ..._visibleExtras.map(_buildExtraSection),
-                      ],
-                      _buildSectionHeader('TITLE FILTERS'),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Applied locally to loaded titles — more results stream in automatically as you scroll',
-                        style: TextStyle(fontSize: 11.5, color: Colors.white54),
-                      ),
-                      const SizedBox(height: 14),
-                      _buildYearSection(),
+                      if (genres.isNotEmpty && genreSupported)
+                        _buildGenreSection(genres),
+                      _buildReleaseDateSection(),
                       _buildRatingSection(),
+                      _buildDurationSection(),
                     ],
                   ),
                 ),
@@ -383,42 +487,12 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: widget.availableTypes.map((t) {
-              final isSelected = t == _type;
+            children: _typeOptions.entries.map((t) {
+              final isSelected = t.key == _type;
               return _buildChoiceChip(
-                label: t[0].toUpperCase() + t.substring(1),
+                label: t.value,
                 selected: isSelected,
-                onSelected: () => _onTypeSelected(t),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCatalogSection() {
-    final catalogs = _catalogsForType;
-    if (catalogs.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('SOURCE / CATALOG'),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: catalogs.map((entry) {
-              final isSelected = entry == _entry;
-              final hasReq = entry.catalog.hasRequiredExtra;
-              return _buildChoiceChip(
-                label: AddonManager.instance.catalogDisplayName(entry.catalog),
-                selected: isSelected,
-                onSelected: () => _onCatalogSelected(entry),
-                trailingBadge: hasReq ? 'Custom' : null,
+                onSelected: () => _onTypeSelected(t.key),
               );
             }).toList(),
           ),
@@ -443,20 +517,13 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [
-              _buildChoiceChip(
-                label: 'Default',
-                selected: _sortKey == null,
-                onSelected: () => setState(() => _sortKey = null),
-              ),
-              ..._sortOptions.entries.map(
-                (opt) => _buildChoiceChip(
-                  label: opt.value,
-                  selected: _sortKey == opt.key,
-                  onSelected: () => setState(() => _sortKey = opt.key),
-                ),
-              ),
-            ],
+            children: _sortOptions.entries.map((opt) {
+              return _buildChoiceChip(
+                label: opt.value,
+                selected: _sortKey == opt.key,
+                onSelected: () => _onSortSelected(opt.key),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -507,9 +574,7 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
     );
   }
 
-  Widget _buildExtraSection(CatalogExtra extra) {
-    final current = _extras[extra.name];
-
+  Widget _buildGenreSection(List<String> genres) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Column(
@@ -517,107 +582,73 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
         children: [
           Row(
             children: [
-              Text(
-                extra.name[0].toUpperCase() + extra.name.substring(1),
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(
-                  color: extra.isRequired
-                      ? Colors.amber.withValues(alpha: 0.2)
-                      : _accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  extra.isRequired ? 'REQUIRED' : 'OPTIONAL',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: extra.isRequired ? Colors.amber : const Color(0xFF9D85FF),
+              Expanded(child: _buildSectionHeader('GENRE')),
+              if (_selectedGenres.isNotEmpty)
+                Text(
+                  '${_selectedGenres.length} selected',
+                  style: const TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white54,
                   ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildChoiceChip(
+                label: 'All',
+                selected: _selectedGenres.isEmpty,
+                onSelected: () => setState(() => _selectedGenres.clear()),
+              ),
+              ...genres.map(
+                (g) => _buildChoiceChip(
+                  label: g,
+                  selected: _selectedGenres.contains(g),
+                  onSelected: () => _toggleGenre(g),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          if (extra.options.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (!extra.isRequired)
-                  _buildChoiceChip(
-                    label: 'All',
-                    selected: current == null,
-                    onSelected: () => setState(() => _extras.remove(extra.name)),
-                  ),
-                ...extra.options.map(
-                  (opt) => _buildChoiceChip(
-                    label: opt,
-                    selected: current == opt,
-                    onSelected: () => setState(() => _extras[extra.name] = opt),
-                  ),
-                ),
-              ],
-            )
-          else
-            TextField(
-              controller: _controllerFor(extra.name),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Enter ${extra.name}...',
-                hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-                filled: true,
-                fillColor: const Color(0xFF0D1017),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: _accent),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildYearSection() {
+  Widget _buildReleaseDateSection() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildSectionHeader('RELEASE DATE'),
+          const SizedBox(height: 4),
           const Text(
-            'Release Year',
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+            'Filters loaded titles by release year',
+            style: TextStyle(fontSize: 11.5, color: Colors.white54),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
-                child: _buildYearDropdown('From', _minYear, (v) => setState(() => _minYear = v)),
+                child: _buildInput(
+                  controller: _yearFromCtrl,
+                  label: 'From (year)',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _buildYearDropdown('To', _maxYear, (v) => setState(() => _maxYear = v)),
+                child: _buildInput(
+                  controller: _yearToCtrl,
+                  label: 'To (year)',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
               ),
             ],
           ),
@@ -626,20 +657,95 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
     );
   }
 
-  Widget _buildYearDropdown(String label, int? value, ValueChanged<int?> onChanged) {
-    final currentYear = DateTime.now().year;
+  Widget _buildRatingSection() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('RATING (IMDB)'),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInput(
+                  controller: _ratingMinCtrl,
+                  label: 'Min',
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d{0,1})?$')),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildInput(
+                  controller: _ratingMaxCtrl,
+                  label: 'Max',
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}(\.\d{0,1})?$')),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-    return DropdownButtonFormField<int?>(
-      value: value,
-      isExpanded: true,
-      dropdownColor: const Color(0xFF151822),
-      menuMaxHeight: 360,
+  Widget _buildDurationSection() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader('DURATION (MINUTES)'),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInput(
+                  controller: _durationMinCtrl,
+                  label: 'Min',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildInput(
+                  controller: _durationMaxCtrl,
+                  label: 'Max',
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInput({
+    required TextEditingController controller,
+    required String label,
+    required TextInputType keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      style: const TextStyle(color: Colors.white, fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
         filled: true,
         fillColor: const Color(0xFF0D1017),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
@@ -648,55 +754,10 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
-      ),
-      style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w600),
-      items: [
-        const DropdownMenuItem<int?>(value: null, child: Text('Any')),
-        ...List.generate(currentYear + 2 - 1950, (i) {
-          final y = currentYear + 1 - i;
-          return DropdownMenuItem<int?>(value: y, child: Text('$y'));
-        }),
-      ],
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildRatingSection() {
-    const ratings = [5.0, 6.0, 7.0, 8.0, 9.0];
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Minimum Rating',
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildChoiceChip(
-                label: 'Any',
-                selected: _minRating == null,
-                onSelected: () => setState(() => _minRating = null),
-              ),
-              ...ratings.map(
-                (r) => _buildChoiceChip(
-                  label: '${r.toStringAsFixed(0)}+',
-                  selected: _minRating == r,
-                  onSelected: () => setState(() => _minRating = r),
-                ),
-              ),
-            ],
-          ),
-        ],
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _accent),
+        ),
       ),
     );
   }
@@ -705,33 +766,9 @@ class _DiscoverFilterSheetState extends State<_DiscoverFilterSheet> {
     required String label,
     required bool selected,
     required VoidCallback onSelected,
-    String? trailingBadge,
   }) {
     return ChoiceChip(
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label),
-          if (trailingBadge != null) ...[
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: selected ? Colors.white24 : Colors.amber.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                trailingBadge,
-                style: TextStyle(
-                  fontSize: 8.5,
-                  fontWeight: FontWeight.w800,
-                  color: selected ? Colors.white : Colors.amber,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
+      label: Text(label),
       selected: selected,
       selectedColor: _accent.withValues(alpha: 0.25),
       backgroundColor: const Color(0xFF0D1017),

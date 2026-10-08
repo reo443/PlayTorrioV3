@@ -7,6 +7,7 @@ class Movie {
   final String addonBaseUrl;
   final String? imdbRating;
   final double? popularity;
+  final int? runtime;
 
   Movie({
     required this.id,
@@ -17,6 +18,7 @@ class Movie {
     required this.addonBaseUrl,
     this.imdbRating,
     this.popularity,
+    this.runtime,
   });
 
   /// Whether this movie represents a collection or franchise item.
@@ -54,6 +56,29 @@ class Movie {
       addonBaseUrl: addonBaseUrl,
       imdbRating: ratingStr,
       popularity: popularity,
+      runtime: _parseRuntime(
+        json['runtime'] ?? json['duration'] ?? json['runtimeMinutes'],
+      ),
     );
+  }
+
+  /// Parses runtime values like "181", "181 min", "2h 21min", or PT2H21M
+  /// into total minutes.
+  static int? _parseRuntime(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.round();
+
+    final s = value.toString().trim();
+    if (s.isEmpty) return null;
+
+    final hMatch = RegExp(r'(\d+)\s*h', caseSensitive: false).firstMatch(s);
+    final mMatch = RegExp(r'(\d+)\s*m(?!s)', caseSensitive: false).firstMatch(s);
+    if (hMatch != null || mMatch != null) {
+      return (int.tryParse(hMatch?.group(1) ?? '') ?? 0) * 60 +
+          (int.tryParse(mMatch?.group(1) ?? '') ?? 0);
+    }
+
+    final digits = int.tryParse(s.replaceAll(RegExp(r'[^0-9]'), ''));
+    return (digits != null && digits > 0) ? digits : null;
   }
 }
