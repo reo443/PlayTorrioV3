@@ -17,6 +17,7 @@ import '../../models/stream/stream_model.dart';
 import '../../models/subtitle/subtitle_model.dart';
 import './player_screen.dart';
 import '../../services/addon/addon_manager.dart';
+import '../../services/home/home_page_settings.dart';
 import '../../services/stream/stream_service.dart';
 import '../../services/stream/stream_bitrate_resolver.dart';
 import '../../services/theme/glass_settings.dart';
@@ -443,14 +444,17 @@ class _WatchScreenState extends State<WatchScreen>
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.sizeOf(context);
+    final screenSize = MediaQuery.of(context).size;
     final bgUrl = widget.detail.background ?? widget.detail.poster;
     final isDesktop = _isDesktop();
+    final bgMode = HomePageSettings.detailsBackground.value;
+    final solidBg = bgMode == DetailsBackground.black ? Colors.black : _C.bg;
 
     final background = Stack(
       children: [
-        const Positioned.fill(child: ColoredBox(color: _C.bg)),
-        if (bgUrl != null) _buildBackdrop(bgUrl, screenSize, isDesktop),
+        Positioned.fill(child: ColoredBox(color: solidBg)),
+        if (bgUrl != null && bgMode == DetailsBackground.backdrop)
+          _buildBackdrop(bgUrl, screenSize, isDesktop),
       ],
     );
     final content = Stack(
@@ -469,7 +473,7 @@ class _WatchScreenState extends State<WatchScreen>
     );
 
     return Scaffold(
-      backgroundColor: _C.bg,
+      backgroundColor: solidBg,
       body: ValueListenableBuilder<bool>(
         valueListenable: GlassSettings.enabled,
         builder: (context, enabled, _) {

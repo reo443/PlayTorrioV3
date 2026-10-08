@@ -54,6 +54,15 @@ enum CardDensity {
   const CardDensity(this.label);
 }
 
+enum DetailsBackground {
+  backdrop('Cinematic Backdrop'),
+  dark('Dark (No Backdrop)'),
+  black('Pure Black');
+
+  final String label;
+  const DetailsBackground(this.label);
+}
+
 abstract final class HomePageSettings {
   static const _keyEnableSpotlight = 'home_enable_spotlight';
   static const _keyEnableSimilar = 'home_enable_similar';
@@ -67,6 +76,7 @@ abstract final class HomePageSettings {
   static const _keyCardDensity = 'home_card_density';
   static const _keyGridColumns = 'app_grid_columns';
   static const _keyPosterScale = 'app_poster_scale';
+  static const _keyDetailsBackground = 'app_details_background';
   static const _keyShowRating = 'home_show_rating';
   static const _keyAmbientGlow = 'home_ambient_glow';
   static const _keyCardHoverZoom = 'home_card_hover_zoom';
@@ -96,6 +106,8 @@ abstract final class HomePageSettings {
       ValueNotifier<CardDensity>(CardDensity.standard);
   static final ValueNotifier<int> gridColumns = ValueNotifier<int>(0);
   static final ValueNotifier<double> posterScale = ValueNotifier<double>(1.0);
+  static final ValueNotifier<DetailsBackground> detailsBackground =
+      ValueNotifier<DetailsBackground>(DetailsBackground.backdrop);
   static final ValueNotifier<bool> showRating = ValueNotifier<bool>(true);
   static final ValueNotifier<bool> ambientGlow = ValueNotifier<bool>(true);
   static final ValueNotifier<double> cardHoverZoom = ValueNotifier<double>(1.08);
@@ -154,6 +166,12 @@ abstract final class HomePageSettings {
 
     posterScale.value =
         (prefs.getDouble(_keyPosterScale) ?? 1.0).clamp(0.6, 1.3);
+
+    final detailsBgStr = prefs.getString(_keyDetailsBackground);
+    detailsBackground.value = DetailsBackground.values.firstWhere(
+      (b) => b.name == detailsBgStr,
+      orElse: () => DetailsBackground.backdrop,
+    );
 
     showRating.value = prefs.getBool(_keyShowRating) ?? true;
     ambientGlow.value = prefs.getBool(_keyAmbientGlow) ?? true;
@@ -300,6 +318,13 @@ abstract final class HomePageSettings {
     posterScale.value = scale.clamp(0.6, 1.3);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_keyPosterScale, posterScale.value);
+    changeNotifier.value++;
+  }
+
+  static Future<void> setDetailsBackground(DetailsBackground background) async {
+    detailsBackground.value = background;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyDetailsBackground, background.name);
     changeNotifier.value++;
   }
 

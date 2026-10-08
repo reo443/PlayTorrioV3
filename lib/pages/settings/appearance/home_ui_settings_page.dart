@@ -205,6 +205,21 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
 
               const SizedBox(height: 28),
 
+              // ── 5b. Details Page Background ──
+              Text(
+                'DETAILS PAGE BACKGROUND',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white.withValues(alpha: 0.35),
+                  letterSpacing: 1.1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildDetailsBackgroundCard(),
+
+              const SizedBox(height: 28),
+
               // ── 6. Feature Shortcuts & Buttons ──
               Text(
                 'HEADER SHORTCUTS & BUTTONS',
@@ -1419,6 +1434,95 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
           setState(() {});
         }
       },
+    );
+  }
+
+  Widget _buildDetailsBackgroundCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF12151E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C5CFF).withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.movie_filter_outlined,
+                  color: Color(0xFF7C5CFF),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Details Page Background',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Choose what appears behind movie & series detail pages',
+                      style: TextStyle(fontSize: 12, color: Colors.white54),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ValueListenableBuilder<DetailsBackground>(
+            valueListenable: HomePageSettings.detailsBackground,
+            builder: (context, current, _) {
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: DetailsBackground.values.map((bg) {
+                  final isSelected = bg == current;
+                  return ChoiceChip(
+                    label: Text(bg.label),
+                    selected: isSelected,
+                    selectedColor: const Color(0xFF7C5CFF).withValues(alpha: 0.25),
+                    backgroundColor: const Color(0xFF0D1017),
+                    labelStyle: TextStyle(
+                      color: isSelected ? const Color(0xFF7C5CFF) : Colors.white70,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                      fontSize: 12,
+                    ),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF7C5CFF).withValues(alpha: 0.6)
+                          : Colors.white.withValues(alpha: 0.08),
+                    ),
+                    onSelected: (selected) {
+                      if (selected) {
+                        HomePageSettings.setDetailsBackground(bg);
+                        setState(() {});
+                      }
+                    },
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 

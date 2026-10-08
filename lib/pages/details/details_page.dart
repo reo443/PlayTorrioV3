@@ -6,6 +6,7 @@ import '../../models/movie/movie.dart';
 import '../../models/movie/video.dart';
 import '../../models/movie/movie_detail.dart';
 import '../../models/my_list/my_list_item.dart';
+import '../../services/home/home_page_settings.dart';
 import '../../services/metadata/bestsimilar_scraper.dart';
 import '../../services/metadata/metadata_service.dart';
 import '../../services/my_list/my_list_service.dart';
@@ -454,8 +455,10 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final isBlackBg =
+        HomePageSettings.detailsBackground.value == DetailsBackground.black;
     return Scaffold(
-      backgroundColor: _Palette.bg,
+      backgroundColor: isBlackBg ? Colors.black : _Palette.bg,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _Palette.accent))
           : _detail == null
@@ -501,7 +504,10 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
     return Stack(
       children: [
-        if (bgUrl != null) _buildBackdrop(bgUrl, screenSize),
+        if (bgUrl != null &&
+            HomePageSettings.detailsBackground.value ==
+                DetailsBackground.backdrop)
+          _buildBackdrop(bgUrl, screenSize),
         Positioned.fill(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
