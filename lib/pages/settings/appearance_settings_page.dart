@@ -156,7 +156,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                     icon: Icons.palette_rounded,
                     iconColor: currentPalette.primaryColor,
                     title: 'Home Page UI & Themes',
-                    subtitle: 'Color schemes, "Because you have on your list" smart slider, hero spotlight, and card density',
+                    subtitle: 'Color schemes, app-wide grid column count, "Because you have on your list" smart slider, hero spotlight, and card density',
                     badgeText: currentPalette.name,
                     badgeColor: currentPalette.primaryColor,
                     onTap: () async {

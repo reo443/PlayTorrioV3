@@ -95,7 +95,7 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
 
   @override
   Widget build(BuildContext context) {
-    final sizing = MovieCardSizing.fromWidth(MediaQuery.sizeOf(context).width);
+    final sizing = MovieCardSizing.fromWidth(MediaQuery.sizeOf(context).width, useGridColumns: false);
     final isDesktop = _isDesktop();
 
     return Padding(

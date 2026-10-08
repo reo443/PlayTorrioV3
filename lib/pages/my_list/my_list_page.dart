@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/my_list/my_list_item.dart';
 import '../../services/my_list/my_list_service.dart';
+import '../../services/home/home_page_settings.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../details/details_page.dart';
 import '../../models/movie/movie.dart';
@@ -57,6 +58,8 @@ class _MyListPageState extends State<MyListPage> {
   }
 
   int _getCrossAxisCount(BuildContext context) {
+    final configured = HomePageSettings.gridColumns.value;
+    if (configured >= 2) return configured;
     final width = MediaQuery.of(context).size.width;
     if (width < 600) return 2;
     if (width < 900) return 3;

@@ -65,6 +65,8 @@ abstract final class HomePageSettings {
   static const _keyHeroAutoRotate = 'home_hero_auto_rotate';
   static const _keyHeroRotateSeconds = 'home_hero_rotate_seconds';
   static const _keyCardDensity = 'home_card_density';
+  static const _keyGridColumns = 'app_grid_columns';
+  static const _keyPosterScale = 'app_poster_scale';
   static const _keyShowRating = 'home_show_rating';
   static const _keyAmbientGlow = 'home_ambient_glow';
   static const _keyCardHoverZoom = 'home_card_hover_zoom';
@@ -92,6 +94,8 @@ abstract final class HomePageSettings {
   static final ValueNotifier<int> heroRotateSeconds = ValueNotifier<int>(6);
   static final ValueNotifier<CardDensity> cardDensity =
       ValueNotifier<CardDensity>(CardDensity.standard);
+  static final ValueNotifier<int> gridColumns = ValueNotifier<int>(0);
+  static final ValueNotifier<double> posterScale = ValueNotifier<double>(1.0);
   static final ValueNotifier<bool> showRating = ValueNotifier<bool>(true);
   static final ValueNotifier<bool> ambientGlow = ValueNotifier<bool>(true);
   static final ValueNotifier<double> cardHoverZoom = ValueNotifier<double>(1.08);
@@ -143,6 +147,13 @@ abstract final class HomePageSettings {
       (d) => d.name == densityStr,
       orElse: () => CardDensity.standard,
     );
+
+    final savedGridColumns = prefs.getInt(_keyGridColumns) ?? 0;
+    gridColumns.value =
+        (savedGridColumns >= 2 && savedGridColumns <= 10) ? savedGridColumns : 0;
+
+    posterScale.value =
+        (prefs.getDouble(_keyPosterScale) ?? 1.0).clamp(0.6, 1.3);
 
     showRating.value = prefs.getBool(_keyShowRating) ?? true;
     ambientGlow.value = prefs.getBool(_keyAmbientGlow) ?? true;
@@ -274,6 +285,21 @@ abstract final class HomePageSettings {
     cardDensity.value = density;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyCardDensity, density.name);
+    changeNotifier.value++;
+  }
+
+  static Future<void> setGridColumns(int columns) async {
+    gridColumns.value =
+        (columns >= 2 && columns <= 10) ? columns : 0;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyGridColumns, columns);
+    changeNotifier.value++;
+  }
+
+  static Future<void> setPosterScale(double scale) async {
+    posterScale.value = scale.clamp(0.6, 1.3);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_keyPosterScale, posterScale.value);
     changeNotifier.value++;
   }
 

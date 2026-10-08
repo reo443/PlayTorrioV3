@@ -88,7 +88,7 @@ class _AnimeSliderSectionState extends State<AnimeSliderSection> {
   Widget build(BuildContext context) {
     if (widget.animeList.isEmpty) return const SizedBox.shrink();
 
-    final sizing = MovieCardSizing.fromWidth(MediaQuery.sizeOf(context).width);
+    final sizing = MovieCardSizing.fromWidth(MediaQuery.sizeOf(context).width, useGridColumns: false);
     final isDesktop = _isDesktop();
 
     return Padding(

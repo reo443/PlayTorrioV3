@@ -34,28 +34,43 @@ class MovieCardSizing {
     required this.sidePadding,
   });
 
-  factory MovieCardSizing.fromWidth(double screenWidth) {
+  factory MovieCardSizing.fromWidth(double screenWidth, {bool useGridColumns = true}) {
+    const spacing = 16.0;
+    const sidePadding = 18.0;
+
     double cardWidth;
 
-    if (screenWidth < 360) {
-      cardWidth = 138;
-    } else if (screenWidth < 430) {
-      cardWidth = 152;
-    } else if (screenWidth < 700) {
-      cardWidth = 162;
-    } else if (screenWidth < 1000) {
-      cardWidth = 176;
-    } else if (screenWidth < 1400) {
-      cardWidth = 190;
+    final gridColumns = useGridColumns ? HomePageSettings.gridColumns.value : 0;
+    if (gridColumns >= 2) {
+      cardWidth = (screenWidth - sidePadding * 2 - spacing * (gridColumns - 1)) /
+              gridColumns -
+          0.01;
+      if (cardWidth < 60) cardWidth = 60;
     } else {
-      cardWidth = 205;
-    }
+      if (screenWidth < 360) {
+        cardWidth = 138;
+      } else if (screenWidth < 430) {
+        cardWidth = 152;
+      } else if (screenWidth < 700) {
+        cardWidth = 162;
+      } else if (screenWidth < 1000) {
+        cardWidth = 176;
+      } else if (screenWidth < 1400) {
+        cardWidth = 190;
+      } else {
+        cardWidth = 205;
+      }
 
-    final density = HomePageSettings.cardDensity.value;
-    if (density == CardDensity.compact) {
-      cardWidth *= 0.85;
-    } else if (density == CardDensity.cinematic) {
-      cardWidth *= 1.20;
+      final density = HomePageSettings.cardDensity.value;
+      if (density == CardDensity.compact) {
+        cardWidth *= 0.85;
+      } else if (density == CardDensity.cinematic) {
+        cardWidth *= 1.20;
+      }
+
+      if (!useGridColumns) {
+        cardWidth *= HomePageSettings.posterScale.value;
+      }
     }
 
     final posterHeight = cardWidth * 1.48;
@@ -65,8 +80,8 @@ class MovieCardSizing {
       cardWidth: cardWidth,
       posterHeight: posterHeight,
       totalHeight: totalHeight,
-      spacing: 16,
-      sidePadding: 18,
+      spacing: spacing,
+      sidePadding: sidePadding,
     );
   }
 }

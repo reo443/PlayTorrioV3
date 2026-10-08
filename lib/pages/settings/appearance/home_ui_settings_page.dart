@@ -1140,6 +1140,39 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
+            'Grid Column Count (All Poster Grids)',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Applies to Discover, Catalog, Search and My List grids across the whole app',
+            style: TextStyle(fontSize: 11.5, color: Colors.white54),
+          ),
+          const SizedBox(height: 8),
+          ValueListenableBuilder<int>(
+            valueListenable: HomePageSettings.gridColumns,
+            builder: (context, columns, _) {
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildGridColumnChip('Auto', 0, columns),
+                  for (final n in const [2, 3, 4, 5, 6, 7, 8])
+                    _buildGridColumnChip('$n', n, columns),
+                ],
+              );
+            },
+          ),
+
+          const SizedBox(height: 16),
+          Divider(color: Colors.white.withValues(alpha: 0.06)),
+          const SizedBox(height: 12),
+
+          Text(
             'Poster Size & Grid Density',
             style: TextStyle(
               fontSize: 13,
@@ -1179,6 +1212,85 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                     },
                   );
                 }).toList(),
+              );
+            },
+          ),
+          ValueListenableBuilder<int>(
+            valueListenable: HomePageSettings.gridColumns,
+            builder: (context, columns, _) {
+              if (columns < 2) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Poster density is ignored while a fixed column count is active',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.amber.withValues(alpha: 0.7),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: 16),
+          Divider(color: Colors.white.withValues(alpha: 0.06)),
+          const SizedBox(height: 12),
+
+          // Poster Size Scale (Home, Anime & Manga)
+          Text(
+            'Poster Size — Home, Anime & Manga',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Scales poster cards in home/anime sliders and the manga page grid',
+            style: TextStyle(fontSize: 11.5, color: Colors.white54),
+          ),
+          ValueListenableBuilder<double>(
+            valueListenable: HomePageSettings.posterScale,
+            builder: (context, scale, _) {
+              return Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Scale',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      Text(
+                        '${(scale * 100).round()}%',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF7C5CFF),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: const Color(0xFF7C5CFF),
+                      inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+                      thumbColor: const Color(0xFF7C5CFF),
+                      trackHeight: 3,
+                    ),
+                    child: Slider(
+                      value: scale,
+                      min: 0.6,
+                      max: 1.3,
+                      divisions: 14,
+                      onChanged: (val) => HomePageSettings.setPosterScale(val),
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -1281,6 +1393,32 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGridColumnChip(String label, int value, int current) {
+    final isSelected = value == current;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      selectedColor: const Color(0xFF7C5CFF).withValues(alpha: 0.25),
+      backgroundColor: const Color(0xFF0D1017),
+      labelStyle: TextStyle(
+        color: isSelected ? const Color(0xFF7C5CFF) : Colors.white70,
+        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+        fontSize: 12,
+      ),
+      side: BorderSide(
+        color: isSelected
+            ? const Color(0xFF7C5CFF).withValues(alpha: 0.6)
+            : Colors.white.withValues(alpha: 0.08),
+      ),
+      onSelected: (selected) {
+        if (selected) {
+          HomePageSettings.setGridColumns(value);
+          setState(() {});
+        }
+      },
     );
   }
 
