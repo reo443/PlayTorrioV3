@@ -366,16 +366,9 @@ class _HomePageState extends State<HomePage> {
                     return SizedBox(height: 110.0 + MediaQuery.paddingOf(context).bottom);
                   }
                   final sectionIdx = index - 2;
-                  final isLastTwo = sectionIdx >= (_sections.length - 2);
-                  return ValueListenableBuilder<bool>(
-                    valueListenable: HomePageSettings.enableCalendar,
-                    builder: (context, calEnabled, _) {
-                      return MovieSliderSection(
-                        section: _sections[sectionIdx],
-                        showCalendarButton: calEnabled && isLastTwo,
-                        injectSupportCard: sectionIdx == 0,
-                      );
-                    },
+                  return MovieSliderSection(
+                    section: _sections[sectionIdx],
+                    injectSupportCard: sectionIdx == 0,
                   );
                 },
               ),

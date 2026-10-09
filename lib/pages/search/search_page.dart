@@ -230,10 +230,12 @@ class _SearchPageState extends State<SearchPage> {
       // Prevent duplicate sections by addon + catalog identity — NOT display
       // name. Addons like Cinemeta name both their movie and series catalogs
       // "Popular", which used to drop the series results as "duplicates".
-      final exists = _results.any((s) =>
-          s.addonBaseUrl == section.addonBaseUrl &&
-          s.catalog.type == section.catalog.type &&
-          s.catalog.id == section.catalog.id);
+      final exists = _results.any(
+        (s) =>
+            s.addonBaseUrl == section.addonBaseUrl &&
+            s.catalog.type == section.catalog.type &&
+            s.catalog.id == section.catalog.id,
+      );
       if (exists) return;
 
       setState(() {
@@ -250,79 +252,102 @@ class _SearchPageState extends State<SearchPage> {
 
     try {
       // 1. Search Stremio Addons with dynamic streaming
-      final addonSearch = AddonManager.instance.searchAll(
-        currentQuery,
-        onSectionResult: (section) {
-          addSection(section, isCloudStream: false);
-        },
-      ).catchError((e) {
-        debugPrint('[SearchPage] Addon search error: $e');
-        return <MovieSection>[];
-      });
+      final addonSearch = AddonManager.instance
+          .searchAll(
+            currentQuery,
+            onSectionResult: (section) {
+              addSection(section, isCloudStream: false);
+            },
+          )
+          .catchError((e) {
+            debugPrint('[SearchPage] Addon search error: $e');
+            return <MovieSection>[];
+          });
 
       // 2. Search CloudStream Extensions with dynamic streaming
-      final csSearch = (CloudStreamManager.instance.activeExtensions.isNotEmpty
-          ? CloudStreamManager.instance.searchAcrossExtensions(
-              currentQuery,
-              onProviderResult: (providerName, items) {
-                if (!mounted || _lastQuery != currentQuery) return;
-                if (items.isEmpty) return;
+      final csSearch =
+          (CloudStreamManager.instance.activeExtensions.isNotEmpty
+                  ? CloudStreamManager.instance.searchAcrossExtensions(
+                      currentQuery,
+                      onProviderResult: (providerName, items) {
+                        if (!mounted || _lastQuery != currentQuery) return;
+                        if (items.isEmpty) return;
 
-                final movies = <Movie>[];
-                for (final item in items) {
-                  final title = item['title']?.toString() ?? item['name']?.toString() ?? 'Unknown';
-                  final rawUrl = item['url']?.toString() ?? '';
-                  final sourceId = item['_sourceId']?.toString() ??
-                      'cs_${providerName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')}';
-                  final cover = item['cover']?.toString() ??
-                      item['poster']?.toString() ??
-                      item['image']?.toString();
-                  final isSeries = item['type'] == 1 ||
-                      item['type']?.toString().toLowerCase().contains('series') == true ||
-                      item['type']?.toString().toLowerCase().contains('tv') == true ||
-                      (item['extraData'] is Map &&
-                          (item['extraData'] as Map)['type']?.toString().toLowerCase().contains('series') == true);
+                        final movies = <Movie>[];
+                        for (final item in items) {
+                          final title =
+                              item['title']?.toString() ??
+                              item['name']?.toString() ??
+                              'Unknown';
+                          final rawUrl = item['url']?.toString() ?? '';
+                          final sourceId =
+                              item['_sourceId']?.toString() ??
+                              'cs_${providerName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '')}';
+                          final cover =
+                              item['cover']?.toString() ??
+                              item['poster']?.toString() ??
+                              item['image']?.toString();
+                          final isSeries =
+                              item['type'] == 1 ||
+                              item['type']?.toString().toLowerCase().contains(
+                                    'series',
+                                  ) ==
+                                  true ||
+                              item['type']?.toString().toLowerCase().contains(
+                                    'tv',
+                                  ) ==
+                                  true ||
+                              (item['extraData'] is Map &&
+                                  (item['extraData'] as Map)['type']
+                                          ?.toString()
+                                          .toLowerCase()
+                                          .contains('series') ==
+                                      true);
 
-                  movies.add(
-                    Movie(
-                      id: 'cloudstream:$sourceId:${Uri.encodeComponent(rawUrl)}',
-                      name: title,
-                      poster: cover,
-                      year: item['year']?.toString() ??
-                          (item['extraData'] is Map ? (item['extraData'] as Map)['year']?.toString() : null),
-                      type: isSeries ? 'series' : 'movie',
-                      addonBaseUrl: 'cloudstream',
-                    ),
-                  );
-                }
+                          movies.add(
+                            Movie(
+                              id: 'cloudstream:$sourceId:${Uri.encodeComponent(rawUrl)}',
+                              name: title,
+                              poster: cover,
+                              year:
+                                  item['year']?.toString() ??
+                                  (item['extraData'] is Map
+                                      ? (item['extraData'] as Map)['year']
+                                            ?.toString()
+                                      : null),
+                              type: isSeries ? 'series' : 'movie',
+                              addonBaseUrl: 'cloudstream',
+                            ),
+                          );
+                        }
 
-                if (movies.isNotEmpty) {
-                  final section = MovieSection(
-                    title: 'CloudStream • $providerName',
-                    subtitle: 'CloudStream Extension',
-                    contentType: 'movie',
-                    addonBaseUrl: 'cloudstream',
-                    catalog: AddonCatalog(
-                      type: 'movie',
-                      id: 'cs_$providerName',
-                      name: providerName,
-                    ),
-                    movies: movies,
-                  );
-                  addSection(section, isCloudStream: true);
-                }
-              },
-            )
-          : Future.value(<String, List<Map<String, dynamic>>>{})
-      ).catchError((e) {
-        debugPrint('[SearchPage] CloudStream search error: $e');
-        return <String, List<Map<String, dynamic>>>{};
-      });
+                        if (movies.isNotEmpty) {
+                          final section = MovieSection(
+                            title: 'CloudStream • $providerName',
+                            subtitle: 'CloudStream Extension',
+                            contentType: 'movie',
+                            addonBaseUrl: 'cloudstream',
+                            catalog: AddonCatalog(
+                              type: 'movie',
+                              id: 'cs_$providerName',
+                              name: providerName,
+                            ),
+                            movies: movies,
+                          );
+                          addSection(section, isCloudStream: true);
+                        }
+                      },
+                    )
+                  : Future.value(<String, List<Map<String, dynamic>>>{}))
+              .catchError((e) {
+                debugPrint('[SearchPage] CloudStream search error: $e');
+                return <String, List<Map<String, dynamic>>>{};
+              });
 
-      await Future.wait([addonSearch, csSearch]).timeout(
-        const Duration(seconds: 20),
-        onTimeout: () => <Object>[],
-      );
+      await Future.wait([
+        addonSearch,
+        csSearch,
+      ]).timeout(const Duration(seconds: 20), onTimeout: () => <Object>[]);
     } catch (_) {}
 
     if (mounted && _lastQuery == currentQuery) {
@@ -468,12 +493,16 @@ class _SearchPageState extends State<SearchPage> {
       child: Container(
         height: 42,
         width: 42,
-        margin: const EdgeInsets.only(right: 12),
+        margin: const EdgeInsets.only(left: 8, right: 12),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF7C5CFF) : Colors.white.withValues(alpha: 0.06),
+          color: isActive
+              ? const Color(0xFF7C5CFF)
+              : Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive ? const Color(0xFF7C5CFF) : Colors.white.withValues(alpha: 0.1),
+            color: isActive
+                ? const Color(0xFF7C5CFF)
+                : Colors.white.withValues(alpha: 0.1),
           ),
         ),
         child: Stack(
@@ -490,7 +519,10 @@ class _SearchPageState extends State<SearchPage> {
                 top: 3,
                 right: 3,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4.5,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -550,60 +582,72 @@ class _SearchPageState extends State<SearchPage> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   Expanded(
-                    child: Container(
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _focusNode,
-                        autofocus: true,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textInputAction: TextInputAction.search,
-                        onChanged: _onSearchChanged,
-                        onSubmitted: _performSearch,
-                        decoration: InputDecoration(
-                          hintText: 'Search movies, series, or paste links',
-                          hintStyle: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.35),
-                            fontSize: 14,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 560),
+                        child: Container(
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
                           ),
-                          border: InputBorder.none,
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            size: 19,
-                            color: Colors.white38,
+                          child: TextField(
+                            controller: _searchController,
+                            focusNode: _focusNode,
+                            autofocus: true,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textInputAction: TextInputAction.search,
+                            onChanged: _onSearchChanged,
+                            onSubmitted: _performSearch,
+                            decoration: InputDecoration(
+                              hintText: 'Search movies, series, or paste links',
+                              hintStyle: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.35),
+                                fontSize: 14,
+                              ),
+                              border: InputBorder.none,
+                              prefixIcon: const Icon(
+                                Icons.search_rounded,
+                                size: 19,
+                                color: Colors.white38,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(
+                                        Icons.close_rounded,
+                                        size: 18,
+                                      ),
+                                      color: Colors.white60,
+                                      splashRadius: 18,
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        _onSearchChanged('');
+                                      },
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(
+                                        Icons.content_paste_rounded,
+                                        size: 17,
+                                      ),
+                                      tooltip: 'Paste from clipboard',
+                                      color: Colors.white54,
+                                      splashRadius: 18,
+                                      onPressed: _pasteFromClipboard,
+                                    ),
+                            ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          suffixIcon: _searchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.close_rounded, size: 18),
-                                  color: Colors.white60,
-                                  splashRadius: 18,
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    _onSearchChanged('');
-                                  },
-                                )
-                              : IconButton(
-                                  icon: const Icon(Icons.content_paste_rounded, size: 17),
-                                  tooltip: 'Paste from clipboard',
-                                  color: Colors.white54,
-                                  splashRadius: 18,
-                                  onPressed: _pasteFromClipboard,
-                                ),
                         ),
                       ),
                     ),
@@ -618,10 +662,7 @@ class _SearchPageState extends State<SearchPage> {
       body: Stack(
         children: [
           if (_isMagnetMode && _magnetQuery.isNotEmpty)
-            MagnetFilesView(
-              key: ValueKey(_magnetQuery),
-              magnet: _magnetQuery,
-            )
+            MagnetFilesView(key: ValueKey(_magnetQuery), magnet: _magnetQuery)
           else if (_isLoading && _results.isEmpty)
             const Center(
               child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
@@ -630,7 +671,10 @@ class _SearchPageState extends State<SearchPage> {
             Center(
               child: SingleChildScrollView(
                 physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 32,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -659,10 +703,17 @@ class _SearchPageState extends State<SearchPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7C5CFF),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        onPressed: () => setState(() => _filters = const SearchFilterState()),
-                        icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
+                        onPressed: () => setState(
+                          () => _filters = const SearchFilterState(),
+                        ),
+                        icon: const Icon(
+                          Icons.filter_alt_off_outlined,
+                          size: 17,
+                        ),
                         label: const Text('Clear Filters'),
                       ),
                     ],
@@ -790,7 +841,11 @@ class _SearchPageState extends State<SearchPage> {
               children: _searchHistory.map((query) {
                 return InputChip(
                   label: Text(query),
-                  labelStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                  labelStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                   backgroundColor: Colors.white.withValues(alpha: 0.07),
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                   onPressed: () {
@@ -800,7 +855,9 @@ class _SearchPageState extends State<SearchPage> {
                   onDeleted: () => _removeSearchHistory(query),
                   deleteIconColor: Colors.white38,
                   deleteIcon: const Icon(Icons.close_rounded, size: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 );
               }).toList(),
             ),

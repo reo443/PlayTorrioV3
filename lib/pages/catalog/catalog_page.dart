@@ -97,6 +97,22 @@ class _CatalogPageState extends State<CatalogPage> {
 
     if (!_hasMore) return;
 
+    // Merged (mixed) sections combine movies + series from multiple catalogs
+    // and can't be re-fetched from a single endpoint — serve the section's
+    // own items instead (e.g. Trending Today / Trending Week).
+    if (widget.section.contentType == 'mixed') {
+      final seen = _items.map((m) => '${m.type}:${m.id}').toSet();
+      setState(() {
+        for (final m in widget.section.movies) {
+          final key = '${m.type}:${m.id}';
+          if (seen.add(key)) _items.add(m);
+        }
+        _isLoading = false;
+        _hasMore = false;
+      });
+      return;
+    }
+
     // Check if all required extras are selected
     if (widget.section.catalog.hasRequiredExtra) {
       for (final req in widget.section.catalog.requiredExtras) {

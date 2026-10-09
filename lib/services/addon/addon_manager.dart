@@ -345,45 +345,130 @@ class AddonManager {
 
     return allSections;
   }
-
-  /// Streams home page sections one by one as they load, so the UI can populate dynamically.
+  /// Streams the curated modern home page sections — Popular, Trending
+  /// (newest releases of the current year) and Top Rated, for movies and
+  /// series — sourced from Cinemeta. All six requests run concurrently and
+  /// sections are yielded in a fixed order so the home layout stays stable.
   Stream<MovieSection> streamHomeSections() async* {
-    final active = activeCatalogAddons;
-    final List<Future<MovieSection?>> sectionFutures = [];
+    const String cinemetaBase = 'https://v3-cinemeta.strem.io';
+    final year = DateTime.now().year.toString();
 
-    // 1. Kick off all network requests concurrently
-    for (final addon in active) {
-      // Only auto-load catalogs where NO extra has isRequired: true
-      final catalogsToFetch = addon.manifest.catalogs.where((c) => c.canAutoLoadOnHome).toList();
+    // Prefer the real installed Cinemeta catalogs so "See All" keeps its
+    // genre filters, search and skip pagination fully functional.
+    final cinemetaAddon = activeCatalogAddons
+        .where((a) =>
+            a.manifest.id.toLowerCase().contains('cinemeta') ||
+            a.baseUrl.toLowerCase().contains('cinemeta'))
+        .firstOrNull;
 
-      for (final catalog in catalogsToFetch) {
-        sectionFutures.add(() async {
-          try {
-            final movies = await MetadataService.fetchCatalog(
-              baseUrl: addon.baseUrl,
-              type: catalog.type,
-              catalogId: catalog.id,
-            );
+    AddonCatalog resolveCatalog(String type, String catalogId, String title) {
+      final real = cinemetaAddon?.manifest.catalogs
+          .where((c) => c.type == type && c.id == catalogId)
+          .firstOrNull;
+      if (real != null) return real;
 
-            if (movies.isEmpty) return null;
+      // Synthetic fallback — keeps See All + skip pagination working even
+      // when the Cinemeta addon isn't installed.
+      return AddonCatalog(
+        type: type,
+        id: catalogId,
+        name: title,
+        extra: [
+          if (catalogId == 'year')
+            CatalogExtra(name: 'genre', options: [year], isRequired: true),
+          const CatalogExtra(name: 'skip'),
+        ],
+      );
+    }
 
-            return MovieSection(
-              title: _catalogDisplayName(catalog),
-              subtitle: addon.manifest.name,
-              contentType: catalog.type,
-              addonBaseUrl: addon.baseUrl,
-              catalog: catalog,
-              movies: movies,
-            );
-          } catch (_) {
-            return null; // Gracefully handle failure
-          }
-        }());
+    Future<MovieSection?> fetchSimple(
+      String type,
+      String catalogId,
+      String title,
+      Map<String, String>? extras,
+    ) async {
+      try {
+        final movies = await MetadataService.fetchCatalog(
+          baseUrl: cinemetaBase,
+          type: type,
+          catalogId: catalogId,
+          extraParams: extras,
+        );
+
+        if (movies.isEmpty) return null;
+
+        return MovieSection(
+          title: title,
+          subtitle: 'Cinemeta',
+          contentType: type,
+          addonBaseUrl: cinemetaBase,
+          catalog: resolveCatalog(type, catalogId, title),
+          movies: movies,
+        );
+      } catch (_) {
+        return null; // Gracefully handle failure
       }
     }
 
-    // 2. Yield them in order so the UI stays stable (top addons appear first)
-    for (final future in sectionFutures) {
+    // Merged movies + series windows from the current-year catalog, ranked
+    // by popularity. "Today" is the freshest page; "Week" is the page behind
+    // it (last week's wave that has since drifted back).
+    Future<MovieSection?> fetchTrendingWindow(
+      String title,
+      String windowId,
+      int skip,
+    ) async {
+      try {
+        final results = await Future.wait([
+          MetadataService.fetchCatalog(
+            baseUrl: cinemetaBase,
+            type: 'movie',
+            catalogId: 'year',
+            extraParams: {'genre': year},
+            skip: skip,
+          ),
+          MetadataService.fetchCatalog(
+            baseUrl: cinemetaBase,
+            type: 'series',
+            catalogId: 'year',
+            extraParams: {'genre': year},
+            skip: skip,
+          ),
+        ]);
+
+        final merged = [...results[0], ...results[1]];
+        if (merged.isEmpty) return null;
+
+        merged.sort((a, b) =>
+            (b.popularity ?? 0.0).compareTo(a.popularity ?? 0.0));
+
+        return MovieSection(
+          title: title,
+          subtitle: 'Cinemeta',
+          contentType: 'mixed',
+          addonBaseUrl: cinemetaBase,
+          catalog: AddonCatalog(type: 'mixed', id: 'trending_$windowId', name: title),
+          movies: merged.take(40).toList(),
+        );
+      } catch (_) {
+        return null; // Gracefully handle failure
+      }
+    }
+
+    // 1. Kick off all requests concurrently, in the final display order
+    final orderedFutures = <Future<MovieSection?>>[
+      fetchSimple('movie', 'top', 'Popular Movies', null),
+      fetchSimple('series', 'top', 'Popular Series', null),
+      fetchTrendingWindow('Trending Today', 'today', 0),
+      fetchTrendingWindow('Trending Week', 'week', 100),
+      fetchSimple('movie', 'year', 'Trending Movies', {'genre': year}),
+      fetchSimple('series', 'year', 'Trending Series', {'genre': year}),
+      fetchSimple('movie', 'imdbRating', 'Top Rated Movies', null),
+      fetchSimple('series', 'imdbRating', 'Top Rated Series', null),
+    ];
+
+    // 2. Yield them in the fixed curated order so the UI stays stable
+    for (final future in orderedFutures) {
       final section = await future;
       if (section != null) yield section;
     }
