@@ -61,52 +61,21 @@ class _PlayerSpeedMenuState extends State<PlayerSpeedMenu> {
 
           const SizedBox(height: 6),
 
-          // Speed Preset List
-          Column(
+          // Speed Preset Chips
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: _presets.map((rate) {
               final isSelected = (widget.currentRate - rate).abs() < 0.01;
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    widget.onRateSelected(rate);
-                    widget.onClose();
-                  },
-                  child: Container(
-                    height: 38,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected ? PlayerTheme.raised : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected ? PlayerTheme.edge : Colors.transparent,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          rate == 1.0
-                              ? 'Normal (1.0×)'
-                              : '${rate.toStringAsFixed(rate == rate.roundToDouble() ? 0 : 2)}×',
-                          style: TextStyle(
-                            color: isSelected ? PlayerTheme.ink : PlayerTheme.inkMuted,
-                            fontSize: 13.5,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          ),
-                        ),
-                        if (isSelected)
-                          const Icon(
-                            Icons.check_rounded,
-                            size: 16,
-                            color: PlayerTheme.accent,
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+              return PlayerToggleChip(
+                active: isSelected,
+                label: rate == 1.0
+                    ? '1×'
+                    : '${rate.toStringAsFixed(rate == rate.roundToDouble() ? 0 : 2)}×',
+                onClick: () {
+                  widget.onRateSelected(rate);
+                  widget.onClose();
+                },
               );
             }).toList(),
           ),
