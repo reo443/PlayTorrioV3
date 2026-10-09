@@ -24,9 +24,7 @@ import '../../widgets/home/continue_watching_slider.dart';
 import '../../widgets/movie/movie_slider_section.dart';
 import '../../widgets/home/support_dev_cards.dart';
 import '../search/search_page.dart';
-import '../ai/wewatch_quiz_page.dart';
 import '../calendar/tv_calendar_page.dart';
-import '../discover/discover_page.dart';
 import '../settings/settings_page.dart';
 import '../../services/theme/dock_settings.dart';
 import '../../widgets/common/app_liquid_dock.dart';
@@ -436,7 +434,6 @@ class _HomePageState extends State<HomePage> {
         child: _GlassAppBar(
           topPadding: topPadding,
           onSearchTap: _navigateToSearch,
-          onSettingsTap: _navigateToSettings,
         ),
       ),
 
@@ -557,22 +554,22 @@ class _HomePageState extends State<HomePage> {
 class _GlassAppBar extends StatelessWidget {
   final double topPadding;
   final void Function(Offset?) onSearchTap;
-  final void Function(Offset?) onSettingsTap;
 
   const _GlassAppBar({
     required this.topPadding,
     required this.onSearchTap,
-    required this.onSettingsTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 700;
+
     return RepaintBoundary(
       child: Container(
         padding: EdgeInsets.only(
-          top: topPadding + 10,
-          bottom: 14,
-          left: 20,
+          top: topPadding + 6,
+          bottom: 10,
+          left: 16,
           right: 8,
         ),
         decoration: BoxDecoration(
@@ -590,53 +587,76 @@ class _GlassAppBar extends StatelessWidget {
             // Logo
             Image.asset(
               'assets/icon.png',
-              width: 34,
-              height: 34,
+              width: 26,
+              height: 26,
               fit: BoxFit.contain,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 9),
             const Text(
               'PlayTorrio',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 17,
                 fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
+                letterSpacing: -0.4,
                 color: Colors.white,
               ),
             ),
             const Spacer(),
-            // AI Taste Profile Quiz
-            ValueListenableBuilder<bool>(
-              valueListenable: HomePageSettings.enableAiQuiz,
-              builder: (context, aiQuizEnabled, _) {
-                if (!aiQuizEnabled) return const SizedBox.shrink();
-                final palette = AppThemeService.currentPalette.value;
-                return IconButton(
-                  icon: Icon(
-                    Icons.auto_awesome_rounded,
-                    color: palette.primaryColor,
-                    size: 22,
-                  ),
-                  tooltip: 'AI Taste Quiz',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const WeWatchQuizPage()),
-                    );
+
+            // Modern search pill
+            Builder(
+              builder: (context) {
+                return GestureDetector(
+                  onTap: () {
+                    final box = context.findRenderObject() as RenderBox?;
+                    final offset =
+                        box?.localToGlobal(box.size.center(Offset.zero));
+                    onSearchTap(offset);
                   },
+                  child: Container(
+                    height: 34,
+                    padding: const EdgeInsets.symmetric(horizontal: 13),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(11),
+                      border:
+                          Border.all(color: Colors.white.withValues(alpha: 0.10)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.search_rounded,
+                          size: 16,
+                          color: Colors.white.withValues(alpha: 0.55),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          isWide ? 'Search movies, series…' : 'Search…',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.45),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
+
             // TV Shows Airing Calendar
             ValueListenableBuilder<bool>(
               valueListenable: HomePageSettings.enableCalendar,
               builder: (context, calEnabled, _) {
                 if (!calEnabled) return const SizedBox.shrink();
                 return IconButton(
+                  visualDensity: VisualDensity.compact,
                   icon: Icon(
                     Icons.calendar_month_rounded,
                     color: Colors.white.withValues(alpha: 0.75),
-                    size: 22,
+                    size: 20,
                   ),
                   tooltip: 'TV Airing Calendar',
                   onPressed: () {
@@ -648,68 +668,19 @@ class _GlassAppBar extends StatelessWidget {
                 );
               },
             ),
-            // Discover Catalogs
-            IconButton(
-              icon: Icon(
-                Icons.explore_rounded,
-                color: Colors.white.withValues(alpha: 0.75),
-                size: 23,
-              ),
-              tooltip: 'Discover Catalogs',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DiscoverPage()),
-                );
-              },
-            ),
-            // Search
-            Builder(
-              builder: (context) {
-                return IconButton(
-                  icon: Icon(
-                    Icons.search_rounded,
-                    color: Colors.white.withValues(alpha: 0.65),
-                    size: 25,
-                  ),
-                  onPressed: () {
-                    final box = context.findRenderObject() as RenderBox?;
-                    final offset = box?.localToGlobal(box.size.center(Offset.zero));
-                    onSearchTap(offset);
-                  },
-                );
-              },
-            ),
-            // Settings
-            Builder(
-              builder: (context) {
-                return IconButton(
-                  icon: Icon(
-                    Icons.settings_rounded,
-                    color: Colors.white.withValues(alpha: 0.65),
-                    size: 24,
-                  ),
-                  tooltip: 'Settings',
-                  onPressed: () {
-                    final box = context.findRenderObject() as RenderBox?;
-                    final offset = box?.localToGlobal(box.size.center(Offset.zero));
-                    onSettingsTap(offset);
-                  },
-                );
-              },
-            ),
             // Fullscreen Toggle (Desktops only)
             if (WindowService.instance.isDesktop)
               ValueListenableBuilder<bool>(
                 valueListenable: WindowService.instance.isFullscreenNotifier,
                 builder: (context, isFullscreen, _) {
                   return IconButton(
+                    visualDensity: VisualDensity.compact,
                     icon: Icon(
                       isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
                       color: isFullscreen
                           ? const Color(0xFFFFB300)
                           : Colors.white.withValues(alpha: 0.75),
-                      size: 24,
+                      size: 22,
                     ),
                     tooltip: isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)',
                     onPressed: () => WindowService.instance.toggleFullscreen(),
