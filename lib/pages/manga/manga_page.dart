@@ -14,8 +14,9 @@ import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/custom_scroll_track.dart';
 import '../../widgets/common/slider_arrow.dart';
 import '../../widgets/manga/manga_card.dart';
-import '../../widgets/manga/manga_category_dropdown.dart';
+import '../../models/manga/manga_browse_filter.dart';
 import '../settings/appearance/manga_settings_page.dart';
+import 'manga_filter_sheet.dart';
 import 'manga_reader_page.dart';
 
 class MangaPage extends StatefulWidget {
@@ -31,21 +32,21 @@ class _MangaPageState extends State<MangaPage> {
   static List<Map<String, dynamic>>? _cachedReadingHistory;
   static int _cachedCurrentPage = 1;
   static String _cachedSearchQuery = '';
-  static String _cachedSelectedGenre = 'All';
+  static MangaBrowseFilter _cachedFilters = const MangaBrowseFilter();
   static double _cachedScrollOffset = 0.0;
 
   final MangaService _mangaService = MangaService();
   late final ScrollController _scrollController;
   final TextEditingController _searchController = TextEditingController();
-  
+
   List<Manga> _mangaList = [];
   List<Map<String, dynamic>> _readingHistory = [];
-  
+
   bool _isLoading = false;
   bool _isLoadingMore = false;
   int _currentPage = 1;
   String _searchQuery = '';
-  String _selectedGenre = 'All';
+  MangaBrowseFilter _filters = const MangaBrowseFilter();
   
   // Track grid layout dimensions
   late double _screenWidth;
@@ -55,8 +56,8 @@ class _MangaPageState extends State<MangaPage> {
     super.initState();
     _scrollController = ScrollController(initialScrollOffset: _cachedScrollOffset);
     _searchController.text = _cachedSearchQuery;
-    _selectedGenre = _cachedSelectedGenre;
-    
+    _filters = _cachedFilters;
+
     MangaSettings.changeNotifier.addListener(_onSettingsChanged);
     AppThemeService.currentPalette.addListener(_onSettingsChanged);
 
@@ -65,7 +66,7 @@ class _MangaPageState extends State<MangaPage> {
       _readingHistory = _cachedReadingHistory!;
       _currentPage = _cachedCurrentPage;
       _searchQuery = _cachedSearchQuery;
-      _selectedGenre = _cachedSelectedGenre;
+      _filters = _cachedFilters;
       // Refresh reading history in background silently
       _mangaService.getReadingHistory().then((history) {
         if (mounted) {
@@ -128,8 +129,8 @@ class _MangaPageState extends State<MangaPage> {
     });
     
     final results = await Future.wait([
-      _searchQuery.isEmpty 
-          ? _mangaService.getManga(page: _currentPage, tag: _selectedGenre == 'All' ? null : _selectedGenre)
+      _searchQuery.isEmpty
+          ? _mangaService.browseManga(page: _currentPage, filter: _filters)
           : _mangaService.searchManga(_searchQuery, page: _currentPage),
       _mangaService.getReadingHistory(),
     ]);
@@ -139,12 +140,12 @@ class _MangaPageState extends State<MangaPage> {
         _mangaList = results[0] as List<Manga>;
         _readingHistory = results[1] as List<Map<String, dynamic>>;
         _isLoading = false;
-        
+
         _cachedMangaList = _mangaList;
         _cachedReadingHistory = _readingHistory;
         _cachedCurrentPage = _currentPage;
         _cachedSearchQuery = _searchQuery;
-        _cachedSelectedGenre = _selectedGenre;
+        _cachedFilters = _filters;
       });
     }
   }
@@ -153,8 +154,8 @@ class _MangaPageState extends State<MangaPage> {
     setState(() => _isLoadingMore = true);
     
     _currentPage++;
-    final newManga = _searchQuery.isEmpty 
-        ? await _mangaService.getManga(page: _currentPage, tag: _selectedGenre == 'All' ? null : _selectedGenre)
+    final newManga = _searchQuery.isEmpty
+        ? await _mangaService.browseManga(page: _currentPage, filter: _filters)
         : await _mangaService.searchManga(_searchQuery, page: _currentPage);
         
     if (mounted) {
@@ -174,16 +175,85 @@ class _MangaPageState extends State<MangaPage> {
     _loadInitialData();
   }
 
-  void _onGenreSelected(String genre) {
-    if (_selectedGenre == genre && _searchQuery.isEmpty) return;
+  void _applyFilters(MangaBrowseFilter result) {
+    if (result == _filters && _searchQuery.isEmpty) return;
     setState(() {
-      _selectedGenre = genre;
-      _cachedSelectedGenre = genre;
+      _filters = result;
+      _cachedFilters = result;
       _searchQuery = '';
       _searchController.clear();
       _cachedSearchQuery = '';
     });
     _loadInitialData();
+  }
+
+  void _openFilterSheet() {
+    showMangaFilterSheet(
+      context: context,
+      current: _filters,
+      onApply: _applyFilters,
+    );
+  }
+
+  Widget _buildFilterButton(bool isMobile) {
+    final count = _filters.activeCount;
+    final hasActive = count > 0;
+    final palette = AppThemeService.currentPalette.value;
+
+    return GestureDetector(
+      onTap: _openFilterSheet,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: hasActive
+              ? palette.primaryColor
+              : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: hasActive
+                ? palette.primaryColor
+                : Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.tune_rounded,
+              size: isMobile ? 16 : 17,
+              color: hasActive ? Colors.white : Colors.white70,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Filters',
+              style: TextStyle(
+                color: hasActive ? Colors.white : Colors.white70,
+                fontWeight: FontWeight.bold,
+                fontSize: isMobile ? 12.5 : 13.5,
+              ),
+            ),
+            if (count > 0) ...[
+              const SizedBox(width: 7),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   void _resumeReading(Map<String, dynamic> historyEntry) {
@@ -472,7 +542,7 @@ class _MangaPageState extends State<MangaPage> {
           ),
         ],
 
-        // ── Discovery / Search Results & Category Dropdown ──
+        // ── Discovery / Search Results & Filters ──
         SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.symmetric(
@@ -484,9 +554,7 @@ class _MangaPageState extends State<MangaPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _searchQuery.isNotEmpty
-                            ? 'Search Results'
-                            : (_selectedGenre == 'All' ? 'Discover Manga' : '$_selectedGenre Manga'),
+                        _searchQuery.isNotEmpty ? 'Search Results' : 'Discover Manga',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 22,
@@ -494,50 +562,20 @@ class _MangaPageState extends State<MangaPage> {
                           letterSpacing: -0.5,
                         ),
                       ),
-                      if (_searchQuery.isEmpty) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            MangaCategoryDropdown(
-                              selectedGenre: _selectedGenre,
-                              genres: MangaService.popularGenres,
-                              onGenreSelected: _onGenreSelected,
+                      if (_filters.activeCount > 0 && _searchQuery.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '${_filters.activeCount} filters active',
+                            style: TextStyle(
+                              color: palette.primaryColor,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
                             ),
-                            if (_selectedGenre != 'All') ...[
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () => _onGenreSelected('All'),
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.06),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.1),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.close_rounded, size: 14, color: Colors.white70),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Clear',
-                                        style: TextStyle(
-                                          color: Colors.white.withValues(alpha: 0.8),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
-                      ],
+                      const SizedBox(height: 12),
+                      _buildFilterButton(true),
                     ],
                   )
                 : Row(
@@ -548,9 +586,7 @@ class _MangaPageState extends State<MangaPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _searchQuery.isNotEmpty
-                                ? 'Search Results'
-                                : (_selectedGenre == 'All' ? 'Discover Manga' : '$_selectedGenre Manga'),
+                            _searchQuery.isNotEmpty ? 'Search Results' : 'Discover Manga',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 28,
@@ -558,11 +594,11 @@ class _MangaPageState extends State<MangaPage> {
                               letterSpacing: -0.5,
                             ),
                           ),
-                          if (_searchQuery.isEmpty && _selectedGenre != 'All')
+                          if (_filters.activeCount > 0 && _searchQuery.isEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                'Filtered by category • $_selectedGenre',
+                                '${_filters.activeCount} filters active',
                                 style: TextStyle(
                                   color: palette.primaryColor,
                                   fontSize: 12.5,
@@ -572,41 +608,7 @@ class _MangaPageState extends State<MangaPage> {
                             ),
                         ],
                       ),
-                      if (_searchQuery.isEmpty)
-                        Row(
-                          children: [
-                            MangaCategoryDropdown(
-                              selectedGenre: _selectedGenre,
-                              genres: MangaService.popularGenres,
-                              onGenreSelected: _onGenreSelected,
-                            ),
-                            if (_selectedGenre != 'All') ...[
-                              const SizedBox(width: 10),
-                              Tooltip(
-                                message: 'Reset to All Categories',
-                                child: InkWell(
-                                  onTap: () => _onGenreSelected('All'),
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(9),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.06),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: Colors.white.withValues(alpha: 0.1),
-                                      ),
-                                    ),
-                                    child: const Icon(
-                                      Icons.refresh_rounded,
-                                      size: 18,
-                                      color: Colors.white70,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
+                      _buildFilterButton(false),
                     ],
                   ),
           ),

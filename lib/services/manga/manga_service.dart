@@ -5,6 +5,7 @@ import 'package:html/parser.dart' as html_parser;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/manga/manga.dart';
+import '../../models/manga/manga_browse_filter.dart';
 import '../../models/manga/manga_chapter.dart';
 
 const String _baseUrl = 'https://weebcentral.com';
@@ -49,20 +50,33 @@ class MangaService {
 
   // ── Browse / Search ─────────────────────────────────────────────────
 
-  Future<List<Manga>> getManga({int page = 1, String? tag, bool allowAdult = false}) async {
+  /// Browse the source catalog with the full WeebCentral filter set
+  /// (sort, order, types, statuses, included/excluded tags, official, adult).
+  Future<List<Manga>> browseManga({
+    int page = 1,
+    MangaBrowseFilter filter = const MangaBrowseFilter(),
+  }) async {
     try {
       final offset = (page - 1) * _pageSize;
-      final adult = allowAdult ? 'Any' : 'False';
-      var url =
-          '$_baseUrl/search/data?text=&display_mode=Full+Display&sort=Popularity&order=Descending&official=Any&adult=$adult&offset=$offset';
-      if (tag != null) {
-        url += '&included_tag=${Uri.encodeComponent(tag)}';
-      }
-      debugPrint('[MangaService] Fetching page $page: $url');
+      final params = <String>[
+        'text=',
+        'display_mode=Full+Display',
+        'sort=${Uri.encodeComponent(filter.sort)}',
+        'order=${filter.descending ? 'Descending' : 'Ascending'}',
+        'official=${Uri.encodeComponent(filter.official)}',
+        'adult=${Uri.encodeComponent(filter.adult)}',
+        'offset=$offset',
+        ...filter.types.map((t) => 'included_type=${Uri.encodeComponent(t)}'),
+        ...filter.statuses.map((s) => 'included_status=${Uri.encodeComponent(s)}'),
+        ...filter.includedTags.map((t) => 'included_tag=${Uri.encodeComponent(t)}'),
+        ...filter.excludedTags.map((t) => 'excluded_tag=${Uri.encodeComponent(t)}'),
+      ];
+      final url = '$_baseUrl/search/data?${params.join('&')}';
+      debugPrint('[MangaService] Browsing page $page: $url');
       final html = await _fetchHtml(url);
       return _parseSearchResults(html);
     } catch (e) {
-      debugPrint('[MangaService] Error fetching manga: $e');
+      debugPrint('[MangaService] Error browsing manga: $e');
       return [];
     }
   }
@@ -83,32 +97,15 @@ class MangaService {
     }
   }
 
-  /// Curated source genres supported by WeebCentral
-  static const List<String> popularGenres = [
-    'All',
-    'Action',
-    'Adventure',
-    'Comedy',
-    'Drama',
-    'Ecchi',
-    'Fantasy',
-    'Harem',
-    'Historical',
-    'Horror',
-    'Isekai',
-    'Martial Arts',
-    'Mature',
-    'Mystery',
-    'Psychological',
-    'Romance',
-    'School Life',
-    'Sci-fi',
-    'Seinen',
-    'Shounen',
-    'Slice of Life',
-    'Sports',
-    'Supernatural',
-    'Tragedy',
+  /// All genre tags exposed by the source's filter form.
+  static const List<String> availableTags = [
+    'Action', 'Adult', 'Adventure', 'Comedy', 'Doujinshi', 'Drama',
+    'Ecchi', 'Fantasy', 'Gender Bender', 'Harem', 'Hentai', 'Historical',
+    'Horror', 'Isekai', 'Josei', 'Lolicon', 'Martial Arts', 'Mature',
+    'Mecha', 'Mystery', 'Psychological', 'Romance', 'School Life', 'Sci-fi',
+    'Seinen', 'Shotacon', 'Shoujo', 'Shoujo Ai', 'Shounen', 'Shounen Ai',
+    'Slice of Life', 'Smut', 'Sports', 'Supernatural', 'Tragedy', 'Yaoi',
+    'Yuri', 'Other',
   ];
 
   List<Manga> _parseSearchResults(String html) {
@@ -488,16 +485,4 @@ class MangaService {
     final likedJson = prefs.getStringList(_likedKey) ?? [];
     return likedJson.map((j) => Manga.fromJson(jsonDecode(j))).toList();
   }
-
-  // ── Available Tags ──────────────────────────────────────────────────
-
-  static const List<String> availableTags = [
-    'Action', 'Adventure', 'Comedy', 'Cooking', 'Doujinshi', 'Drama',
-    'Ecchi', 'Fantasy', 'Gender Bender', 'Harem', 'Historical',
-    'Horror', 'Isekai', 'Josei', 'Lolicon', 'Martial Arts', 'Mature',
-    'Mecha', 'Medical', 'Music', 'Mystery', 'One Shot', 'Psychological',
-    'Romance', 'School Life', 'Sci-Fi', 'Seinen', 'Shotacon', 'Shoujo',
-    'Shoujo Ai', 'Shounen', 'Shounen Ai', 'Slice of Life', 'Smut',
-    'Sports', 'Supernatural', 'Tragedy', 'Yaoi', 'Yuri',
-  ];
 }
