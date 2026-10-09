@@ -23,6 +23,7 @@ import '../../services/stream/stream_bitrate_resolver.dart';
 import '../../services/theme/glass_settings.dart';
 import '../../services/scraper/builtin_providers_settings_service.dart';
 import '../../widgets/common/performance_liquid_lens.dart';
+import '../../widgets/common/flag_icon.dart';
 import '../settings/settings_page.dart';
 import '../details/details_page.dart';
 import '../../utils/navigation/route_transitions.dart';
@@ -666,19 +667,19 @@ class _WatchScreenState extends State<WatchScreen>
                           _buildTypeChip('all', 'All (${_sources.length})', Icons.apps_rounded, null),
                           _buildTypeChip(
                             'debrid',
-                            '⚡ Debrid (${_sources.where((s) => s.isDebrid).length})',
+                            'Debrid (${_sources.where((s) => s.isDebrid).length})',
                             Icons.bolt_rounded,
                             const Color(0xFF00E5FF),
                           ),
                           _buildTypeChip(
                             'torrent',
-                            '🧲 Torrents (${_sources.where((s) => s.isTorrent).length})',
+                            'Torrents (${_sources.where((s) => s.isTorrent).length})',
                             Icons.share_rounded,
                             const Color(0xFF7C5CFF),
                           ),
                           _buildTypeChip(
                             'direct',
-                            '🌐 Direct (${_sources.where((s) => s.isHttpDirect).length})',
+                            'Direct (${_sources.where((s) => s.isHttpDirect).length})',
                             Icons.link_rounded,
                             const Color(0xFF10B981),
                           ),
@@ -1103,7 +1104,13 @@ class _WatchScreenState extends State<WatchScreen>
   }
 
   Widget _buildActionBar() {
-    final links = widget.detail.links.take(4).toList();
+    // Genres, cast, writers and directors already render as pills in the
+    // info section — only show real web links (IMDb, share, trailer...) here.
+    final excluded = ['genres', 'cast', 'writers', 'directors'];
+    final links = widget.detail.links
+        .where((l) => !excluded.contains(l.category.toLowerCase()))
+        .take(4)
+        .toList();
 
     // Fallback if no links provided by addon
     if (links.isEmpty && widget.detail.id.startsWith('tt')) {
@@ -1251,19 +1258,19 @@ class _WatchScreenState extends State<WatchScreen>
               _buildTypeChip('all', 'All (${_sources.length})', Icons.apps_rounded, null),
               _buildTypeChip(
                 'debrid',
-                '⚡ Debrid (${_sources.where((s) => s.isDebrid).length})',
+                'Debrid (${_sources.where((s) => s.isDebrid).length})',
                 Icons.bolt_rounded,
                 const Color(0xFF00E5FF),
               ),
               _buildTypeChip(
                 'torrent',
-                '🧲 Torrents (${_sources.where((s) => s.isTorrent).length})',
+                'Torrents (${_sources.where((s) => s.isTorrent).length})',
                 Icons.share_rounded,
                 const Color(0xFF7C5CFF),
               ),
               _buildTypeChip(
                 'direct',
-                '🌐 Direct (${_sources.where((s) => s.isHttpDirect).length})',
+                'Direct (${_sources.where((s) => s.isHttpDirect).length})',
                 Icons.link_rounded,
                 const Color(0xFF10B981),
               ),
@@ -1304,14 +1311,14 @@ class _WatchScreenState extends State<WatchScreen>
       selected: isSelected,
       selectedColor: activeColor.withValues(alpha: 0.25),
       backgroundColor: const Color(0xFF13151C),
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : Colors.white70,
-        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+      labelStyle: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w700,
         fontSize: 11.5,
       ),
       side: BorderSide(
         color: isSelected ? activeColor : Colors.white.withValues(alpha: 0.1),
-        width: isSelected ? 1.5 : 1.0,
+        width: 1.2,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onSelected: (selected) {
@@ -1988,29 +1995,54 @@ class _WatchScreenState extends State<WatchScreen>
   String _getAudioFilterLabel(String key) {
     switch (key) {
       case 'multi':
-        return '🌐 Multi-Audio';
+        return 'Multi-Audio';
       case 'english':
-        return '🇺🇸 English / Orig';
+        return 'English / Orig';
       case 'hindi':
-        return '🇮🇳 Hindi / Indian';
+        return 'Hindi / Indian';
       case 'german':
-        return '🇩🇪 German';
+        return 'German';
       case 'french':
-        return '🇫🇷 French';
+        return 'French';
       case 'spanish_castilian':
-        return '🇪🇸 Spanish (Castilian)';
+        return 'Spanish (Castilian)';
       case 'spanish_latino':
-        return '🇲🇽 Spanish (Latin)';
+        return 'Spanish (Latin)';
       case 'spanish':
-        return '🌎 All Spanish';
+        return 'All Spanish';
       case 'russian':
-        return '🇷🇺 Russian';
+        return 'Russian';
       case 'japanese':
-        return '🇯🇵 Japanese';
+        return 'Japanese';
       case 'italian':
-        return '🇮🇹 Italian';
+        return 'Italian';
       default:
         return 'All Audio';
+    }
+  }
+
+  String? _audioFilterLanguage(String key) {
+    switch (key) {
+      case 'english':
+        return 'english';
+      case 'hindi':
+        return 'hindi';
+      case 'german':
+        return 'german';
+      case 'french':
+        return 'french';
+      case 'spanish_castilian':
+      case 'spanish_latino':
+      case 'spanish':
+        return 'spanish';
+      case 'russian':
+        return 'russian';
+      case 'japanese':
+        return 'japanese';
+      case 'italian':
+        return 'italian';
+      default:
+        return null;
     }
   }
 
@@ -2051,11 +2083,17 @@ class _WatchScreenState extends State<WatchScreen>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.audiotrack_rounded,
-                      color: isActive ? const Color(0xFFB197FC) : Colors.white70,
-                      size: 16,
-                    ),
+                    if (_audioFilterLanguage(_selectedAudioFilter) != null)
+                      FlagIcon(
+                        language: _audioFilterLanguage(_selectedAudioFilter)!,
+                        height: 13,
+                      )
+                    else
+                      Icon(
+                        Icons.audiotrack_rounded,
+                        color: isActive ? const Color(0xFFB197FC) : Colors.white70,
+                        size: 16,
+                      ),
                     const SizedBox(width: 6),
                     Text(
                       currentText,
@@ -2152,17 +2190,17 @@ class _WatchScreenState extends State<WatchScreen>
                               color: Colors.white.withValues(alpha: 0.1),
                             ),
                             const SizedBox(height: 4),
-                            _buildAudioDropdownItem('🌐 Multi-Audio', 'multi'),
-                            _buildAudioDropdownItem('🇺🇸 English / Orig', 'english'),
-                            _buildAudioDropdownItem('🇮🇳 Hindi / Indian', 'hindi'),
-                            _buildAudioDropdownItem('🇩🇪 German', 'german'),
-                            _buildAudioDropdownItem('🇫🇷 French', 'french'),
-                            _buildAudioDropdownItem('🇪🇸 Spanish (Castilian)', 'spanish_castilian'),
-                            _buildAudioDropdownItem('🇲🇽 Spanish (Latin)', 'spanish_latino'),
-                            _buildAudioDropdownItem('🌎 All Spanish', 'spanish'),
-                            _buildAudioDropdownItem('🇷🇺 Russian', 'russian'),
-                            _buildAudioDropdownItem('🇯🇵 Japanese', 'japanese'),
-                            _buildAudioDropdownItem('🇮🇹 Italian', 'italian'),
+                            _buildAudioDropdownItem('Multi-Audio', 'multi', language: null),
+                            _buildAudioDropdownItem('English / Orig', 'english', language: 'english'),
+                            _buildAudioDropdownItem('Hindi / Indian', 'hindi', language: 'hindi'),
+                            _buildAudioDropdownItem('German', 'german', language: 'german'),
+                            _buildAudioDropdownItem('French', 'french', language: 'french'),
+                            _buildAudioDropdownItem('Spanish (Castilian)', 'spanish_castilian', language: 'spanish'),
+                            _buildAudioDropdownItem('Spanish (Latin)', 'spanish_latino', language: 'spanish'),
+                            _buildAudioDropdownItem('All Spanish', 'spanish', language: 'spanish'),
+                            _buildAudioDropdownItem('Russian', 'russian', language: 'russian'),
+                            _buildAudioDropdownItem('Japanese', 'japanese', language: 'japanese'),
+                            _buildAudioDropdownItem('Italian', 'italian', language: 'italian'),
                           ],
                         ),
                       ),
@@ -2177,7 +2215,7 @@ class _WatchScreenState extends State<WatchScreen>
     );
   }
 
-  Widget _buildAudioDropdownItem(String title, String value) {
+  Widget _buildAudioDropdownItem(String title, String value, {String? language}) {
     final isSelected = _selectedAudioFilter == value;
     return InkWell(
       onTap: () {
@@ -2198,6 +2236,10 @@ class _WatchScreenState extends State<WatchScreen>
         ),
         child: Row(
           children: [
+            if (language != null) ...[
+              FlagIcon(language: language, height: 13),
+              const SizedBox(width: 10),
+            ],
             Expanded(
               child: Text(
                 title,
@@ -2275,6 +2317,7 @@ class _WatchScreenState extends State<WatchScreen>
     required bool isSelected,
     required Color activeColor,
     required VoidCallback onTap,
+    Widget? leading,
   }) {
     return InkWell(
       onTap: () {
@@ -2297,6 +2340,7 @@ class _WatchScreenState extends State<WatchScreen>
         ),
         child: Row(
           children: [
+            if (leading != null) ...[leading, const SizedBox(width: 12)],
             Expanded(
               child: Text(
                 title,
@@ -2373,7 +2417,7 @@ class _WatchScreenState extends State<WatchScreen>
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🌐 Multi-Audio',
+                    title: 'Multi-Audio',
                     isSelected: _selectedAudioFilter == 'multi',
                     activeColor: const Color(0xFFB197FC),
                     onTap: () {
@@ -2382,90 +2426,100 @@ class _WatchScreenState extends State<WatchScreen>
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇺🇸 English / Original',
+                    title: 'English / Original',
                     isSelected: _selectedAudioFilter == 'english',
                     activeColor: const Color(0xFFB197FC),
+                    leading: const FlagIcon(language: 'english', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'english');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇮🇳 Hindi / Indian',
+                    title: 'Hindi / Indian',
                     isSelected: _selectedAudioFilter == 'hindi',
                     activeColor: const Color(0xFFFF922B),
+                    leading: const FlagIcon(language: 'hindi', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'hindi');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇩🇪 German',
+                    title: 'German',
                     isSelected: _selectedAudioFilter == 'german',
                     activeColor: const Color(0xFFFFD43B),
+                    leading: const FlagIcon(language: 'german', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'german');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇫🇷 French',
+                    title: 'French',
                     isSelected: _selectedAudioFilter == 'french',
                     activeColor: const Color(0xFF4DABF7),
+                    leading: const FlagIcon(language: 'french', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'french');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇪🇸 Spanish (Castilian)',
+                    title: 'Spanish (Castilian)',
                     isSelected: _selectedAudioFilter == 'spanish_castilian',
                     activeColor: const Color(0xFFFAB005),
+                    leading: const FlagIcon(language: 'spanish', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'spanish_castilian');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇲🇽 Spanish (Latin)',
+                    title: 'Spanish (Latin)',
                     isSelected: _selectedAudioFilter == 'spanish_latino',
                     activeColor: const Color(0xFF20C997),
+                    leading: const FlagIcon(language: 'spanish', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'spanish_latino');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🌎 All Spanish',
+                    title: 'All Spanish',
                     isSelected: _selectedAudioFilter == 'spanish',
                     activeColor: const Color(0xFFFAB005),
+                    leading: const FlagIcon(language: 'spanish', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'spanish');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇷🇺 Russian',
+                    title: 'Russian',
                     isSelected: _selectedAudioFilter == 'russian',
                     activeColor: const Color(0xFF22B8CF),
+                    leading: const FlagIcon(language: 'russian', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'russian');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇯🇵 Japanese',
+                    title: 'Japanese',
                     isSelected: _selectedAudioFilter == 'japanese',
                     activeColor: const Color(0xFFFF8787),
+                    leading: const FlagIcon(language: 'japanese', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'japanese');
                       Navigator.pop(ctx);
                     },
                   ),
                   _buildBottomSheetItem(
-                    title: '🇮🇹 Italian',
+                    title: 'Italian',
                     isSelected: _selectedAudioFilter == 'italian',
                     activeColor: const Color(0xFF69DB7C),
+                    leading: const FlagIcon(language: 'italian', height: 14),
                     onTap: () {
                       setState(() => _selectedAudioFilter = 'italian');
                       Navigator.pop(ctx);
