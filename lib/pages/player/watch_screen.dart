@@ -615,7 +615,7 @@ class _WatchScreenState extends State<WatchScreen>
               ),
             ),
 
-            const SliverPadding(padding: EdgeInsets.only(top: _S.lg)),
+            const SliverPadding(padding: EdgeInsets.only(top: _S.xs)),
 
             // ── Sources header ──
             SliverToBoxAdapter(
@@ -625,7 +625,7 @@ class _WatchScreenState extends State<WatchScreen>
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
             // ── Sources list (virtualized!) ──
             if (_isLoadingSources && filtered.isEmpty)
@@ -762,12 +762,12 @@ class _WatchScreenState extends State<WatchScreen>
         // Cast
         if (meta.cast.isNotEmpty) ...[
           _buildLabelChips('CAST', meta.cast.take(8).toList()),
-          const SizedBox(height: _S.lg),
+          const SizedBox(height: _S.sm),
         ],
 
         // Action bar
         _buildActionBar(),
-        const SizedBox(height: _S.lg),
+        const SizedBox(height: _S.xs),
       ],
     );
   }
@@ -1134,7 +1134,7 @@ class _WatchScreenState extends State<WatchScreen>
   Widget _buildSourcesCard({required bool isDesktop, required List<StreamSource> filtered}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 22),
       decoration: BoxDecoration(
         color: const Color(0xFF12141C),
         borderRadius: BorderRadius.circular(24),
