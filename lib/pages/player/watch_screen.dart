@@ -662,27 +662,30 @@ class _WatchScreenState extends State<WatchScreen>
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          _buildTypeChip('all', 'All (${_sources.length})', Icons.apps_rounded, null),
+                          _buildTypeChip('all', 'All', Icons.apps_rounded, null, count: _sources.length),
                           const SizedBox(width: 6),
                           _buildTypeChip(
                             'debrid',
-                            'Debrid (${_sources.where((s) => s.isDebrid).length})',
+                            'Debrid',
                             Icons.bolt_rounded,
                             const Color(0xFF00E5FF),
+                            count: _sources.where((s) => s.isDebrid).length,
                           ),
                           const SizedBox(width: 6),
                           _buildTypeChip(
                             'torrent',
-                            'Torrents (${_sources.where((s) => s.isTorrent).length})',
+                            'Torrents',
                             Icons.share_rounded,
                             const Color(0xFF7C5CFF),
+                            count: _sources.where((s) => s.isTorrent).length,
                           ),
                           const SizedBox(width: 6),
                           _buildTypeChip(
                             'direct',
-                            'Direct (${_sources.where((s) => s.isHttpDirect).length})',
+                            'Direct',
                             Icons.link_rounded,
                             const Color(0xFF10B981),
+                            count: _sources.where((s) => s.isHttpDirect).length,
                           ),
                         ],
                       ),
@@ -1125,18 +1128,9 @@ class _WatchScreenState extends State<WatchScreen>
       );
     }
 
+    // Nothing worth showing — hide the bar entirely
     if (links.isEmpty) {
-      // Generic fallback
-      final query = Uri.encodeComponent(
-        '${widget.detail.name} ${widget.detail.year ?? ''}',
-      );
-      links.add(
-        Link(
-          name: 'Search',
-          category: 'web',
-          url: 'https://google.com/search?q=$query',
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     return Row(
@@ -1255,27 +1249,30 @@ class _WatchScreenState extends State<WatchScreen>
         if (_sources.isNotEmpty) ...[
           Row(
             children: [
-              _buildTypeChip('all', 'All (${_sources.length})', Icons.apps_rounded, null),
+              _buildTypeChip('all', 'All', Icons.apps_rounded, null, count: _sources.length),
               const SizedBox(width: 6),
               _buildTypeChip(
                 'debrid',
-                'Debrid (${_sources.where((s) => s.isDebrid).length})',
+                'Debrid',
                 Icons.bolt_rounded,
                 const Color(0xFF00E5FF),
+                count: _sources.where((s) => s.isDebrid).length,
               ),
               const SizedBox(width: 6),
               _buildTypeChip(
                 'torrent',
-                'Torrents (${_sources.where((s) => s.isTorrent).length})',
+                'Torrents',
                 Icons.share_rounded,
                 const Color(0xFF7C5CFF),
+                count: _sources.where((s) => s.isTorrent).length,
               ),
               const SizedBox(width: 6),
               _buildTypeChip(
                 'direct',
-                'Direct (${_sources.where((s) => s.isHttpDirect).length})',
+                'Direct',
                 Icons.link_rounded,
                 const Color(0xFF10B981),
+                count: _sources.where((s) => s.isHttpDirect).length,
               ),
             ],
           ),
@@ -1305,7 +1302,7 @@ class _WatchScreenState extends State<WatchScreen>
     );
   }
 
-  Widget _buildTypeChip(String typeKey, String label, IconData icon, Color? color) {
+  Widget _buildTypeChip(String typeKey, String label, IconData icon, Color? color, {int? count}) {
     final isSelected = _selectedTypeFilter == typeKey;
     final activeColor = color ?? _C.accent;
 
@@ -1314,8 +1311,21 @@ class _WatchScreenState extends State<WatchScreen>
         showCheckmark: false,
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        label: Text(
-          label,
+        label: Text.rich(
+          TextSpan(
+            text: label,
+            children: [
+              if (count != null)
+                TextSpan(
+                  text: ' ($count)',
+                  style: const TextStyle(
+                    fontSize: 9.5,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           softWrap: false,
