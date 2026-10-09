@@ -186,7 +186,7 @@ class _MangaDetailsPageState extends State<MangaDetailsPage> {
 
     return CustomScrollView(
       controller: _scrollController,
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(
           child: SizedBox(height: MediaQuery.paddingOf(context).top + 60),

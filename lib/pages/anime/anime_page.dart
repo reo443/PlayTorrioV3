@@ -327,7 +327,7 @@ class _AnimePageState extends State<AnimePage> {
                     controller: _scrollController,
                     clipBehavior: Clip.none,
                     padding: EdgeInsets.zero,
-                    physics: const BouncingScrollPhysics(
+                    physics: const ClampingScrollPhysics(
                       parent: AlwaysScrollableScrollPhysics(),
                     ),
                     children: [

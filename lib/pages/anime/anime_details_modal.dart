@@ -366,7 +366,7 @@ class _AnimeDetailsModalState extends State<AnimeDetailsModal> {
                               horizontal: isMobile ? 16 : 24,
                               vertical: 12,
                             ),
-                            physics: const BouncingScrollPhysics(),
+                            physics: const ClampingScrollPhysics(),
                             children: [
                               // Action Row: Play + Add to List + SUB/DUB toggle
                               Row(
@@ -734,7 +734,7 @@ class _AnimeDetailsModalState extends State<AnimeDetailsModal> {
                                   height: 145,
                                   child: ListView.separated(
                                     scrollDirection: Axis.horizontal,
-                                    physics: const BouncingScrollPhysics(),
+                                    physics: const ClampingScrollPhysics(),
                                     itemCount: _anime.characters.length,
                                     separatorBuilder: (_, __) => const SizedBox(width: 14),
                                     itemBuilder: (context, index) {
@@ -801,7 +801,7 @@ class _AnimeDetailsModalState extends State<AnimeDetailsModal> {
                                   height: 180,
                                   child: ListView.separated(
                                     scrollDirection: Axis.horizontal,
-                                    physics: const BouncingScrollPhysics(),
+                                    physics: const ClampingScrollPhysics(),
                                     itemCount: _anime.relations.length,
                                     separatorBuilder: (_, __) => const SizedBox(width: 14),
                                     itemBuilder: (context, index) {
@@ -877,7 +877,7 @@ class _AnimeDetailsModalState extends State<AnimeDetailsModal> {
                                   height: 185,
                                   child: ListView.separated(
                                     scrollDirection: Axis.horizontal,
-                                    physics: const BouncingScrollPhysics(),
+                                    physics: const ClampingScrollPhysics(),
                                     itemCount: _anime.recommendations.length,
                                     separatorBuilder: (_, __) => const SizedBox(width: 14),
                                     itemBuilder: (context, index) {

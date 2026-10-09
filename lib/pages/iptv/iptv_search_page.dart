@@ -198,7 +198,7 @@ class _IptvSearchPageState extends State<IptvSearchPage> {
                   )
                 : GridView.builder(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount,
                       childAspectRatio: 0.72,

@@ -321,7 +321,7 @@ class _PlayerSubStyleModalState extends State<PlayerSubStyleModal>
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         child: Row(
           children: SubtitleStylePreset.values.map((preset) {
             final isSelected = activePreset == preset;
@@ -411,7 +411,7 @@ class _PlayerSubStyleModalState extends State<PlayerSubStyleModal>
   Widget _buildTypographyTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       children: [
         // Font Family Selector
         _buildSectionTitle('FONT FAMILY'),
@@ -535,7 +535,7 @@ class _PlayerSubStyleModalState extends State<PlayerSubStyleModal>
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       children: [
         // Text Color Palette
         _buildSectionTitle('SUBTITLE TEXT COLOR'),
@@ -656,7 +656,7 @@ class _PlayerSubStyleModalState extends State<PlayerSubStyleModal>
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       children: [
         // Outline Color Selector
         _buildSectionTitle('OUTLINE / BORDER COLOR'),
@@ -746,7 +746,7 @@ class _PlayerSubStyleModalState extends State<PlayerSubStyleModal>
   Widget _buildPositionAndLayoutTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       children: [
         // Horizontal Alignment
         _buildSectionTitle('HORIZONTAL ALIGNMENT'),
@@ -863,7 +863,7 @@ class _PlayerSubStyleModalState extends State<PlayerSubStyleModal>
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       children: [
         _buildSectionTitle('SUBTITLE RENDERING ENGINE'),
         const SizedBox(height: 10),

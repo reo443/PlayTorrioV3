@@ -498,7 +498,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
 
   Widget _buildSourcesList(bool isCompact) {
     return ListView.separated(
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       padding: EdgeInsets.symmetric(
         horizontal: isCompact ? 12 : 16,
         vertical: 14,

@@ -153,7 +153,7 @@ class _LiquidDockState extends State<LiquidDock> {
             child: SingleChildScrollView(
               controller: _scrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

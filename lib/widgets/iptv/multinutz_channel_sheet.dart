@@ -663,7 +663,7 @@ class _MultiNutzChannelSheetState extends State<MultiNutzChannelSheet>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               child: Row(
                 children: [
                   _buildSourceChip('all', 'All (${ctrl.verified.length})', Icons.apps_rounded, palette),

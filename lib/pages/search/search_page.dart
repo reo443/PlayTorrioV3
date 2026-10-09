@@ -525,7 +525,7 @@ class _SearchPageState extends State<SearchPage> {
                 top: topPadding + kToolbarHeight + 40,
                 bottom: 40 + MediaQuery.paddingOf(context).bottom,
               ),
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               itemCount: _results.length + (_isLoading ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index < _results.length) {
@@ -592,7 +592,7 @@ class _SearchPageState extends State<SearchPage> {
         top: topPadding + kToolbarHeight + 14,
         bottom: 40 + MediaQuery.paddingOf(context).bottom,
       ),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       children: [
         // Recent Searches
         if (_searchHistory.isNotEmpty) ...[

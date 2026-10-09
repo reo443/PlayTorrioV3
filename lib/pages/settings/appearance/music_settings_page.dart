@@ -40,7 +40,7 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
           constraints: const BoxConstraints(maxWidth: 820),
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             children: [
               // 1. Enter Music Player Studio Banner
               _buildEnterPlayerStudioBanner(palette),

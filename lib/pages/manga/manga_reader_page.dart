@@ -604,7 +604,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
       reverse: isRtl,
       physics: _currentZoom > 1.05
           ? const NeverScrollableScrollPhysics()
-          : const BouncingScrollPhysics(),
+          : const ClampingScrollPhysics(),
       itemCount: _pageUrls.length,
       onPageChanged: _onPageChanged,
       itemBuilder: (context, index) {
@@ -642,7 +642,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
           controller: _verticalScrollController,
           physics: _currentZoom > 1.05
               ? const NeverScrollableScrollPhysics()
-              : const BouncingScrollPhysics(),
+              : const ClampingScrollPhysics(),
           itemCount: _pageUrls.length + 1,
           itemBuilder: (context, index) {
             if (index == _pageUrls.length) {
@@ -820,7 +820,7 @@ class _MangaReaderPageState extends State<MangaReaderPage> {
             child: ListView.builder(
               controller: _deckScrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               itemCount: _pageUrls.length,
               itemBuilder: (context, index) {
                 final isCurrent = index == _currentPageIndex;

@@ -569,7 +569,7 @@ class _WatchScreenState extends State<WatchScreen>
                 flex: leftFlex,
                 child: SingleChildScrollView(
                   controller: _mainScrollController,
-                  physics: const BouncingScrollPhysics(),
+                  physics: const ClampingScrollPhysics(),
                   child: _buildInfoRegion(isDesktop: true),
                 ),
               ),
@@ -601,7 +601,7 @@ class _WatchScreenState extends State<WatchScreen>
         opacity: _fadeAnim,
         child: CustomScrollView(
           controller: _mainScrollController,
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           slivers: [
             // ── Top padding ──
             const SliverPadding(padding: EdgeInsets.only(top: 60)),
@@ -1337,7 +1337,7 @@ class _WatchScreenState extends State<WatchScreen>
       controller: isDesktop ? _sourcesScrollController : null,
       shrinkWrap: !isDesktop,
       physics: isDesktop
-          ? const BouncingScrollPhysics()
+          ? const ClampingScrollPhysics()
           : const NeverScrollableScrollPhysics(),
       itemCount: sources.length + (_isLoadingSources ? 2 : 0),
       separatorBuilder: (_, __) => const SizedBox(height: _S.xs),
@@ -1502,7 +1502,7 @@ class _WatchScreenState extends State<WatchScreen>
                           border: Border.all(color: const Color(0x26FFFFFF)),
                         ),
                         child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
+                          physics: const ClampingScrollPhysics(),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1706,7 +1706,7 @@ class _WatchScreenState extends State<WatchScreen>
                           border: Border.all(color: const Color(0x26FFFFFF)),
                         ),
                         child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
+                          physics: const ClampingScrollPhysics(),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1918,7 +1918,7 @@ class _WatchScreenState extends State<WatchScreen>
                           border: Border.all(color: const Color(0x26FFFFFF)),
                         ),
                         child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
+                          physics: const ClampingScrollPhysics(),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2140,7 +2140,7 @@ class _WatchScreenState extends State<WatchScreen>
                         border: Border.all(color: const Color(0x26FFFFFF)),
                       ),
                       child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2359,7 +2359,7 @@ class _WatchScreenState extends State<WatchScreen>
               maxHeight: MediaQuery.sizeOf(context).height * 0.55,
             ),
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -2524,7 +2524,7 @@ class _WatchScreenState extends State<WatchScreen>
               maxHeight: MediaQuery.sizeOf(context).height * 0.55,
             ),
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -2635,7 +2635,7 @@ class _WatchScreenState extends State<WatchScreen>
               maxHeight: MediaQuery.sizeOf(context).height * 0.55,
             ),
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -2764,7 +2764,7 @@ class _WatchScreenState extends State<WatchScreen>
               maxHeight: MediaQuery.sizeOf(context).height * 0.55,
             ),
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

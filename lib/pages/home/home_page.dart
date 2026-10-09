@@ -350,7 +350,7 @@ class _HomePageState extends State<HomePage> {
                 controller: _scrollController,
                 clipBehavior: Clip.none,
                 padding: EdgeInsets.zero,
-                physics: const BouncingScrollPhysics(
+                physics: const ClampingScrollPhysics(
                   parent: AlwaysScrollableScrollPhysics(),
                 ),
                 itemCount: _sections.length + 3,

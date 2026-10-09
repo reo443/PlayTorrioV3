@@ -194,7 +194,7 @@ class _ContinueWatchingSliderState extends State<ContinueWatchingSlider> {
                         controller: _scrollController,
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 18),
-                        physics: const BouncingScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         itemCount: items.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 14),
                         itemBuilder: (context, index) {

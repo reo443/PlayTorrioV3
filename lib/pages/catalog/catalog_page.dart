@@ -250,7 +250,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 sizing.sidePadding,
                 40 + MediaQuery.paddingOf(context).bottom, // Bottom padding
               ),
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: ((MediaQuery.sizeOf(context).width - sizing.sidePadding * 2 + sizing.spacing) / (sizing.cardWidth + sizing.spacing)).floor().clamp(2, 10),
                 childAspectRatio: sizing.cardWidth / sizing.totalHeight,
@@ -388,7 +388,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 controller: _genreScrollController,
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 itemCount: options.length + (singleExtra.isRequired ? 0 : 1),
                 separatorBuilder: (context, index) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
@@ -450,7 +450,7 @@ class _CatalogPageState extends State<CatalogPage> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         itemCount: selectableExtras.length,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {

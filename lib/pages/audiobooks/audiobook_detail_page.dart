@@ -124,7 +124,7 @@ class _AudiobookDetailPageState extends State<AudiobookDetailPage> {
 
           // Main Scroll View
           CustomScrollView(
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             slivers: [
               // Top Header Bar
               SliverToBoxAdapter(

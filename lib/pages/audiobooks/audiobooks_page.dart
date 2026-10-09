@@ -346,7 +346,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
 
           // ── Main Content Scroll ──
           CustomScrollView(
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             slivers: [
               // Top Header Bar
               SliverToBoxAdapter(
@@ -539,7 +539,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                     child: ListView.builder(
                       padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
                       scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
+                      physics: const ClampingScrollPhysics(),
                       itemCount: _categories.length,
                       itemBuilder: (context, index) {
                         final cat = _categories[index];
@@ -913,7 +913,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
             child: ListView.builder(
               controller: _continueScrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               itemCount: _continueListeningList.length,
               itemBuilder: (context, index) {
                 final item = _continueListeningList[index];
@@ -1085,7 +1085,7 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
             height: 120,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               children: [
                 // Render Generated Jobs
                 ...jobs.map((job) {

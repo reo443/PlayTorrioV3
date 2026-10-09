@@ -177,7 +177,7 @@ class _ContinueReadingSliderState extends State<ContinueReadingSlider> {
                       child: ListView.builder(
                         controller: _scrollController,
                         scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                         itemCount: items.length,
                         itemBuilder: (context, index) {

@@ -313,7 +313,7 @@ class _ReaderCustomizationSheetState extends State<ReaderCustomizationSheet>
     ];
 
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.all(ReaderTokens.space24),
       children: [
         _buildSectionTitle('Font Family', settings),
@@ -457,7 +457,7 @@ class _ReaderCustomizationSheetState extends State<ReaderCustomizationSheet>
 
   Widget _buildThemeTab(ReaderSettingsData settings) {
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.all(ReaderTokens.space24),
       children: [
         _buildSectionTitle('Reading Themes', settings),
@@ -545,7 +545,7 @@ class _ReaderCustomizationSheetState extends State<ReaderCustomizationSheet>
 
   Widget _buildLayoutTab(ReaderSettingsData settings) {
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.all(ReaderTokens.space24),
       children: [
         _buildSectionTitle('Page Margins', settings),

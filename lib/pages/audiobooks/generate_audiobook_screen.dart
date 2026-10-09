@@ -502,7 +502,7 @@ class _GenerateAudiobookScreenState extends State<GenerateAudiobookScreen>
           builder: (context, jobs, _) {
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               children: [
                 // ── Voice Selector Card ──
                 _buildVoiceSelectorCard(palette),
@@ -708,7 +708,7 @@ class _GenerateAudiobookScreenState extends State<GenerateAudiobookScreen>
           height: 165,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             itemCount: _detectedEpubs.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, idx) {
@@ -988,7 +988,7 @@ class _GenerateAudiobookScreenState extends State<GenerateAudiobookScreen>
           builder: (context, books, _) {
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               children: [
                 // Upload Personal Audiobook Banner
                 InkWell(

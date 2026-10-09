@@ -164,7 +164,7 @@ class _IptvSliderSectionState extends State<IptvSliderSection> {
                     scrollDirection: Axis.horizontal,
                     clipBehavior: Clip.none,
                     padding: EdgeInsets.symmetric(horizontal: sizing.sidePadding),
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     itemCount: widget.channels.length,
                     separatorBuilder: (_, _) =>
                         SizedBox(width: sizing.spacing),

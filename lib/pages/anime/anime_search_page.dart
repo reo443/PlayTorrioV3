@@ -691,7 +691,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
                     height: 38,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
+                      physics: const ClampingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       children: [
                         // Sort Dropdown
@@ -855,7 +855,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
                   top: topPadding + kToolbarHeight + 80,
                   bottom: 40,
                 ),
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 children: [
                   if (tvSeries.isNotEmpty)
                     AnimeSliderSection(
@@ -888,7 +888,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
                   top: topPadding + kToolbarHeight + 80,
                   bottom: 40,
                 ),
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 children: [
                   if (_trendingList.isNotEmpty)
                     AnimeSliderSection(

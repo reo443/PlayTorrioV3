@@ -605,7 +605,7 @@ class _CloudStreamMarketplaceModalState extends State<CloudStreamMarketplaceModa
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                        physics: const BouncingScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         itemCount: _filteredRepos.length,
                         itemBuilder: (context, index) {
                           final repo = _filteredRepos[index];

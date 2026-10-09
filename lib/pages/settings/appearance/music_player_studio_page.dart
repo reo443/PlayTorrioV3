@@ -1180,7 +1180,7 @@ class _MusicPlayerStudioPageState extends State<MusicPlayerStudioPage> with Sing
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               children: [
                 if (_selectedStudioTab == 0) _buildDragAndDropLayoutSection(palette),
                 if (_selectedStudioTab == 1) _buildSeekbarCanvasSection(palette),

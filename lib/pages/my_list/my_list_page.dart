@@ -344,7 +344,7 @@ class _MyListPageState extends State<MyListPage> {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             child: Row(
               children: [
                 // Filter Tabs

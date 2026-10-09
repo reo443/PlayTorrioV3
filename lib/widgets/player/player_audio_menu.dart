@@ -88,7 +88,7 @@ class PlayerAudioMenu extends StatelessWidget {
       width: cardWidth,
       padding: EdgeInsets.all(isCompactH ? 8 : 12),
       child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,7 +150,7 @@ class PlayerAudioMenu extends StatelessWidget {
               child: hasTracks
                   ? ListView.builder(
                       shrinkWrap: true,
-                      physics: const BouncingScrollPhysics(),
+                      physics: const ClampingScrollPhysics(),
                       itemCount: audioTracks.length,
                       itemBuilder: (context, i) {
                         final track = audioTracks[i];

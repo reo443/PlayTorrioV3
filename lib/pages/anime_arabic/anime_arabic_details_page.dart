@@ -279,7 +279,7 @@ class _AnimeArabicDetailsPageState extends State<AnimeArabicDetailsPage>
                         child: SlideTransition(
                           position: _slideAnimation,
                           child: CustomScrollView(
-                            physics: const BouncingScrollPhysics(),
+                            physics: const ClampingScrollPhysics(),
                             slivers: [
                               // App Bar Space
                               const SliverToBoxAdapter(child: SizedBox(height: 60)),
@@ -901,7 +901,7 @@ class _AnimeArabicDetailsPageState extends State<AnimeArabicDetailsPage>
                     clipBehavior: Clip.none,
                     controller: _recsScrollController,
                     scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     itemCount: related.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 14),
                     itemBuilder: (context, index) {

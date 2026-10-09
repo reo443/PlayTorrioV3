@@ -333,7 +333,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                                             constraints: const BoxConstraints(maxWidth: 780),
                                             child: SingleChildScrollView(
                                               controller: _scrollController,
-                                              physics: const BouncingScrollPhysics(),
+                                              physics: const ClampingScrollPhysics(),
                                               padding: const EdgeInsets.only(
                                                 top: 76,
                                                 bottom: 96,
@@ -792,7 +792,7 @@ class _EpubReaderPageState extends State<EpubReaderPage> {
                       ),
                     )
                   : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
+                      physics: const ClampingScrollPhysics(),
                       itemCount: toc.length,
                       itemBuilder: (context, idx) {
                         final item = toc[idx];

@@ -1013,7 +1013,7 @@ class _MusicPageState extends State<MusicPage> {
       child: ListView(
         controller: _scrollController,
         padding: EdgeInsets.only(top: 75, bottom: bottomPad),
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        physics: const ClampingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         children: [
           if (MusicSettings.enableSpotlight.value && _heroTrack != null)
             _MusicHeroBillboard(
@@ -1077,7 +1077,7 @@ class _MusicPageState extends State<MusicPage> {
       children: [
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           child: Row(
             children: [
               _filterTab('All'),
@@ -1176,7 +1176,7 @@ class _MusicPageState extends State<MusicPage> {
               height: 130,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 itemCount: _searchData.artists.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 16),
                 itemBuilder: (context, index) {
@@ -2017,7 +2017,7 @@ class _MusicHorizontalScrollSectionState extends State<_MusicHorizontalScrollSec
                 ListView.separated(
                   controller: _controller,
                   scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
+                  physics: const ClampingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   itemCount: widget.itemCount,
                   separatorBuilder: (_, __) => const SizedBox(width: 16),

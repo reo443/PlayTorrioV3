@@ -1412,7 +1412,7 @@ class _IptvPortalBrowserPageState extends State<IptvPortalBrowserPage> {
           addAutomaticKeepAlives: false,
           addRepaintBoundaries: true,
           padding: EdgeInsets.fromLTRB(isDesktop ? 20 : 10, 12, isDesktop ? 20 : 10, 30),
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: gridCols,
             childAspectRatio: 1.25,
@@ -1445,7 +1445,7 @@ class _IptvPortalBrowserPageState extends State<IptvPortalBrowserPage> {
           addAutomaticKeepAlives: false,
           addRepaintBoundaries: true,
           padding: EdgeInsets.fromLTRB(isDesktop ? 20 : 10, 12, isDesktop ? 20 : 10, 30),
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           itemCount: streams.length,
           itemBuilder: (context, index) {
             final stream = streams[index];
@@ -1476,7 +1476,7 @@ class _IptvPortalBrowserPageState extends State<IptvPortalBrowserPage> {
           addAutomaticKeepAlives: false,
           addRepaintBoundaries: true,
           padding: EdgeInsets.fromLTRB(isDesktop ? 20 : 10, 12, isDesktop ? 20 : 10, 30),
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           itemCount: streams.length,
           itemBuilder: (context, index) {
             final stream = streams[index];
@@ -1523,7 +1523,7 @@ class _IptvPortalBrowserPageState extends State<IptvPortalBrowserPage> {
         addAutomaticKeepAlives: false,
         addRepaintBoundaries: true,
         padding: EdgeInsets.fromLTRB(isDesktop ? 20 : 10, 12, isDesktop ? 20 : 10, 30),
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: crossAxisCount,
           childAspectRatio: 0.68,

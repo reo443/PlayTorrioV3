@@ -377,7 +377,7 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
             16,
             40 + MediaQuery.paddingOf(context).bottom,
           ),
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           children: [
             // Header Info Card
             _buildTorrentHeaderCard(palette, videoCount),

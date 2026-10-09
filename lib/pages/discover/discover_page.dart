@@ -659,7 +659,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     if (_selectedCatalogEntry == null) {
       return Center(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20, topOffset + 30, 20, 100),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -691,7 +691,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     if (_items.isEmpty && _error != null) {
       return Center(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20, topOffset + 30, 20, 100),
           child: ErrorView(
             error: _error,
@@ -704,7 +704,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     if (_items.isEmpty) {
       return Center(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20, topOffset + 30, 20, 100),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -732,7 +732,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       }
       return Center(
         child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20, topOffset + 30, 20, 100),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -776,7 +776,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         sizing.sidePadding,
         110 + bottomInset,
       ),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,
         childAspectRatio: cardAspectRatio,
@@ -802,7 +802,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     return Center(
       child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(
           isNarrow ? 16 : 24,
           topOffset + 20,
@@ -1254,7 +1254,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         sizing.sidePadding,
         110 + MediaQuery.paddingOf(context).bottom,
       ),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: ((MediaQuery.sizeOf(context).width - sizing.sidePadding * 2 + sizing.spacing) /
                 (sizing.cardWidth + sizing.spacing))

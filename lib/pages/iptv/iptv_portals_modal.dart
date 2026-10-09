@@ -1113,7 +1113,7 @@ class _IptvPortalsModalState extends State<IptvPortalsModal>
           if (_ctrl.verified.isNotEmpty) ...[
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               child: Row(
                 children: [
                   _buildSourceChip(

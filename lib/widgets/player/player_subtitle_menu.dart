@@ -422,7 +422,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         child: Row(
           children: [
             // Off Button
@@ -576,7 +576,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
           ),
           child: ListView(
             padding: const EdgeInsets.all(7),
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             children: [
               // Subtitles Off Button
               Material(
@@ -883,7 +883,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
   Widget _buildEmbeddedList({required bool compact}) {
     return ListView.builder(
       padding: const EdgeInsets.all(7),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       itemCount: widget.embeddedSubtitles.length,
       itemBuilder: (context, i) {
         final track = widget.embeddedSubtitles[i];
@@ -1080,7 +1080,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(7),
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       itemCount: totalItemCount,
       itemBuilder: (context, i) {
         if (hasLoadingBanner && i == 0) {

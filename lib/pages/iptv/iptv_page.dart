@@ -274,7 +274,7 @@ class _IptvPageState extends State<IptvPage> {
         controller: _scrollController,
         clipBehavior: Clip.none,
         padding: EdgeInsets.zero,
-        physics: const BouncingScrollPhysics(
+        physics: const ClampingScrollPhysics(
           parent: AlwaysScrollableScrollPhysics(),
         ),
         children: [
@@ -844,7 +844,7 @@ class _QuickChannelsSliderState extends State<_QuickChannelsSlider> {
                   scrollDirection: Axis.horizontal,
                   clipBehavior: Clip.none,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  physics: const BouncingScrollPhysics(),
+                  physics: const ClampingScrollPhysics(),
                   itemCount: widget.channels.length + 1,
                   separatorBuilder: (_, __) => const SizedBox(width: 12),
                   itemBuilder: (context, index) {

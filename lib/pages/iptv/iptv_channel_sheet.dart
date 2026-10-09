@@ -510,7 +510,7 @@ class _IptvChannelSheetState extends State<IptvChannelSheet> {
                           )
                         : ListView.separated(
                             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 6),
-                            physics: const BouncingScrollPhysics(),
+                            physics: const ClampingScrollPhysics(),
                             itemCount: filteredResults.length,
                             separatorBuilder: (_, _) => const SizedBox(height: 10),
                             itemBuilder: (context, index) {

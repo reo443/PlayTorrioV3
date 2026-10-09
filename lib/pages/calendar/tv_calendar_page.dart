@@ -367,7 +367,7 @@ class _TvCalendarPageState extends State<TvCalendarPage> {
             child: ListView.separated(
               controller: _dayScrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               itemCount: _availableDays.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
@@ -528,7 +528,7 @@ class _TvCalendarPageState extends State<TvCalendarPage> {
             child: ListView.separated(
               controller: _networkScrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               itemCount: networks.length,
               separatorBuilder: (_, __) => const SizedBox(width: 6),
               itemBuilder: (context, index) {
@@ -756,7 +756,7 @@ class _TvCalendarPageState extends State<TvCalendarPage> {
     final dateTitle = _formatFullDate(_selectedDay);
 
     return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       slivers: [
         // Day Header Summary
         SliverToBoxAdapter(

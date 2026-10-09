@@ -117,7 +117,7 @@ class _AnimeSliderSectionState extends State<AnimeSliderSection> {
                     clipBehavior: Clip.none,
                     controller: _scrollController,
                     scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     padding: EdgeInsets.symmetric(horizontal: sizing.sidePadding),
                     itemCount: widget.animeList.length,
                     separatorBuilder: (_, __) => SizedBox(width: sizing.spacing),

@@ -510,7 +510,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
           _buildBackdrop(bgUrl, screenSize),
         Positioned.fill(
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             child: Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: contentMaxWidth),
@@ -1140,7 +1140,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                   clipBehavior: Clip.none,
                   controller: _castScrollController,
                   scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
+                  physics: const ClampingScrollPhysics(),
                   itemCount: cast.length,
                   separatorBuilder: (_, __) => const SizedBox(width: _Space.lg),
                   itemBuilder: (context, index) {
@@ -1234,7 +1234,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
               clipBehavior: Clip.none,
               controller: _seasonScrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               itemCount: seasons.length,
               separatorBuilder: (_, __) => const SizedBox(width: _Space.sm),
               itemBuilder: (context, index) {
@@ -1331,7 +1331,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                 clipBehavior: Clip.hardEdge,
                 controller: _episodeScrollController,
                 scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 itemCount: _currentSeasonEpisodes.length,
                 separatorBuilder: (_, __) => const SizedBox(width: _Space.md),
                 itemBuilder: (context, index) {
@@ -1456,7 +1456,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                     clipBehavior: Clip.hardEdge,
                     controller: _relatedScrollController,
                     scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     itemCount: related.length,
                     separatorBuilder: (_, __) => const SizedBox(width: _Space.md),
                     itemBuilder: (context, index) {
@@ -1594,7 +1594,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                     clipBehavior: Clip.hardEdge,
                     controller: _similarScrollController,
                     scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     itemCount: _similarItems.length,
                     separatorBuilder: (_, __) => const SizedBox(width: _Space.md),
                     itemBuilder: (context, index) {

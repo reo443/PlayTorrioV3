@@ -169,7 +169,7 @@ class _BookDetailSheetState extends State<BookDetailSheet> {
 
           Expanded(
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

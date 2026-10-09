@@ -287,7 +287,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage>
 
           Positioned.fill(
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: contentMaxWidth),
@@ -898,7 +898,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage>
                   clipBehavior: Clip.none,
                   controller: _castScrollController,
                   scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
+                  physics: const ClampingScrollPhysics(),
                   itemCount: _anime.characters.length,
                   separatorBuilder: (_, __) => const SizedBox(width: _Space.md),
                   itemBuilder: (context, index) {
@@ -1277,7 +1277,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage>
                   clipBehavior: Clip.none,
                   controller: _relationsScrollController,
                   scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
+                  physics: const ClampingScrollPhysics(),
                   itemCount: _anime.relations.length,
                   separatorBuilder: (_, __) => const SizedBox(width: _Space.md),
                   itemBuilder: (context, index) {
@@ -1433,7 +1433,7 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage>
                     clipBehavior: Clip.none,
                     controller: _recsScrollController,
                     scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     itemCount: _anime.recommendations.length,
                     separatorBuilder: (_, __) => const SizedBox(width: _Space.md),
                     itemBuilder: (context, index) {

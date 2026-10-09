@@ -390,7 +390,7 @@ class _WeWatchQuizPageState extends State<WeWatchQuizPage> {
     final progress = (rated / 3.0).clamp(0.0, 1.0);
 
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 20, vertical: 16),
       children: [
         // Taste Profile Header Card
@@ -737,7 +737,7 @@ class _WeWatchQuizPageState extends State<WeWatchQuizPage> {
                       height: 120,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         itemCount: WeWatchService.starterPicks.length,
                         itemBuilder: (context, sIdx) {
                           final starter = WeWatchService.starterPicks[sIdx];
@@ -1000,7 +1000,7 @@ class _WeWatchQuizPageState extends State<WeWatchQuizPage> {
     final recs = _recommendations!;
 
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 20, vertical: 16),
       children: [
         Row(

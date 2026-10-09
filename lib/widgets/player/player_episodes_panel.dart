@@ -286,7 +286,7 @@ class _PlayerEpisodesPanelState extends State<PlayerEpisodesPanel> {
                     children: [
                       ListView.separated(
                         controller: _scrollController,
-                        physics: const BouncingScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         padding: EdgeInsets.symmetric(
                           horizontal: isCompact ? 12 : 16,
                           vertical: 14,
@@ -433,7 +433,7 @@ class _PlayerEpisodesPanelState extends State<PlayerEpisodesPanel> {
             child: ListView.separated(
               controller: _seasonScrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 6),
               itemCount: _seasons.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),

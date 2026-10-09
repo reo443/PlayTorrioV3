@@ -433,7 +433,7 @@ class _MangaPageState extends State<MangaPage> {
 
     return CustomScrollView(
       controller: _scrollController,
-      physics: const BouncingScrollPhysics(),
+      physics: const ClampingScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(
           child: SizedBox(height: 76.0 + topInset), // Spacer for top app bar
@@ -866,7 +866,7 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
                 horizontal: widget.isMobile ? 12.0 : 24.0,
               ),
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               itemCount: widget.readingHistory.length,
               itemBuilder: (context, index) {
                 return _buildHistoryCard(widget.readingHistory[index]);

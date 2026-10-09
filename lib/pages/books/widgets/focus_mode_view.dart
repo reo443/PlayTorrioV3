@@ -315,7 +315,7 @@ class _FocusModeViewState extends State<FocusModeView> {
                       onTapUp: (details) => _handleScreenTap(details, constraints.maxHeight),
                       child: SingleChildScrollView(
                         controller: _scrollController,
-                        physics: const BouncingScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         padding: EdgeInsets.only(
                           top: 120,
                           bottom: constraints.maxHeight * 0.55,

@@ -147,7 +147,7 @@ class _BooksPageState extends State<BooksPage> {
             bottom: false,
             child: CustomScrollView(
               controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               slivers: [
                 // Top App Bar & Search Header
                 SliverToBoxAdapter(
@@ -407,7 +407,7 @@ class _BooksPageState extends State<BooksPage> {
       padding: const EdgeInsets.fromLTRB(24, 4, 24, 20),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
         child: Row(
           children: [
             // Format Filter Chips

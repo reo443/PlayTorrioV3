@@ -583,7 +583,7 @@ class _DropdownOverlayContentState extends State<_DropdownOverlayContent> {
                                       child: GridView.builder(
                                         padding: const EdgeInsets.all(12),
                                         shrinkWrap: true,
-                                        physics: const BouncingScrollPhysics(),
+                                        physics: const ClampingScrollPhysics(),
                                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                           crossAxisCount: 2,
                                           mainAxisSpacing: 8,

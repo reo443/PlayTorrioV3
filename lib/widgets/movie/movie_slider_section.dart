@@ -181,7 +181,7 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
                         clipBehavior: Clip.none,
                         controller: _scrollController,
                         scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
+                        physics: const ClampingScrollPhysics(),
                         padding: EdgeInsets.symmetric(horizontal: sizing.sidePadding),
                         itemCount: totalCount,
                         separatorBuilder: (context, index) {
