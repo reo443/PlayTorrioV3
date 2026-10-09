@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../common/flag_icon.dart';
 import 'player_glass.dart';
 
 class PlayerAudioTrack {
@@ -37,25 +38,6 @@ class PlayerAudioMenu extends StatelessWidget {
     required this.onDelayChanged,
     required this.onClose,
   });
-
-  String _getLanguageEmoji(String? lang) {
-    if (lang == null || lang.isEmpty) return '🔊';
-    final l = lang.toLowerCase();
-    if (l.contains('en') || l.contains('eng')) return '🇺🇸';
-    if (l.contains('ar') || l.contains('ara')) return '🇸🇦';
-    if (l.contains('es') || l.contains('spa')) return '🇪🇸';
-    if (l.contains('fr') || l.contains('fre') || l.contains('fra')) return '🇫🇷';
-    if (l.contains('de') || l.contains('ger') || l.contains('deu')) return '🇩🇪';
-    if (l.contains('it') || l.contains('ita')) return '🇮🇹';
-    if (l.contains('ja') || l.contains('jpn')) return '🇯🇵';
-    if (l.contains('ko') || l.contains('kor')) return '🇰🇷';
-    if (l.contains('zh') || l.contains('chi') || l.contains('zho')) return '🇨🇳';
-    if (l.contains('ru') || l.contains('rus')) return '🇷🇺';
-    if (l.contains('pt') || l.contains('por')) return '🇧🇷';
-    if (l.contains('hi') || l.contains('hin')) return '🇮🇳';
-    if (l.contains('tr') || l.contains('tur')) return '🇹🇷';
-    return '🌐';
-  }
 
   String? _getTrackSubtitle(PlayerAudioTrack track) {
     final parts = <String>[];
@@ -199,10 +181,9 @@ class PlayerAudioMenu extends StatelessWidget {
                                         : null,
                                   ),
                                   const SizedBox(width: 10),
-                                  Text(
-                                    _getLanguageEmoji(track.language),
-                                    style: const TextStyle(fontSize: 15),
-                                  ),
+                                  (track.language == null || track.language!.isEmpty)
+                                      ? const Icon(Icons.volume_up_rounded, size: 14, color: Colors.white54)
+                                      : FlagIcon(language: track.language!, height: 13),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Column(

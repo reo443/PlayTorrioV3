@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:playtorrio/models/subtitle/subtitle_model.dart';
 import 'package:playtorrio/services/subtitles/subtitle_service.dart';
+import '../common/flag_icon.dart';
 import 'player_glass.dart';
 
 /// Full-featured subtitle selection, search, and timing menu.
@@ -163,24 +164,6 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
     } finally {
       if (mounted) setState(() => _isLoadingSearch = false);
     }
-  }
-
-  String _getLanguageEmoji(String lang) {
-    final l = lang.toLowerCase();
-    if (l.contains('en') || l.contains('eng')) return '🇺🇸';
-    if (l.contains('ar') || l.contains('ara')) return '🇸🇦';
-    if (l.contains('es') || l.contains('spa')) return '🇪🇸';
-    if (l.contains('fr') || l.contains('fre')) return '🇫🇷';
-    if (l.contains('de') || l.contains('ger')) return '🇩🇪';
-    if (l.contains('it') || l.contains('ita')) return '🇮🇹';
-    if (l.contains('pt') || l.contains('por')) return '🇧🇷';
-    if (l.contains('ru') || l.contains('rus')) return '🇷🇺';
-    if (l.contains('ja') || l.contains('jpn')) return '🇯🇵';
-    if (l.contains('ko') || l.contains('kor')) return '🇰🇷';
-    if (l.contains('zh') || l.contains('chi')) return '🇨🇳';
-    if (l.contains('hi') || l.contains('hin')) return '🇮🇳';
-    if (l.contains('tr') || l.contains('tur')) return '🇹🇷';
-    return '🌐';
   }
 
   List<SubtitleVariant> _getFilteredVariants() {
@@ -445,7 +428,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
             if (widget.embeddedSubtitles.isNotEmpty) ...[
               _buildLanguagePill(
                 label: 'Embedded',
-                emoji: '⚡',
+                icon: const Icon(Icons.bolt_rounded, size: 12, color: Colors.white70),
                 count: widget.embeddedSubtitles.length,
                 isSelected: _selectedLanguage == '__embedded__',
                 onTap: () => setState(() => _selectedLanguage = '__embedded__'),
@@ -457,7 +440,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
             if (_dynamicGroups.isNotEmpty) ...[
               _buildLanguagePill(
                 label: 'All',
-                emoji: '🌐',
+                icon: const Icon(Icons.public_rounded, size: 12, color: Colors.white70),
                 count: totalVariantsCount,
                 isSelected: _selectedLanguage == '__all__',
                 onTap: () => setState(() => _selectedLanguage = '__all__'),
@@ -471,7 +454,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
                   padding: const EdgeInsets.only(right: 6),
                   child: _buildLanguagePill(
                     label: g.language,
-                    emoji: _getLanguageEmoji(g.language),
+                    icon: FlagIcon(language: g.language, height: 10),
                     count: g.variants.length,
                     isSelected: isSelected,
                     onTap: () => setState(() => _selectedLanguage = g.language),
@@ -775,7 +758,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
                         ),
                         child: Row(
                           children: [
-                            Text(_getLanguageEmoji(g.language), style: const TextStyle(fontSize: 11.5)),
+                            FlagIcon(language: g.language, height: 10.5),
                             const SizedBox(width: 7),
                             Expanded(
                               child: Text(
@@ -930,10 +913,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
                         Row(
                           children: [
                             if (track.language != null && track.language!.isNotEmpty) ...[
-                              Text(
-                                _getLanguageEmoji(track.language!),
-                                style: const TextStyle(fontSize: 12),
-                              ),
+                              FlagIcon(language: track.language!, height: 11),
                               const SizedBox(width: 6),
                             ],
                             Expanded(
@@ -1158,10 +1138,7 @@ class _PlayerSubtitleMenuState extends State<PlayerSubtitleMenu> {
                         Row(
                           children: [
                             if (variant.language.isNotEmpty) ...[
-                              Text(
-                                _getLanguageEmoji(variant.language),
-                                style: const TextStyle(fontSize: 12),
-                              ),
+                              FlagIcon(language: variant.language, height: 11),
                               const SizedBox(width: 5),
                             ],
                             Expanded(
