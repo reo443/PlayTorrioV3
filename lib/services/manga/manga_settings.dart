@@ -64,6 +64,11 @@ abstract final class MangaSettings {
   static const _keyShowScrollTrack = 'manga_show_scroll_track';
   static const _keyAmbientCardGlow = 'manga_ambient_card_glow';
 
+  // Chapter list keys
+  static const _keyChaptersSortDescending = 'manga_chapters_sort_desc';
+  static const _keyChaptersGridLayout = 'manga_chapters_grid';
+  static const _keyShowChapterReleaseDate = 'manga_chapters_show_date';
+
   // Reader keys
   static const _keyDefaultReadingMode = 'manga_default_reading_mode';
   static const _keyReaderMaxWidth = 'manga_reader_max_width';
@@ -89,6 +94,11 @@ abstract final class MangaSettings {
   static final ValueNotifier<bool> showMangaYear = ValueNotifier<bool>(true);
   static final ValueNotifier<bool> showScrollTrack = ValueNotifier<bool>(true);
   static final ValueNotifier<bool> ambientCardGlow = ValueNotifier<bool>(true);
+
+  // Chapter List Notifiers
+  static final ValueNotifier<bool> chaptersSortDescending = ValueNotifier<bool>(true);
+  static final ValueNotifier<bool> chaptersGridLayout = ValueNotifier<bool>(false);
+  static final ValueNotifier<bool> showChapterReleaseDate = ValueNotifier<bool>(false);
 
   // Reader Experience Notifiers
   static final ValueNotifier<MangaReadingMode> defaultReadingMode =
@@ -128,6 +138,10 @@ abstract final class MangaSettings {
     showMangaYear.value = prefs.getBool(_keyShowMangaYear) ?? true;
     showScrollTrack.value = prefs.getBool(_keyShowScrollTrack) ?? true;
     ambientCardGlow.value = prefs.getBool(_keyAmbientCardGlow) ?? true;
+
+    chaptersSortDescending.value = prefs.getBool(_keyChaptersSortDescending) ?? true;
+    chaptersGridLayout.value = prefs.getBool(_keyChaptersGridLayout) ?? false;
+    showChapterReleaseDate.value = prefs.getBool(_keyShowChapterReleaseDate) ?? false;
 
     final readModeStr = prefs.getString(_keyDefaultReadingMode);
     defaultReadingMode.value = MangaReadingMode.values.firstWhere(
@@ -193,6 +207,27 @@ abstract final class MangaSettings {
     changeNotifier.value++;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyShowContinueReading, val);
+  }
+
+  static Future<void> setChaptersSortDescending(bool val) async {
+    chaptersSortDescending.value = val;
+    changeNotifier.value++;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyChaptersSortDescending, val);
+  }
+
+  static Future<void> setChaptersGridLayout(bool val) async {
+    chaptersGridLayout.value = val;
+    changeNotifier.value++;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyChaptersGridLayout, val);
+  }
+
+  static Future<void> setShowChapterReleaseDate(bool val) async {
+    showChapterReleaseDate.value = val;
+    changeNotifier.value++;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyShowChapterReleaseDate, val);
   }
 
   static Future<void> setCardDensity(MangaCardDensity val) async {

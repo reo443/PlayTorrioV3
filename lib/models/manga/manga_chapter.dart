@@ -4,6 +4,7 @@ class MangaChapter {
   final String name;
   final String url;
   final String rawName;
+  final String releaseDate;
 
   MangaChapter({
     required this.id,
@@ -11,9 +12,10 @@ class MangaChapter {
     this.name = '',
     this.url = '',
     this.rawName = '',
+    this.releaseDate = '',
   });
 
-  factory MangaChapter.fromRaw(String id, String rawName, String url) {
+  factory MangaChapter.fromRaw(String id, String rawName, String url, {String releaseDate = ''}) {
     var cleanRaw = rawName.replaceAll(RegExp(r'Last Read', caseSensitive: false), '').trim();
 
     // Match numbers like 1, 1.5, 100, 0.5
@@ -40,6 +42,7 @@ class MangaChapter {
       name: title,
       url: url,
       rawName: cleanRaw,
+      releaseDate: releaseDate,
     );
   }
 
@@ -53,6 +56,7 @@ class MangaChapter {
       name: json['name'] ?? '',
       url: json['url'] ?? '',
       rawName: json['raw_name'] ?? '',
+      releaseDate: json['release_date'] ?? '',
     );
   }
 
@@ -63,6 +67,7 @@ class MangaChapter {
       'name': name,
       'url': url,
       'raw_name': rawName,
+      'release_date': releaseDate,
     };
   }
 }

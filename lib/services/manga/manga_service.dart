@@ -366,7 +366,9 @@ class MangaService {
         }
 
         if (chapterName.isNotEmpty) {
-          chapters.add(MangaChapter.fromRaw(chapterId, chapterName, href));
+          final timeEl = a.querySelector('time');
+          final releaseDate = timeEl?.attributes['datetime'] ?? '';
+          chapters.add(MangaChapter.fromRaw(chapterId, chapterName, href, releaseDate: releaseDate));
         }
       }
 

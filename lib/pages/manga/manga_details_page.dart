@@ -4,8 +4,10 @@ import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 
 import '../../models/manga/manga.dart';
 import '../../models/manga/manga_chapter.dart';
+import '../../services/home/home_page_settings.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../services/manga/manga_service.dart';
+import '../../services/manga/manga_settings.dart';
 import 'manga_reader_page.dart';
 
 class MangaDetailsPage extends StatefulWidget {
@@ -99,12 +101,31 @@ class _MangaDetailsPageState extends State<MangaDetailsPage> {
 
   List<MangaChapter> get _filteredChapters {
     if (_chapters == null) return [];
-    if (_chapterSearchQuery.isEmpty) return _chapters!;
-
     final query = _chapterSearchQuery.toLowerCase();
-    return _chapters!.where((c) =>
-        c.name.toLowerCase().contains(query) ||
-        c.number.toString().contains(query)).toList();
+    final list = query.isEmpty
+        ? List<MangaChapter>.of(_chapters!)
+        : _chapters!
+            .where((c) =>
+                c.name.toLowerCase().contains(query) ||
+                c.number.toString().contains(query))
+            .toList();
+
+    final desc = MangaSettings.chaptersSortDescending.value;
+    final origPos = <String, int>{};
+    for (var i = 0; i < _chapters!.length; i++) {
+      origPos[_chapters![i].id] = i;
+    }
+
+    list.sort((a, b) {
+      final cmp = a.number.compareTo(b.number);
+      final effective = desc ? -cmp : cmp;
+      if (effective != 0) return effective;
+      final pa = origPos[a.id] ?? 0;
+      final pb = origPos[b.id] ?? 0;
+      return desc ? pb.compareTo(pa) : pa.compareTo(pb);
+    });
+
+    return list;
   }
 
   List<MangaChapter> get _paginatedChapters {
@@ -122,41 +143,48 @@ class _MangaDetailsPageState extends State<MangaDetailsPage> {
     final coverUrl = displayManga.coverNormal.isNotEmpty
         ? displayManga.coverNormal
         : displayManga.coverSmall;
+    final bgMode = HomePageSettings.detailsBackground.value;
+    final showBackdrop = bgMode == DetailsBackground.backdrop;
+    final solidBg = bgMode == DetailsBackground.black
+        ? Colors.black
+        : const Color(0xFF0F111A);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F111A),
+      backgroundColor: solidBg,
       body: Stack(
         children: [
           // Background Hero Cover with ambient blur
-          Positioned.fill(
-            child: Hero(
-              tag: 'manga_cover_${displayManga.id}',
-              child: Image.network(
-                coverUrl,
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-                errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFF0F111A)),
-              ),
-            ),
-          ),
-
-          // Dark Gradient Overlay
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFF0F111A).withValues(alpha: 0.65),
-                    const Color(0xFF0F111A).withValues(alpha: 0.96),
-                    const Color(0xFF0F111A),
-                  ],
-                  stops: const [0.0, 0.45, 1.0],
+          if (showBackdrop)
+            Positioned.fill(
+              child: Hero(
+                tag: 'manga_cover_${displayManga.id}',
+                child: Image.network(
+                  coverUrl,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                  errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFF0F111A)),
                 ),
               ),
             ),
-          ),
+
+          // Dark Gradient Overlay
+          if (showBackdrop)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xFF0F111A).withValues(alpha: 0.65),
+                      const Color(0xFF0F111A).withValues(alpha: 0.96),
+                      const Color(0xFF0F111A),
+                    ],
+                    stops: const [0.0, 0.45, 1.0],
+                  ),
+                ),
+              ),
+            ),
 
           // Main Scrollable Content
           LiquidGlassView(
@@ -266,6 +294,8 @@ class _MangaDetailsPageState extends State<MangaDetailsPage> {
                               letterSpacing: -0.2,
                             ),
                           ),
+                          const SizedBox(width: 6),
+                          _buildChaptersSettingsButton(palette, isDesktop: true),
                           if (_chapters != null) ...[
                             const SizedBox(width: 10),
                             Container(
@@ -307,6 +337,8 @@ class _MangaDetailsPageState extends State<MangaDetailsPage> {
                               letterSpacing: -0.2,
                             ),
                           ),
+                          const SizedBox(width: 6),
+                          _buildChaptersSettingsButton(palette, isDesktop: false),
                           if (_chapters != null) ...[
                             const SizedBox(width: 8),
                             Container(
@@ -363,83 +395,113 @@ class _MangaDetailsPageState extends State<MangaDetailsPage> {
             ),
           )
         else ...[
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final chapter = paginatedList[index];
-                final originalIndex = _chapters!.indexOf(chapter);
+          if (MangaSettings.chaptersGridLayout.value)
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(horizontalPad, 6, horizontalPad, 6),
+              sliver: SliverGrid(
+                gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 250,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 2.5,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) =>
+                      _buildChapterGridCell(paginatedList[index], palette),
+                  childCount: paginatedList.length,
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final chapter = paginatedList[index];
+                  final originalIndex = _chapters!.indexOf(chapter);
 
-                final isRead = _historyEntry != null &&
-                    _historyEntry!['chapterIndex'] < originalIndex;
-                final isCurrent = _historyEntry != null &&
-                    _historyEntry!['chapterIndex'] == originalIndex;
+                  final isRead = _historyEntry != null &&
+                      _historyEntry!['chapterIndex'] < originalIndex;
+                  final isCurrent = _historyEntry != null &&
+                      _historyEntry!['chapterIndex'] == originalIndex;
+                  final showDate =
+                      MangaSettings.showChapterReleaseDate.value &&
+                          chapter.releaseDate.isNotEmpty;
 
-                return Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPad,
-                    vertical: 3.5,
-                  ),
-                  child: ListTile(
-                    onTap: () => _startReading(originalIndex),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: isCurrent
-                            ? palette.primaryColor.withValues(alpha: 0.40)
-                            : Colors.white.withValues(alpha: 0.05),
-                      ),
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPad,
+                      vertical: 3.5,
                     ),
-                    tileColor: isCurrent
-                        ? palette.primaryColor.withValues(alpha: 0.18)
-                        : Colors.white.withValues(alpha: 0.04),
-                    leading: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: isCurrent
-                            ? palette.primaryColor.withValues(alpha: 0.3)
-                            : Colors.white.withValues(alpha: 0.08),
-                        shape: BoxShape.circle,
+                    child: ListTile(
+                      onTap: () => _startReading(originalIndex),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: isCurrent
+                              ? palette.primaryColor.withValues(alpha: 0.40)
+                              : Colors.white.withValues(alpha: 0.05),
+                        ),
                       ),
-                      child: Center(
-                        child: Text(
-                          chapter.number > 0
-                              ? chapter.number.toStringAsFixed(
-                                  chapter.number.truncateToDouble() == chapter.number ? 0 : 1)
-                              : '#',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11.5,
+                      tileColor: isCurrent
+                          ? palette.primaryColor.withValues(alpha: 0.18)
+                          : Colors.white.withValues(alpha: 0.04),
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: isCurrent
+                              ? palette.primaryColor.withValues(alpha: 0.3)
+                              : Colors.white.withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            chapter.number > 0
+                                ? chapter.number.toStringAsFixed(
+                                    chapter.number.truncateToDouble() == chapter.number ? 0 : 1)
+                                : '#',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    title: Text(
-                      (chapter.name.isNotEmpty && chapter.name.toLowerCase() != 'last read')
-                          ? chapter.name
-                          : (chapter.number > 0
-                              ? 'Chapter ${chapter.number.toStringAsFixed(chapter.number.truncateToDouble() == chapter.number ? 0 : 1)}'
-                              : 'Chapter'),
-                      style: TextStyle(
-                        color: isRead ? Colors.white54 : Colors.white,
-                        fontSize: isDesktop ? 14.5 : 13.5,
-                        fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                      title: Text(
+                        (chapter.name.isNotEmpty && chapter.name.toLowerCase() != 'last read')
+                            ? chapter.name
+                            : (chapter.number > 0
+                                ? 'Chapter ${chapter.number.toStringAsFixed(chapter.number.truncateToDouble() == chapter.number ? 0 : 1)}'
+                                : 'Chapter'),
+                        style: TextStyle(
+                          color: isRead ? Colors.white54 : Colors.white,
+                          fontSize: isDesktop ? 14.5 : 13.5,
+                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      subtitle: showDate
+                          ? Text(
+                              _formatReleaseDate(chapter.releaseDate),
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 11.5,
+                              ),
+                            )
+                          : null,
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white38,
+                        size: 20,
+                      ),
                     ),
-                    trailing: const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.white38,
-                      size: 20,
-                    ),
-                  ),
-                );
-              },
-              childCount: paginatedList.length,
+                  );
+                },
+                childCount: paginatedList.length,
+              ),
             ),
-          ),
 
           // Pagination Controls
           if (totalPages > 1)
@@ -478,6 +540,185 @@ class _MangaDetailsPageState extends State<MangaDetailsPage> {
 
         const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Chapter list settings (sort order, layout, release dates)
+  // ─────────────────────────────────────────────────────────────────────
+  Widget _buildChaptersSettingsButton(AppThemePalette palette, {required bool isDesktop}) {
+    return PopupMenuButton<String>(
+      tooltip: 'Chapter list options',
+      color: const Color(0xFF15171F),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 'sort_desc':
+            MangaSettings.setChaptersSortDescending(true);
+            break;
+          case 'sort_asc':
+            MangaSettings.setChaptersSortDescending(false);
+            break;
+          case 'grid':
+            MangaSettings.setChaptersGridLayout(!MangaSettings.chaptersGridLayout.value);
+            break;
+          case 'date':
+            MangaSettings.setShowChapterReleaseDate(!MangaSettings.showChapterReleaseDate.value);
+            break;
+        }
+        setState(() {});
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem<String>(
+          enabled: false,
+          height: 32,
+          child: Text(
+            'SORT ORDER',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+              color: Colors.white38,
+            ),
+          ),
+        ),
+        CheckedPopupMenuItem<String>(
+          value: 'sort_desc',
+          checked: MangaSettings.chaptersSortDescending.value,
+          child: const Text('Newest First (DSC)', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+        ),
+        CheckedPopupMenuItem<String>(
+          value: 'sort_asc',
+          checked: !MangaSettings.chaptersSortDescending.value,
+          child: const Text('Oldest First (ASC)', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+        ),
+        const PopupMenuDivider(height: 1),
+        CheckedPopupMenuItem<String>(
+          value: 'grid',
+          checked: MangaSettings.chaptersGridLayout.value,
+          child: const Text('Grid Layout', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+        ),
+        CheckedPopupMenuItem<String>(
+          value: 'date',
+          checked: MangaSettings.showChapterReleaseDate.value,
+          child: const Text('Show Release Date', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+        ),
+      ],
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Icon(
+          Icons.tune_rounded,
+          size: isDesktop ? 16 : 15,
+          color: Colors.white70,
+        ),
+      ),
+    );
+  }
+
+  String _formatReleaseDate(String iso) {
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return iso;
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+  }
+
+  Widget _buildChapterGridCell(MangaChapter chapter, AppThemePalette palette) {
+    final originalIndex = _chapters!.indexOf(chapter);
+    final isRead =
+        _historyEntry != null && _historyEntry!['chapterIndex'] < originalIndex;
+    final isCurrent =
+        _historyEntry != null && _historyEntry!['chapterIndex'] == originalIndex;
+    final showDate = MangaSettings.showChapterReleaseDate.value &&
+        chapter.releaseDate.isNotEmpty;
+
+    return GestureDetector(
+      onTap: () => _startReading(originalIndex),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: isCurrent
+              ? palette.primaryColor.withValues(alpha: 0.18)
+              : Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isCurrent
+                ? palette.primaryColor.withValues(alpha: 0.40)
+                : Colors.white.withValues(alpha: 0.05),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isCurrent
+                        ? palette.primaryColor.withValues(alpha: 0.3)
+                        : Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    chapter.number > 0
+                        ? chapter.number.toStringAsFixed(
+                            chapter.number.truncateToDouble() == chapter.number ? 0 : 1)
+                        : '#',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10.5,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.white24,
+                  size: 16,
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              (chapter.name.isNotEmpty && chapter.name.toLowerCase() != 'last read')
+                  ? chapter.name
+                  : (chapter.number > 0
+                      ? 'Chapter ${chapter.number.toStringAsFixed(chapter.number.truncateToDouble() == chapter.number ? 0 : 1)}'
+                      : 'Chapter'),
+              style: TextStyle(
+                color: isRead ? Colors.white54 : Colors.white,
+                fontSize: 12.5,
+                fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (showDate) ...[
+              const SizedBox(height: 2),
+              Text(
+                _formatReleaseDate(chapter.releaseDate),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white38, fontSize: 10.5),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
