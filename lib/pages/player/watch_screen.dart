@@ -660,23 +660,24 @@ class _WatchScreenState extends State<WatchScreen>
                     ),
                     if (_sources.isNotEmpty) ...[
                       const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
+                      Row(
                         children: [
                           _buildTypeChip('all', 'All (${_sources.length})', Icons.apps_rounded, null),
+                          const SizedBox(width: 6),
                           _buildTypeChip(
                             'debrid',
                             'Debrid (${_sources.where((s) => s.isDebrid).length})',
                             Icons.bolt_rounded,
                             const Color(0xFF00E5FF),
                           ),
+                          const SizedBox(width: 6),
                           _buildTypeChip(
                             'torrent',
                             'Torrents (${_sources.where((s) => s.isTorrent).length})',
                             Icons.share_rounded,
                             const Color(0xFF7C5CFF),
                           ),
+                          const SizedBox(width: 6),
                           _buildTypeChip(
                             'direct',
                             'Direct (${_sources.where((s) => s.isHttpDirect).length})',
@@ -1251,23 +1252,24 @@ class _WatchScreenState extends State<WatchScreen>
 
         // Stream Type Filter Bar (All / Debrid / Torrents / Direct HTTP)
         if (_sources.isNotEmpty) ...[
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
+          Row(
             children: [
               _buildTypeChip('all', 'All (${_sources.length})', Icons.apps_rounded, null),
+              const SizedBox(width: 6),
               _buildTypeChip(
                 'debrid',
                 'Debrid (${_sources.where((s) => s.isDebrid).length})',
                 Icons.bolt_rounded,
                 const Color(0xFF00E5FF),
               ),
+              const SizedBox(width: 6),
               _buildTypeChip(
                 'torrent',
                 'Torrents (${_sources.where((s) => s.isTorrent).length})',
                 Icons.share_rounded,
                 const Color(0xFF7C5CFF),
               ),
+              const SizedBox(width: 6),
               _buildTypeChip(
                 'direct',
                 'Direct (${_sources.where((s) => s.isHttpDirect).length})',
@@ -1306,28 +1308,37 @@ class _WatchScreenState extends State<WatchScreen>
     final isSelected = _selectedTypeFilter == typeKey;
     final activeColor = color ?? _C.accent;
 
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      selectedColor: activeColor.withValues(alpha: 0.25),
-      backgroundColor: const Color(0xFF13151C),
-      labelStyle: const TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.w700,
-        fontSize: 11.5,
+    return Expanded(
+      child: ChoiceChip(
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          softWrap: false,
+        ),
+        selected: isSelected,
+        selectedColor: activeColor.withValues(alpha: 0.25),
+        backgroundColor: const Color(0xFF13151C),
+        labelStyle: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 11.5,
+        ),
+        side: BorderSide(
+          color: isSelected ? activeColor : Colors.white.withValues(alpha: 0.1),
+          width: 1.2,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        onSelected: (selected) {
+          if (selected) {
+            setState(() {
+              _selectedTypeFilter = typeKey;
+            });
+          }
+        },
       ),
-      side: BorderSide(
-        color: isSelected ? activeColor : Colors.white.withValues(alpha: 0.1),
-        width: 1.2,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      onSelected: (selected) {
-        if (selected) {
-          setState(() {
-            _selectedTypeFilter = typeKey;
-          });
-        }
-      },
     );
   }
 
