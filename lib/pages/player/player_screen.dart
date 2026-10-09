@@ -42,6 +42,7 @@ import '../../widgets/player/player_sources_panel.dart';
 import '../../widgets/player/player_volume_control.dart';
 import '../../widgets/player/sub_sync_bar.dart';
 import '../../widgets/player/text_sync_overlay.dart';
+import '../../widgets/common/modern_toast.dart';
 import '../../models/download/download_task_model.dart';
 import '../../services/download/download_service.dart';
 import '../../utils/download/download_path_helper.dart';
@@ -853,19 +854,21 @@ class _PlayerScreenState extends State<PlayerScreen>
     _player.setSubtitleTrack(SubtitleTrack.no());
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Downloading ${variant.language} subtitle...'),
-          duration: const Duration(seconds: 2),
-        ),
+      ModernToast.show(
+        context,
+        message: 'Downloading ${variant.language} subtitle...',
+        type: ToastType.info,
       );
     }
 
     final path = await SubtitleService().downloadSubtitle(variant);
     if (path == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to download subtitle')),
+        ModernToast.show(
+          context,
+          message: 'Failed to download subtitle',
+          type: ToastType.error,
+          duration: const Duration(milliseconds: 3000),
         );
       }
       return;
@@ -895,11 +898,10 @@ class _PlayerScreenState extends State<PlayerScreen>
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${variant.language} subtitle loaded (${_currentCues.length} lines)'),
-          duration: const Duration(seconds: 2),
-        ),
+      ModernToast.show(
+        context,
+        message: '${variant.language} subtitle loaded (${_currentCues.length} lines)',
+        type: ToastType.success,
       );
     }
   }
@@ -959,8 +961,10 @@ class _PlayerScreenState extends State<PlayerScreen>
       _setSubtitleScale(_subtitleScale);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Subtitle timing synchronized and saved!')),
+        ModernToast.show(
+          context,
+          message: 'Subtitle timing synchronized and saved!',
+          type: ToastType.success,
         );
       }
     }
