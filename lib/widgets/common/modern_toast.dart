@@ -125,15 +125,18 @@ class _ToastOverlayState extends State<_ToastOverlay>
       top: topInset + 14,
       left: 24,
       right: 24,
-      child: FadeTransition(
-        opacity: opacity,
-        child: SlideTransition(
-          position: slide,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: FractionallySizedBox(
-              widthFactor: 0.75,
-              child: _buildGlassPill(context),
+      child: Material(
+        type: MaterialType.transparency,
+        child: FadeTransition(
+          opacity: opacity,
+          child: SlideTransition(
+            position: slide,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: FractionallySizedBox(
+                widthFactor: 0.75,
+                child: _buildGlassPill(context),
+              ),
             ),
           ),
         ),
