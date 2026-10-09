@@ -23,6 +23,7 @@ import '../../services/theme/glass_settings.dart';
 import '../../services/trakt/trakt_service.dart';
 import '../../services/simkl/simkl_service.dart';
 import '../../services/player/player_settings.dart';
+import '../../services/stream/stream_bitrate_resolver.dart';
 import '../../services/discord/discord_rpc_service.dart';
 
 import '../../widgets/player/player_glass.dart';
@@ -38,6 +39,7 @@ import '../../widgets/player/player_subtitle_menu.dart';
 import '../../widgets/player/player_sub_style_modal.dart';
 import '../../widgets/player/player_skip_button.dart';
 import '../../widgets/player/player_episodes_panel.dart';
+import '../../widgets/player/player_quality_menu.dart';
 import '../../widgets/player/player_sources_panel.dart';
 import '../../widgets/player/player_volume_control.dart';
 import '../../widgets/player/sub_sync_bar.dart';
@@ -183,7 +185,15 @@ class _PlayerScreenState extends State<PlayerScreen>
   String? _sourcesErrorMessage;
   final Map<String, List<StreamSource>> _cachedSourcesByEpisode = {};
   String? _activeStreamUrl;
+  Map<String, String>? _activeStreamHeaders;
   bool _wasFullscreenBeforeEntering = false;
+
+  // Quality selector state (per-stream, adaptive HLS only)
+  List<HlsVariant>? _qualityVariants;
+  bool _isResolvingQualities = false;
+  bool _qualityVariantsResolved = false;
+  String _selectedQuality = 'auto'; // 'auto' or bandwidth kbps as string
+  String? _masterStreamUrl; // master playlist URL (for switching back to Auto)
 
   @override
   void initState() {
@@ -384,6 +394,8 @@ class _PlayerScreenState extends State<PlayerScreen>
 
       final cleanUri = Uri.parse(sanitizedUrlStr);
       _activeStreamUrl = sanitizedUrlStr;
+      _masterStreamUrl = sanitizedUrlStr;
+      _activeStreamHeaders = Map<String, String>.from(playerHeaders);
       print('[PlayerScreen] Opening direct network stream URL: $cleanUri (headers: ${playerHeaders.keys})');
 
       if (!mounted) return;
@@ -794,6 +806,9 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _toggleMenu(String menuName) {
+    if (menuName == 'quality') {
+      _ensureQualityVariants();
+    }
     setState(() {
       if (_activeMenu == menuName) {
         _activeMenu = null;
@@ -805,6 +820,101 @@ class _PlayerScreenState extends State<PlayerScreen>
         _hideTimer?.cancel();
       }
     });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Quality selector (adaptive HLS streams)
+  // ─────────────────────────────────────────────────────────────────────
+  void _ensureQualityVariants() {
+    if (_qualityVariantsResolved || _isResolvingQualities) return;
+    final url = _activeStreamUrl;
+    if (url == null || !url.startsWith('http')) {
+      _qualityVariantsResolved = true;
+      return;
+    }
+
+    _isResolvingQualities = true;
+    StreamBitrateResolver.resolveVariants(_currentSource).then((variants) {
+      if (!mounted) return;
+      setState(() {
+        _qualityVariants = variants;
+        _isResolvingQualities = false;
+        _qualityVariantsResolved = true;
+        if (variants == null || variants.length <= 1) {
+          _selectedQuality = 'auto';
+        }
+      });
+    });
+  }
+
+  String _qualityLabelFor(String value) {
+    if (value == 'auto') return 'Auto (Best)';
+    final kbps = int.tryParse(value);
+    final match = _qualityVariants?.where((v) => v.bandwidthKbps == kbps).firstOrNull;
+    return match?.label ?? value;
+  }
+
+  Future<void> _selectQuality(String value) async {
+    if (value == _selectedQuality) return;
+    _selectedQuality = value;
+
+    final url = _activeStreamUrl;
+    if (url == null || !url.startsWith('http')) return;
+
+    final label = _qualityLabelFor(value);
+    final kbps = int.tryParse(value);
+    final variant = kbps == null
+        ? null
+        : _qualityVariants?.where((v) => v.bandwidthKbps == kbps).firstOrNull;
+
+    // Prefer opening the variant's own playlist URL — deterministic, no
+    // reliance on mpv's bandwidth-matching heuristics. Fall back to the
+    // hls-bitrate ceiling when the manifest didn't expose a variant URI.
+    final targetUrl = value == 'auto'
+        ? (_masterStreamUrl ?? url)
+        : (variant?.uri ?? (_masterStreamUrl ?? url));
+    final useBitrateCap = value != 'auto' && variant?.uri == null;
+
+    setState(() => _activeMenu = null);
+
+    try {
+      // mpv's hls-bitrate is a ceiling in bits per second — the variant
+      // list stores kbps, so convert before applying.
+      final cap =
+          useBitrateCap ? '${(int.tryParse(value) ?? 0) * 1000}' : 'max';
+      PlayerSettings.hlsBitrateCap.value = cap;
+      final platform = _player.platform as dynamic;
+      await platform?.setProperty('hls-bitrate', cap);
+      if (!mounted) return;
+      ModernToast.show(
+        context,
+        message: 'Switching to $label...',
+        type: ToastType.info,
+      );
+
+      final resumePos = _position > Duration.zero ? _position : _player.state.position;
+      await _player.open(
+        Media(targetUrl, httpHeaders: _activeStreamHeaders, start: resumePos),
+        play: true,
+      );
+      await PlayerSettings.applyPostOpenProperties(_player);
+      _player.play();
+
+      // Keep future reopens (watchdog fallback, episode resume) on the
+      // same variant the user picked.
+      setState(() {
+        _activeStreamUrl = targetUrl;
+        _masterStreamUrl = _masterStreamUrl ?? url;
+      });
+    } catch (e) {
+      debugPrint('[PlayerScreen] Quality switch error: $e');
+      if (!mounted) return;
+      ModernToast.show(
+        context,
+        message: 'Could not switch quality',
+        type: ToastType.error,
+      );
+    }
   }
 
   void _selectEmbeddedSubtitle(PlayerEmbeddedSubtitle embedded) {
@@ -1189,6 +1299,11 @@ class _PlayerScreenState extends State<PlayerScreen>
     setState(() {
       _currentSource = newSource;
       _currentEpisode = newEpisode;
+      _selectedQuality = 'auto';
+      _qualityVariants = null;
+      _qualityVariantsResolved = false;
+      _masterStreamUrl = null;
+      PlayerSettings.hlsBitrateCap.value = 'max';
       final showName = widget.detail?.name ?? widget.title;
       final epNum = newEpisode.episode ?? 1;
       final sNum = newEpisode.season ?? 1;
@@ -1980,6 +2095,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                       title: widget.detail?.name ?? _currentTitle,
                       subtitle: episodeSubtitle,
                       quality: _currentSource.name,
+                      onToggleQualityMenu:
+                          (!_isLoading && _activeStreamUrl != null && _activeStreamUrl!.startsWith('http'))
+                              ? () => _toggleMenu('quality')
+                              : null,
                       onDownload: (_isLoading || isOfflineFile) ? null : _handleDownloadMedia,
                       isDownloading: isDownloading,
                       onCopyStreamUrl: _isLoading ? null : _handleCopyStreamUrl,
@@ -2194,6 +2313,23 @@ class _PlayerScreenState extends State<PlayerScreen>
                   } catch (_) {}
                   _showAudioHudToast('AUDIO SYNC: ${sec > 0 ? "+" : ""}${sec.toStringAsFixed(2)}s');
                 },
+                onClose: () => setState(() => _activeMenu = null),
+              ),
+            ),
+
+          // Floating Quality Menu Popover
+          if (_activeMenu == 'quality' && !_isLoading)
+            Positioned(
+              bottom: MediaQuery.sizeOf(context).height < 500
+                  ? 46
+                  : (MediaQuery.sizeOf(context).width < 680 ? 76 : 96),
+              right: MediaQuery.sizeOf(context).width < 680 ? 12 : 28,
+              child: PlayerQualityMenu(
+                variants: _qualityVariants,
+                isResolving: _isResolvingQualities,
+                selectedQuality: _selectedQuality,
+                currentHeight: _player.state.height,
+                onQualitySelected: _selectQuality,
                 onClose: () => setState(() => _activeMenu = null),
               ),
             ),

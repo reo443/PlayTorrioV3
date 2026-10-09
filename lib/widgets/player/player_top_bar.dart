@@ -11,6 +11,7 @@ class PlayerTopBar extends StatelessWidget {
   final bool isEpisodesActive;
   final VoidCallback? onScreenshot;
   final VoidCallback? onToggleAspect;
+  final VoidCallback? onToggleQualityMenu;
   final VoidCallback? onCast;
   final VoidCallback? onDownload;
   final bool isDownloading;
@@ -27,6 +28,7 @@ class PlayerTopBar extends StatelessWidget {
     this.isEpisodesActive = false,
     this.onScreenshot,
     this.onToggleAspect,
+    this.onToggleQualityMenu,
     this.onCast,
     this.onDownload,
     this.isDownloading = false,
@@ -202,6 +204,17 @@ class PlayerTopBar extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
+              ],
+              if (onToggleQualityMenu != null) ...[
+                PlayerIconButton(
+                  size: 40,
+                  iconSize: 20,
+                  icon: const Icon(Icons.high_quality_rounded),
+                  tooltip: 'Quality',
+                  backgroundColor: const Color(0x22080C12),
+                  onPressed: onToggleQualityMenu,
+                ),
+                const SizedBox(width: 8),
               ],
               if (onCopyStreamUrl != null) ...[
                 PlayerIconButton(

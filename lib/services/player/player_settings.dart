@@ -184,6 +184,11 @@ abstract final class PlayerSettings {
   /// Android Direct Surface (SurfaceProducer / SurfaceView) toggle. Default: false (off).
   static final ValueNotifier<bool> enableSurfaceProducer = ValueNotifier<bool>(false);
 
+  /// Session-level HLS quality cap for adaptive streams ('max' = auto/best,
+  /// or a bitrate ceiling in bits-per-second as string). Not persisted —
+  /// each new stream starts at max quality.
+  static final ValueNotifier<String> hlsBitrateCap = ValueNotifier<String>('max');
+
   /// Touch gestures in the video player (swipe for brightness/volume, long-press speed boost). Default: true.
   static final ValueNotifier<bool> enablePlayerGestures = ValueNotifier<bool>(true);
 
@@ -563,7 +568,7 @@ abstract final class PlayerSettings {
       await applyStreamContinuity(player, isLive: isLive);
 
       // Fast probing to avoid stream startup freezes and demuxer timeouts
-      await platform.setProperty('hls-bitrate', 'max');
+      await platform.setProperty('hls-bitrate', hlsBitrateCap.value);
       await platform.setProperty('demuxer-lavf-probesize', isLive ? '4194304' : '8388608');
       await platform.setProperty('demuxer-lavf-analyzeduration', isLive ? '3' : '5');
       await platform.setProperty('demuxer-lavf-o', 'strict=experimental');
