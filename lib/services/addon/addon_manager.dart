@@ -399,7 +399,7 @@ class AddonManager {
 
         return MovieSection(
           title: title,
-          subtitle: 'Cinemeta',
+          subtitle: '',
           contentType: type,
           addonBaseUrl: cinemetaBase,
           catalog: resolveCatalog(type, catalogId, title),
@@ -444,7 +444,7 @@ class AddonManager {
 
         return MovieSection(
           title: title,
-          subtitle: 'Cinemeta',
+          subtitle: '',
           contentType: 'mixed',
           addonBaseUrl: cinemetaBase,
           catalog: AddonCatalog(type: 'mixed', id: 'trending_$windowId', name: title),
