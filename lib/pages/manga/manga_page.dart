@@ -15,7 +15,6 @@ import '../../widgets/common/custom_scroll_track.dart';
 import '../../widgets/common/slider_arrow.dart';
 import '../../widgets/manga/manga_card.dart';
 import '../../models/manga/manga_browse_filter.dart';
-import '../settings/appearance/manga_settings_page.dart';
 import 'manga_filter_sheet.dart';
 import 'manga_reader_page.dart';
 
@@ -195,62 +194,65 @@ class _MangaPageState extends State<MangaPage> {
     );
   }
 
-  Widget _buildFilterButton(bool isMobile) {
+  /// Glass "Filters" button for the app bar, with an active-filter count
+  /// badge. Opens the manga filter sheet.
+  Widget _buildAppBarFilterButton() {
     final count = _filters.activeCount;
     final hasActive = count > 0;
     final palette = AppThemeService.currentPalette.value;
 
-    return GestureDetector(
-      onTap: _openFilterSheet,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        decoration: BoxDecoration(
-          color: hasActive
-              ? palette.primaryColor
-              : Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
+        child: Container(
+          decoration: BoxDecoration(
             color: hasActive
-                ? palette.primaryColor
-                : Colors.white.withValues(alpha: 0.1),
+                ? palette.primaryColor.withValues(alpha: 0.25)
+                : Colors.white.withValues(alpha: 0.05),
+            border: Border.all(
+              color: hasActive
+                  ? palette.primaryColor.withValues(alpha: 0.6)
+                  : Colors.white.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
+            borderRadius: BorderRadius.circular(24),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.tune_rounded,
-              size: isMobile ? 16 : 17,
-              color: hasActive ? Colors.white : Colors.white70,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Filters',
-              style: TextStyle(
-                color: hasActive ? Colors.white : Colors.white70,
-                fontWeight: FontWeight.bold,
-                fontSize: isMobile ? 12.5 : 13.5,
-              ),
-            ),
-            if (count > 0) ...[
-              const SizedBox(width: 7),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(8),
+          child: IconButton(
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  Icons.tune_rounded,
+                  color: hasActive ? palette.primaryColor : Colors.white70,
                 ),
-                child: Text(
-                  '$count',
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                if (count > 0)
+                  Positioned(
+                    top: -4,
+                    right: -5,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: palette.primaryColor,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF10131C), width: 1.5),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ],
+              ],
+            ),
+            tooltip: 'Filters',
+            onPressed: _openFilterSheet,
+            splashRadius: 20,
+          ),
         ),
       ),
     );
@@ -282,161 +284,6 @@ class _MangaPageState extends State<MangaPage> {
     _mangaService.removeHistory(mangaId).then((_) {
       _loadHistory();
     });
-  }
-
-  void _showMangaCustomizer(BuildContext context) {
-    final palette = AppThemeService.currentPalette.value;
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: const Color(0xFF10131C),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Padding(
-              padding: const EdgeInsets.all(22),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.tune_rounded, color: palette.primaryColor, size: 20),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Customize Manga Section',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, color: Colors.white54, size: 20),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(color: Colors.white.withValues(alpha: 0.08)),
-                  const SizedBox(height: 12),
-
-                  const Text(
-                    'Poster Card Density',
-                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 8),
-                  ValueListenableBuilder<MangaCardDensity>(
-                    valueListenable: MangaSettings.cardDensity,
-                    builder: (context, density, _) {
-                      return Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: MangaCardDensity.values.map((d) {
-                          final isSelected = d == density;
-                          return ChoiceChip(
-                            label: Text(d.label),
-                            selected: isSelected,
-                            selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                            backgroundColor: const Color(0xFF0D1017),
-                            labelStyle: TextStyle(
-                              color: isSelected ? palette.primaryColor : Colors.white70,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                              fontSize: 12,
-                            ),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? palette.primaryColor.withValues(alpha: 0.6)
-                                  : Colors.white.withValues(alpha: 0.08),
-                            ),
-                            onSelected: (selected) {
-                              if (selected) MangaSettings.setCardDensity(d);
-                            },
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  ValueListenableBuilder<bool>(
-                    valueListenable: MangaSettings.enableAmbientLights,
-                    builder: (context, enabled, _) {
-                      return SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Moving Ambient Background Glow', style: TextStyle(color: Colors.white, fontSize: 13.5)),
-                        value: enabled,
-                        activeColor: palette.primaryColor,
-                        onChanged: (val) => MangaSettings.setEnableAmbientLights(val),
-                      );
-                    },
-                  ),
-
-                  ValueListenableBuilder<bool>(
-                    valueListenable: MangaSettings.showContinueReading,
-                    builder: (context, show, _) {
-                      return SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Show "Continue Reading" Slider', style: TextStyle(color: Colors.white, fontSize: 13.5)),
-                        value: show,
-                        activeColor: palette.primaryColor,
-                        onChanged: (val) => MangaSettings.setShowContinueReading(val),
-                      );
-                    },
-                  ),
-
-                  ValueListenableBuilder<bool>(
-                    valueListenable: MangaSettings.showContentTypeBadge,
-                    builder: (context, show, _) {
-                      return SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Show Content Type Badge on Posters', style: TextStyle(color: Colors.white, fontSize: 13.5)),
-                        value: show,
-                        activeColor: palette.primaryColor,
-                        onChanged: (val) => MangaSettings.setShowContentTypeBadge(val),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 12),
-                  Divider(color: Colors.white.withValues(alpha: 0.08)),
-                  const SizedBox(height: 12),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: palette.primaryColor.withValues(alpha: 0.15),
-                        foregroundColor: palette.primaryColor,
-                        side: BorderSide(color: palette.primaryColor.withValues(alpha: 0.4)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      icon: const Icon(Icons.settings_rounded, size: 18),
-                      label: const Text('More Appearance & Reader Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const MangaSettingsPage()),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -574,8 +421,6 @@ class _MangaPageState extends State<MangaPage> {
                             ),
                           ),
                         ),
-                      const SizedBox(height: 12),
-                      _buildFilterButton(true),
                     ],
                   )
                 : Row(
@@ -608,7 +453,6 @@ class _MangaPageState extends State<MangaPage> {
                             ),
                         ],
                       ),
-                      _buildFilterButton(false),
                     ],
                   ),
           ),
@@ -744,29 +588,8 @@ class _MangaPageState extends State<MangaPage> {
 
           const SizedBox(width: 12),
 
-          // Quick Customize Button
-          ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.tune_rounded, color: Colors.white70),
-                  tooltip: 'Customize Manga Section',
-                  onPressed: () => _showMangaCustomizer(context),
-                  splashRadius: 20,
-                ),
-              ),
-            ),
-          ),
+          // Filters Button
+          _buildAppBarFilterButton(),
           
           // Spacer so search bar doesn't touch the right edge on wide desktop screens
           if (_screenWidth > 800) const SizedBox(width: 80),
