@@ -827,11 +827,10 @@ class _PlayerScreenState extends State<PlayerScreen>
     PlayerSettings.applySubtitleStyling(_player);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Switched to embedded subtitle: ${embedded.title}'),
-          duration: const Duration(seconds: 2),
-        ),
+      ModernToast.show(
+        context,
+        message: 'Switched to embedded subtitle: ${embedded.title}',
+        type: ToastType.success,
       );
     }
   }
@@ -993,11 +992,11 @@ class _PlayerScreenState extends State<PlayerScreen>
         lower.contains('.ass')) {
       debugPrint('[PlayerScreen] Ignored non-fatal subtitle warning: $errorMsg');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not load subtitle: $errorMsg'),
-            duration: const Duration(seconds: 3),
-          ),
+        ModernToast.show(
+          context,
+          message: 'Could not load subtitle: $errorMsg',
+          type: ToastType.error,
+          duration: const Duration(milliseconds: 3200),
         );
       }
       return;
@@ -2063,20 +2062,19 @@ class _PlayerScreenState extends State<PlayerScreen>
                           onToggleSubtitleMenu: () => _toggleMenu('subtitle'),
                           onToggleSubSync: () {
                             if (_selectedEmbeddedSubtitleIndex != null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Subtitle sync is not supported for embedded subtitles. Please select an external subtitle.'),
-                                  duration: Duration(seconds: 2),
-                                ),
+                              ModernToast.show(
+                                context,
+                                message: 'Subtitle sync is not supported for embedded subtitles. Please select an external subtitle.',
+                                type: ToastType.info,
+                                duration: const Duration(milliseconds: 3200),
                               );
                               return;
                             }
                             if (_currentSubtitlePath == null || _currentSubtitleVariant == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please load an external subtitle to use subtitle sync.'),
-                                  duration: Duration(seconds: 2),
-                                ),
+                              ModernToast.show(
+                                context,
+                                message: 'Please load an external subtitle to use subtitle sync.',
+                                type: ToastType.info,
                               );
                               return;
                             }
@@ -2129,11 +2127,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                   onToggleOff: _disableSubtitles,
                   onOpenSyncBar: () {
                     if (_selectedEmbeddedSubtitleIndex != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Subtitle sync is not supported for embedded subtitles.'),
-                          duration: Duration(seconds: 2),
-                        ),
+                      ModernToast.show(
+                        context,
+                        message: 'Subtitle sync is not supported for embedded subtitles.',
+                        type: ToastType.info,
                       );
                       return;
                     }
@@ -2147,11 +2144,10 @@ class _PlayerScreenState extends State<PlayerScreen>
                   },
                   onOpenTextSync: () {
                     if (_selectedEmbeddedSubtitleIndex != null || _currentSubtitlePath == null || _currentCues.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Speech sync requires an external subtitle file.'),
-                          duration: Duration(seconds: 2),
-                        ),
+                      ModernToast.show(
+                        context,
+                        message: 'Speech sync requires an external subtitle file.',
+                        type: ToastType.info,
                       );
                       return;
                     }

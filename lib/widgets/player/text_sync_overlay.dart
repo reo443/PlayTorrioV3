@@ -5,6 +5,7 @@ import 'package:media_kit/media_kit.dart';
 
 import '../../services/subtitles/subtitle_parser.dart';
 import '../../services/subtitles/subtitle_sync_helper.dart';
+import '../common/modern_toast.dart';
 import 'player_glass.dart';
 
 /// Full-screen right-side floating drawer for dialogue speech following & subtitle sync.
@@ -285,8 +286,10 @@ class _TextSyncOverlayState extends State<TextSyncOverlay> {
       widget.onClose();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving sync: $e')),
+        ModernToast.show(
+          context,
+          message: 'Error saving sync: $e',
+          type: ToastType.error,
         );
       }
     } finally {
