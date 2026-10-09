@@ -1105,16 +1105,17 @@ class _WatchScreenState extends State<WatchScreen>
   }
 
   Widget _buildActionBar() {
-    // Genres, cast, writers and directors already render as pills in the
-    // info section — only show real web links (IMDb, share, trailer...) here.
-    final excluded = ['genres', 'cast', 'writers', 'directors'];
+    // Genres, cast, writers and directors render as pills in the info
+    // section, and the rating badge lives in the meta row — so the action
+    // bar only keeps real web links (trailer, wiki, search...).
+    final excluded = ['genres', 'cast', 'writers', 'directors', 'imdb', 'share'];
     final links = widget.detail.links
         .where((l) => !excluded.contains(l.category.toLowerCase()))
         .take(4)
         .toList();
 
-    // Fallback if no links provided by addon
-    if (links.isEmpty && widget.detail.id.startsWith('tt')) {
+    // IMDb fallback only when the addon provided no links at all
+    if (widget.detail.links.isEmpty && widget.detail.id.startsWith('tt')) {
       links.add(
         Link(
           name: 'IMDb',
@@ -1310,21 +1311,23 @@ class _WatchScreenState extends State<WatchScreen>
 
     return Expanded(
       child: ChoiceChip(
+        showCheckmark: false,
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         label: Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           softWrap: false,
+          textAlign: TextAlign.center,
         ),
         selected: isSelected,
-        selectedColor: activeColor.withValues(alpha: 0.25),
+        selectedColor: activeColor.withValues(alpha: 0.35),
         backgroundColor: const Color(0xFF13151C),
         labelStyle: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w700,
-          fontSize: 11.5,
+          fontSize: 11,
         ),
         side: BorderSide(
           color: isSelected ? activeColor : Colors.white.withValues(alpha: 0.1),
