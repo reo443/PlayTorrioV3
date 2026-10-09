@@ -8,6 +8,7 @@ class Movie {
   final String? imdbRating;
   final double? popularity;
   final int? runtime;
+  final List<String> genres;
 
   Movie({
     required this.id,
@@ -19,6 +20,7 @@ class Movie {
     this.imdbRating,
     this.popularity,
     this.runtime,
+    this.genres = const [],
   });
 
   /// Whether this movie represents a collection or franchise item.
@@ -59,7 +61,27 @@ class Movie {
       runtime: _parseRuntime(
         json['runtime'] ?? json['duration'] ?? json['runtimeMinutes'],
       ),
+      genres: _parseGenres(json['genres'] ?? json['genre']),
     );
+  }
+
+  /// Parses genre data that can arrive as a list or a comma-separated
+  /// string depending on the addon.
+  static List<String> _parseGenres(dynamic value) {
+    if (value is List) {
+      return value
+          .map((e) => e.toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    if (value is String && value.trim().isNotEmpty) {
+      return value
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return const [];
   }
 
   /// Parses runtime values like "181", "181 min", "2h 21min", or PT2H21M

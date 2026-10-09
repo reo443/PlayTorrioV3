@@ -10,13 +10,13 @@ import '../../models/movie/movie_section.dart';
 import '../../models/stream/stream_model.dart';
 import '../../services/addon/addon_manager.dart';
 import '../../services/cloudstream/cloudstream_manager.dart';
-import '../../services/home/home_page_settings.dart';
-import '../../services/theme/app_theme_service.dart';
-import '../../widgets/movie/movie_slider_section.dart';
+import '../../widgets/movie/movie_card.dart';
 import '../../widgets/search/magnet_files_view.dart';
-import '../ai/wewatch_quiz_page.dart';
 import '../player/player_screen.dart';
+import 'search_filter_sheet.dart';
 
+/// Dedicated search page: back button, search bar, content-type filter,
+/// and results in a responsive poster grid.
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -27,7 +27,7 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-  
+
   Timer? _debounce;
   bool _isLoading = false;
   List<MovieSection> _results = [];
@@ -37,15 +37,25 @@ class _SearchPageState extends State<SearchPage> {
   String _magnetQuery = '';
 
   List<String> _searchHistory = [];
-  List<MovieSection> _suggestedSections = [];
-  bool _isLoadingSuggestions = true;
+
+  /// Client-side filters applied to the flattened results.
+  SearchFilterState _filters = const SearchFilterState();
 
   @override
   void initState() {
     super.initState();
     _loadSearchHistory();
-    _loadSuggestions();
   }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _focusNode.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  // ── Search history ────────────────────────────────────────────────────
 
   Future<void> _loadSearchHistory() async {
     final prefs = await SharedPreferences.getInstance();
@@ -58,7 +68,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> _saveSearchHistory(String query) async {
-    if (query.trim().isEmpty) return;
     final prefs = await SharedPreferences.getInstance();
     final history = prefs.getStringList('search_history') ?? [];
     history.remove(query);
@@ -94,23 +103,7 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  Future<void> _loadSuggestions() async {
-    try {
-      final sections = await AddonManager.instance.fetchAllHomeSections();
-      if (mounted) {
-        setState(() {
-          _suggestedSections = sections.take(4).toList();
-          _isLoadingSuggestions = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoadingSuggestions = false;
-        });
-      }
-    }
-  }
+  // ── Link detection / direct playback ────────────────────────────────
 
   static bool _isMagnetLink(String text) {
     final trimmed = text.trim();
@@ -156,17 +149,11 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _focusNode.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
+  // ── Search ────────────────────────────────────────────────────────────
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    
+
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
       setState(() {
@@ -240,11 +227,13 @@ class _SearchPageState extends State<SearchPage> {
       if (!mounted || _lastQuery != currentQuery) return;
       if (section.movies.isEmpty) return;
 
-      // Prevent duplicate sections
+      // Prevent duplicate sections by addon + catalog identity — NOT display
+      // name. Addons like Cinemeta name both their movie and series catalogs
+      // "Popular", which used to drop the series results as "duplicates".
       final exists = _results.any((s) =>
-          s.title == section.title &&
-          s.subtitle == section.subtitle &&
-          s.addonBaseUrl == section.addonBaseUrl);
+          s.addonBaseUrl == section.addonBaseUrl &&
+          s.catalog.type == section.catalog.type &&
+          s.catalog.id == section.catalog.id);
       if (exists) return;
 
       setState(() {
@@ -330,7 +319,10 @@ class _SearchPageState extends State<SearchPage> {
         return <String, List<Map<String, dynamic>>>{};
       });
 
-      await Future.wait([addonSearch, csSearch]);
+      await Future.wait([addonSearch, csSearch]).timeout(
+        const Duration(seconds: 20),
+        onTimeout: () => <Object>[],
+      );
     } catch (_) {}
 
     if (mounted && _lastQuery == currentQuery) {
@@ -352,9 +344,177 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
+  // ── Results ──────────────────────────────────────────────────────────
+
+  static int? _extractYear(String? s) {
+    if (s == null || s.isEmpty) return null;
+    final m = RegExp(r'(19|20)\d{2}').firstMatch(s);
+    return m != null ? int.tryParse(m.group(0)!) : null;
+  }
+
+  static double? _ratingOf(Movie m) => double.tryParse(m.imdbRating ?? '');
+
+  int _cmpNullsLast(double? va, double? vb) {
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    return _filters.sortDescending ? vb.compareTo(va) : va.compareTo(vb);
+  }
+
+  int _compareBySort(Movie a, Movie b) {
+    switch (_filters.sortKey) {
+      case 'title':
+        final an = a.name.toLowerCase();
+        final bn = b.name.toLowerCase();
+        return _filters.sortDescending ? bn.compareTo(an) : an.compareTo(bn);
+      case 'popularity':
+        return _cmpNullsLast(a.popularity, b.popularity);
+      case 'score':
+        return _cmpNullsLast(_ratingOf(a), _ratingOf(b));
+      case 'year':
+        return _cmpNullsLast(
+          _extractYear(a.year)?.toDouble(),
+          _extractYear(b.year)?.toDouble(),
+        );
+      default:
+        return 0;
+    }
+  }
+
+  /// Union of genres present across all current results, sorted.
+  List<String> get _availableGenres {
+    final seen = <String>{};
+    final list = <String>[];
+    for (final sec in _results) {
+      for (final m in sec.movies) {
+        for (final g in m.genres) {
+          final trimmed = g.trim();
+          if (trimmed.isNotEmpty && seen.add(trimmed)) {
+            list.add(trimmed);
+          }
+        }
+      }
+    }
+    list.sort();
+    return list;
+  }
+
+  /// Flattens result sections into a deduplicated, filtered, sorted list.
+  List<Movie> get _filteredMovies {
+    final seen = <String>{};
+    final list = <Movie>[];
+    final f = _filters;
+
+    for (final sec in _results) {
+      for (final m in sec.movies) {
+        if (f.type != 'all' && m.type != f.type) continue;
+
+        if (f.genres.isNotEmpty) {
+          final hasAny = m.genres.any(f.genres.contains);
+          if (!hasAny) continue;
+        }
+
+        if (f.minYear != null || f.maxYear != null) {
+          final y = _extractYear(m.year);
+          if (y == null) continue;
+          if (f.minYear != null && y < f.minYear!) continue;
+          if (f.maxYear != null && y > f.maxYear!) continue;
+        }
+        if (f.minRating != null || f.maxRating != null) {
+          final r = _ratingOf(m);
+          if (r == null) continue;
+          if (f.minRating != null && r < f.minRating!) continue;
+          if (f.maxRating != null && r > f.maxRating!) continue;
+        }
+        if (f.minDuration != null || f.maxDuration != null) {
+          final d = m.runtime;
+          if (d == null) continue;
+          if (f.minDuration != null && d < f.minDuration!) continue;
+          if (f.maxDuration != null && d > f.maxDuration!) continue;
+        }
+
+        if (!seen.add(m.id)) continue;
+        list.add(m);
+      }
+    }
+
+    if (f.sortKey != null) {
+      list.sort(_compareBySort);
+    }
+    return list;
+  }
+
+  void _applyFilters(SearchFilterState result) {
+    if (result == _filters) return;
+    setState(() {
+      _filters = result;
+    });
+  }
+
+  // ── UI ────────────────────────────────────────────────────────────────
+
+  Widget _buildFilterButton() {
+    final count = _filters.activeCount;
+    final isActive = count > 0;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => showSearchFilterSheet(
+        context: context,
+        current: _filters,
+        availableGenres: _availableGenres,
+        onApply: _applyFilters,
+      ),
+      child: Container(
+        height: 42,
+        width: 42,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF7C5CFF) : Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? const Color(0xFF7C5CFF) : Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Stack(
+          children: [
+            Center(
+              child: Icon(
+                Icons.tune_rounded,
+                size: 19,
+                color: isActive ? Colors.white : Colors.white70,
+              ),
+            ),
+            if (count > 0)
+              Positioned(
+                top: 3,
+                right: 3,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF7C5CFF),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final movies = _filteredMovies;
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
@@ -390,95 +550,65 @@ class _SearchPageState extends State<SearchPage> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
-                          ),
+                    child: Container(
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _focusNode,
-                          autofocus: true,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _focusNode,
+                        autofocus: true,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textInputAction: TextInputAction.search,
+                        onChanged: _onSearchChanged,
+                        onSubmitted: _performSearch,
+                        decoration: InputDecoration(
+                          hintText: 'Search movies, series, or paste links',
+                          hintStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.35),
+                            fontSize: 14,
                           ),
-                          textInputAction: TextInputAction.search,
-                          onChanged: _onSearchChanged,
-                          onSubmitted: _performSearch,
-                          decoration: InputDecoration(
-                            hintText: 'Search movies, series, or paste links',
-                            hintStyle: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.35),
-                              fontSize: 14,
-                            ),
-                            border: InputBorder.none,
-                            prefixIcon: const Icon(
-                              Icons.search_rounded,
-                              size: 19,
-                              color: Colors.white38,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                            suffixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (_searchController.text.isNotEmpty)
-                                  IconButton(
-                                    icon: const Icon(Icons.close_rounded, size: 18),
-                                    color: Colors.white60,
-                                    splashRadius: 18,
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      _onSearchChanged('');
-                                    },
-                                  )
-                                else ...[
-                                  ValueListenableBuilder<bool>(
-                                    valueListenable: HomePageSettings.enableAiQuiz,
-                                    builder: (context, aiQuizEnabled, _) {
-                                      if (!aiQuizEnabled) return const SizedBox.shrink();
-                                      return IconButton(
-                                        icon: Icon(
-                                          Icons.auto_awesome_rounded,
-                                          size: 17,
-                                          color: AppThemeService.currentPalette.value.primaryColor,
-                                        ),
-                                        tooltip: 'AI Taste Quiz',
-                                        splashRadius: 18,
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(builder: (_) => const WeWatchQuizPage()),
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.content_paste_rounded, size: 17),
-                                    tooltip: 'Paste from clipboard',
-                                    color: Colors.white54,
-                                    splashRadius: 18,
-                                    onPressed: _pasteFromClipboard,
-                                  ),
-                                ],
-                              ],
-                            ),
+                          border: InputBorder.none,
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            size: 19,
+                            color: Colors.white38,
                           ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  color: Colors.white60,
+                                  splashRadius: 18,
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _onSearchChanged('');
+                                  },
+                                )
+                              : IconButton(
+                                  icon: const Icon(Icons.content_paste_rounded, size: 17),
+                                  tooltip: 'Paste from clipboard',
+                                  color: Colors.white54,
+                                  splashRadius: 18,
+                                  onPressed: _pasteFromClipboard,
+                                ),
                         ),
                       ),
                     ),
                   ),
+                  _buildFilterButton(),
                 ],
               ),
             ),
@@ -496,76 +626,84 @@ class _SearchPageState extends State<SearchPage> {
             const Center(
               child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
             )
-          else if (!_isLoading && _lastQuery.isNotEmpty && _results.isEmpty)
+          else if (!_isLoading && _lastQuery.isNotEmpty && movies.isEmpty)
             Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.search_off_rounded,
-                    size: 64,
-                    color: Colors.white.withValues(alpha: 0.2),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No results for "$_lastQuery"',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _results.isNotEmpty
+                          ? Icons.filter_alt_off_rounded
+                          : Icons.search_off_rounded,
+                      size: 64,
+                      color: Colors.white.withValues(alpha: 0.2),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Text(
+                      _results.isNotEmpty
+                          ? 'No results match your active filters'
+                          : 'No results for "$_lastQuery"',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (_results.isNotEmpty) ...[
+                      const SizedBox(height: 18),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7C5CFF),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => setState(() => _filters = const SearchFilterState()),
+                        icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
+                        label: const Text('Clear Filters'),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             )
-          else if (_results.isNotEmpty)
-            ListView.builder(
-              clipBehavior: Clip.none,
-              padding: EdgeInsets.only(
-                top: topPadding + kToolbarHeight + 40,
-                bottom: 40 + MediaQuery.paddingOf(context).bottom,
-              ),
-              physics: const ClampingScrollPhysics(),
-              itemCount: _results.length + (_isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index < _results.length) {
-                  final sec = _results[index];
-                  return MovieSliderSection(
-                    key: ValueKey('${sec.addonBaseUrl}_${sec.catalog.id}_${sec.subtitle}'),
-                    section: sec,
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFF7C5CFF),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Searching more sources...',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
+          else if (movies.isNotEmpty)
+            Builder(
+              builder: (context) {
+                final screenWidth = MediaQuery.sizeOf(context).width;
+                final sizing = MovieCardSizing.fromWidth(screenWidth);
+                final columns =
+                    ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /
+                            (sizing.cardWidth + sizing.spacing))
+                        .floor()
+                        .clamp(2, 10);
+
+                return GridView.builder(
+                  padding: EdgeInsets.only(
+                    top: topPadding + kToolbarHeight + 20,
+                    left: sizing.sidePadding,
+                    right: sizing.sidePadding,
+                    bottom: 40 + MediaQuery.paddingOf(context).bottom,
                   ),
+                  physics: const ClampingScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    childAspectRatio: sizing.cardWidth / sizing.totalHeight,
+                    crossAxisSpacing: sizing.spacing,
+                    mainAxisSpacing: sizing.spacing,
+                  ),
+                  itemCount: movies.length,
+                  itemBuilder: (context, index) {
+                    return MovieCard(movie: movies[index]);
+                  },
                 );
               },
             )
           else
-            _buildDiscoveryEmptyState(topPadding),
+            _buildEmptyState(topPadding),
 
           if (_isLoading && _results.isNotEmpty)
             Positioned(
@@ -585,18 +723,36 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildDiscoveryEmptyState(double topPadding) {
+  Widget _buildEmptyState(double topPadding) {
     return ListView(
       clipBehavior: Clip.none,
       padding: EdgeInsets.only(
-        top: topPadding + kToolbarHeight + 14,
+        top: topPadding + kToolbarHeight + 24,
         bottom: 40 + MediaQuery.paddingOf(context).bottom,
       ),
       physics: const ClampingScrollPhysics(),
       children: [
+        Icon(
+          Icons.search_rounded,
+          size: 56,
+          color: Colors.white.withValues(alpha: 0.18),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: Text(
+            'Search for movies, series, or paste a link',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.45),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+
         // Recent Searches
         if (_searchHistory.isNotEmpty) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: 36),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -625,7 +781,7 @@ class _SearchPageState extends State<SearchPage> {
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Wrap(
@@ -649,29 +805,6 @@ class _SearchPageState extends State<SearchPage> {
               }).toList(),
             ),
           ),
-          const SizedBox(height: 12),
-        ],
-
-        // Discover / Trending Content
-        if (_suggestedSections.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'TRENDING & SUGGESTED',
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w800,
-                color: Colors.white38,
-                letterSpacing: 1.1,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          ..._suggestedSections.map((sec) => MovieSliderSection(section: sec)),
-        ] else if (_isLoadingSuggestions) ...[
-          const SizedBox(height: 32),
-          const Center(child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C5CFF))),
         ],
       ],
     );

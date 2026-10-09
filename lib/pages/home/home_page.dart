@@ -562,8 +562,6 @@ class _GlassAppBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.sizeOf(context).width >= 700;
-
     return RepaintBoundary(
       child: Container(
         padding: EdgeInsets.only(
@@ -603,47 +601,16 @@ class _GlassAppBar extends StatelessWidget {
             ),
             const Spacer(),
 
-            // Modern search pill
-            Builder(
-              builder: (context) {
-                return GestureDetector(
-                  onTap: () {
-                    final box = context.findRenderObject() as RenderBox?;
-                    final offset =
-                        box?.localToGlobal(box.size.center(Offset.zero));
-                    onSearchTap(offset);
-                  },
-                  child: Container(
-                    height: 34,
-                    padding: const EdgeInsets.symmetric(horizontal: 13),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(11),
-                      border:
-                          Border.all(color: Colors.white.withValues(alpha: 0.10)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.search_rounded,
-                          size: 16,
-                          color: Colors.white.withValues(alpha: 0.55),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          isWide ? 'Search movies, series…' : 'Search…',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.45),
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+            // Search
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              icon: Icon(
+                Icons.search_rounded,
+                color: Colors.white.withValues(alpha: 0.75),
+                size: 22,
+              ),
+              tooltip: 'Search',
+              onPressed: () => onSearchTap(null),
             ),
 
             // TV Shows Airing Calendar
