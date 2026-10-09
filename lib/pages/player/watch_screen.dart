@@ -621,92 +621,11 @@ class _WatchScreenState extends State<WatchScreen>
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: _S.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.stream_rounded,
-                              color: _C.accent,
-                              size: 20,
-                            ),
-                            SizedBox(width: _S.xs),
-                            Text(
-                              'Watch Sources',
-                              style: TextStyle(
-                                color: _C.textPrimary,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          _isLoadingSources
-                              ? (filtered.isEmpty
-                                  ? 'Searching sources...'
-                                  : '${filtered.length} found · Searching...')
-                              : '${filtered.length} source${filtered.length == 1 ? '' : 's'} found',
-                          style: const TextStyle(
-                            color: _C.textTertiary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (_sources.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          _buildTypeChip('all', 'All', Icons.apps_rounded, null, count: _sources.length),
-                          const SizedBox(width: 6),
-                          _buildTypeChip(
-                            'debrid',
-                            'Debrid',
-                            Icons.bolt_rounded,
-                            const Color(0xFF00E5FF),
-                            count: _sources.where((s) => s.isDebrid).length,
-                          ),
-                          const SizedBox(width: 6),
-                          _buildTypeChip(
-                            'torrent',
-                            'Torrents',
-                            Icons.share_rounded,
-                            const Color(0xFF7C5CFF),
-                            count: _sources.where((s) => s.isTorrent).length,
-                          ),
-                          const SizedBox(width: 6),
-                          _buildTypeChip(
-                            'direct',
-                            'Direct',
-                            Icons.link_rounded,
-                            const Color(0xFF10B981),
-                            count: _sources.where((s) => s.isHttpDirect).length,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          _buildSeederFilterDropdown(),
-                          _buildSizeFilterDropdown(),
-                          _buildAddonFilterDropdown(),
-                          _buildAudioFilterDropdown(),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: _S.md),
-                  ],
-                ),
+                child: _buildSourcesCard(isDesktop: false, filtered: filtered),
               ),
             ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
 
             // ── Sources list (virtualized!) ──
             if (_isLoadingSources && filtered.isEmpty)
@@ -1208,88 +1127,143 @@ class _WatchScreenState extends State<WatchScreen>
   // ─────────────────────────────────────────────────────────────────────────
   // Sources Panel
   // ─────────────────────────────────────────────────────────────────────────
+
+  /// Unified "Watch Sources" card: header row, source type tabs, and the
+  /// filter grid — shared by the mobile (inline) and desktop (side panel)
+  /// layouts. 2×2 filter grid on mobile, 4-across on desktop.
+  Widget _buildSourcesCard({required bool isDesktop, required List<StreamSource> filtered}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF12141C),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF23252F)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'WATCH SOURCES',
+            style: TextStyle(
+              color: Color(0xFF999AA8),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                'Sources',
+                style: TextStyle(
+                  color: _C.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              Text(
+                _isLoadingSources
+                    ? (filtered.isEmpty
+                        ? 'Searching sources...'
+                        : '${filtered.length} found · Searching...')
+                    : '${filtered.length} source${filtered.length == 1 ? '' : 's'} found',
+                style: const TextStyle(
+                  color: Color(0xFF999AA8),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          if (_sources.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const ClampingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildTypeChip('all', 'All', count: _sources.length),
+                  const SizedBox(width: 8),
+                  _buildTypeChip(
+                    'debrid',
+                    'Debrid',
+                    count: _sources.where((s) => s.isDebrid).length,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildTypeChip(
+                    'torrent',
+                    'Torrents',
+                    count: _sources.where((s) => s.isTorrent).length,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildTypeChip(
+                    'direct',
+                    'Direct',
+                    count: _sources.where((s) => s.isHttpDirect).length,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Divider(color: Colors.white.withValues(alpha: 0.06), height: 1),
+            const SizedBox(height: 14),
+            const Text(
+              'FILTER SOURCES',
+              style: TextStyle(
+                color: Color(0xFF999AA8),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (isDesktop)
+              Row(
+                children: [
+                  Expanded(child: _buildSeederFilterDropdown()),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildSizeFilterDropdown()),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildAddonFilterDropdown()),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildAudioFilterDropdown()),
+                ],
+              )
+            else ...[
+              Row(
+                children: [
+                  Expanded(child: _buildSeederFilterDropdown()),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildSizeFilterDropdown()),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: _buildAddonFilterDropdown()),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildAudioFilterDropdown()),
+                ],
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildSourcesPanel({required bool isDesktop}) {
     final filtered = _filteredSources;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.stream_rounded, color: _C.accent, size: 20),
-                SizedBox(width: _S.xs),
-                Text(
-                  'Watch Sources',
-                  style: TextStyle(
-                    color: _C.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            Text(
-              _isLoadingSources
-                  ? (filtered.isEmpty
-                      ? 'Searching sources...'
-                      : '${filtered.length} found · Searching...')
-                  : '${filtered.length} source${filtered.length == 1 ? '' : 's'} found',
-              style: const TextStyle(color: _C.textTertiary, fontSize: 12),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-
-        // Stream Type Filter Bar (All / Debrid / Torrents / Direct HTTP)
-        if (_sources.isNotEmpty) ...[
-          Row(
-            children: [
-              _buildTypeChip('all', 'All', Icons.apps_rounded, null, count: _sources.length),
-              const SizedBox(width: 6),
-              _buildTypeChip(
-                'debrid',
-                'Debrid',
-                Icons.bolt_rounded,
-                const Color(0xFF00E5FF),
-                count: _sources.where((s) => s.isDebrid).length,
-              ),
-              const SizedBox(width: 6),
-              _buildTypeChip(
-                'torrent',
-                'Torrents',
-                Icons.share_rounded,
-                const Color(0xFF7C5CFF),
-                count: _sources.where((s) => s.isTorrent).length,
-              ),
-              const SizedBox(width: 6),
-              _buildTypeChip(
-                'direct',
-                'Direct',
-                Icons.link_rounded,
-                const Color(0xFF10B981),
-                count: _sources.where((s) => s.isHttpDirect).length,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _buildSeederFilterDropdown(),
-              _buildSizeFilterDropdown(),
-              _buildAddonFilterDropdown(),
-              _buildAudioFilterDropdown(),
-            ],
-          ),
-          const SizedBox(height: 12),
-        ],
+        _buildSourcesCard(isDesktop: isDesktop, filtered: filtered),
+        const SizedBox(height: 12),
 
         // Source list
         if (isDesktop)
@@ -1302,55 +1276,48 @@ class _WatchScreenState extends State<WatchScreen>
     );
   }
 
-  Widget _buildTypeChip(String typeKey, String label, IconData icon, Color? color, {int? count}) {
+  Widget _buildTypeChip(String typeKey, String label, {int? count}) {
     final isSelected = _selectedTypeFilter == typeKey;
-    final activeColor = color ?? _C.accent;
 
-    return Expanded(
-      child: ChoiceChip(
-        showCheckmark: false,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        label: Text.rich(
-          TextSpan(
-            text: label,
-            children: [
-              if (count != null)
-                TextSpan(
-                  text: ' ($count)',
-                  style: const TextStyle(
-                    fontSize: 9.5,
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-            ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() {
+        _selectedTypeFilter = typeKey;
+      }),
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? _C.accent : const Color(0xFF1A1D26),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? _C.accent : const Color(0xFF2E313A),
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          softWrap: false,
-          textAlign: TextAlign.center,
         ),
-        selected: isSelected,
-        selectedColor: activeColor.withValues(alpha: 0.35),
-        backgroundColor: const Color(0xFF13151C),
-        labelStyle: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-          fontSize: 11,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : _C.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (count != null) ...[
+              const SizedBox(width: 5),
+              Text(
+                '·  $count',
+                style: TextStyle(
+                  color: isSelected ? Colors.white70 : _C.textSecondary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
         ),
-        side: BorderSide(
-          color: isSelected ? activeColor : Colors.white.withValues(alpha: 0.1),
-          width: 1.2,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        onSelected: (selected) {
-          if (selected) {
-            setState(() {
-              _selectedTypeFilter = typeKey;
-            });
-          }
-        },
       ),
     );
   }
@@ -1392,73 +1359,91 @@ class _WatchScreenState extends State<WatchScreen>
     return list;
   }
 
-  Widget _buildSeederFilterDropdown() {
-    final currentText = _getSeederFilterLabel(_selectedSeederFilter);
-
+  /// Shared compact filter card: icon + label + chevron on the first line,
+  /// the current value as muted text below. Entire card is tappable.
+  Widget _buildFilterControl({
+    required Widget icon,
+    required String label,
+    required String value,
+    required bool isActive,
+    required void Function(BuildContext anchorContext) onTap,
+  }) {
     return Builder(
       builder: (buttonContext) {
         return GestureDetector(
-          onTap: () => _isDesktop()
-              ? _showSeederGlassDropdown(buttonContext)
-              : _showSeederBottomSheet(),
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(18)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x40000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onTap(buttonContext),
+          child: Container(
+            height: 72,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1D26),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isActive ? _C.accent : const Color(0xFF2E313A),
+              ),
             ),
-            child: PerformanceLiquidLens(
-              style: PerformanceGlassStyles.menuButton,
-              child: Container(
-                height: 36,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: _selectedSeederFilter != 'all'
-                        ? const Color(0xFF10B981).withValues(alpha: 0.6)
-                        : const Color(0x26FFFFFF),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
                   children: [
-                    Icon(
-                      Icons.people_alt_rounded,
-                      color: _selectedSeederFilter != 'all'
-                          ? const Color(0xFF10B981)
-                          : Colors.white70,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      currentText,
-                      style: TextStyle(
-                        color: _selectedSeederFilter != 'all'
-                            ? const Color(0xFF10B981)
-                            : Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                    icon,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: _C.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 6),
                     const Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.white70,
+                      Icons.keyboard_arrow_down_rounded,
                       size: 20,
+                      color: _C.textSecondary,
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _C.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSeederFilterDropdown() {
+    final isActive = _selectedSeederFilter != 'all';
+    return _buildFilterControl(
+      icon: Icon(
+        Icons.people_alt_rounded,
+        size: 18,
+        color: isActive ? _C.accent : _C.textSecondary,
+      ),
+      label: 'Seeds',
+      value: _getSeederFilterLabel(_selectedSeederFilter),
+      isActive: isActive,
+      onTap: (ctx) => _isDesktop()
+          ? _showSeederGlassDropdown(ctx)
+          : _showSeederBottomSheet(),
     );
   }
 
@@ -1605,64 +1590,19 @@ class _WatchScreenState extends State<WatchScreen>
   }
 
   Widget _buildSizeFilterDropdown() {
-    final currentText = _getSizeFilterLabel(_selectedSizeFilter);
-
-    return Builder(
-      builder: (buttonContext) {
-        return GestureDetector(
-          onTap: () => _isDesktop()
-              ? _showSizeGlassDropdown(buttonContext)
-              : _showSizeBottomSheet(),
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(18)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x40000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: PerformanceLiquidLens(
-              style: PerformanceGlassStyles.menuButton,
-              child: Container(
-                height: 36,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0x26FFFFFF)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.data_usage_rounded,
-                      color: Colors.white70,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      currentText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.white70,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+    final isActive = _selectedSizeFilter != null;
+    return _buildFilterControl(
+      icon: Icon(
+        Icons.data_usage_rounded,
+        size: 18,
+        color: isActive ? _C.accent : _C.textSecondary,
+      ),
+      label: 'File Size',
+      value: _getSizeFilterLabel(_selectedSizeFilter),
+      isActive: isActive,
+      onTap: (ctx) => _isDesktop()
+          ? _showSizeGlassDropdown(ctx)
+          : _showSizeBottomSheet(),
     );
   }
 
@@ -1819,58 +1759,20 @@ class _WatchScreenState extends State<WatchScreen>
   Widget _buildAddonFilterDropdown() {
     final addons = _sources.map((e) => e.addonName).toSet().toList();
     if (addons.isEmpty) return const SizedBox.shrink();
-    final currentText = _selectedAddonFilter ?? 'All Sources';
+    final isActive = _selectedAddonFilter != null;
 
-    return Builder(
-      builder: (buttonContext) {
-        return GestureDetector(
-          onTap: () => _isDesktop()
-              ? _showGlassDropdown(buttonContext, addons)
-              : _showAddonBottomSheet(addons),
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(18)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x40000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: PerformanceLiquidLens(
-              style: PerformanceGlassStyles.menuButton,
-              child: Container(
-                height: 36,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0x26FFFFFF)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      currentText,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.white70,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+    return _buildFilterControl(
+      icon: Icon(
+        Icons.hub_rounded,
+        size: 18,
+        color: isActive ? _C.accent : _C.textSecondary,
+      ),
+      label: 'Provider',
+      value: _selectedAddonFilter ?? 'All Sources',
+      isActive: isActive,
+      onTap: (ctx) => _isDesktop()
+          ? _showGlassDropdown(ctx, addons)
+          : _showAddonBottomSheet(addons),
     );
   }
 
@@ -2071,75 +1973,23 @@ class _WatchScreenState extends State<WatchScreen>
   }
 
   Widget _buildAudioFilterDropdown() {
-    final currentText = _getAudioFilterLabel(_selectedAudioFilter);
     final isActive = _selectedAudioFilter != 'all';
+    final lang = _audioFilterLanguage(_selectedAudioFilter);
 
-    return Builder(
-      builder: (buttonContext) {
-        return GestureDetector(
-          onTap: () => _isDesktop()
-              ? _showAudioGlassDropdown(buttonContext)
-              : _showAudioBottomSheet(),
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(18)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x40000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
+    return _buildFilterControl(
+      icon: lang != null
+          ? FlagIcon(language: lang, height: 13)
+          : Icon(
+              Icons.audiotrack_rounded,
+              size: 18,
+              color: isActive ? _C.accent : _C.textSecondary,
             ),
-            child: PerformanceLiquidLens(
-              style: PerformanceGlassStyles.menuButton,
-              child: Container(
-                height: 36,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isActive
-                        ? const Color(0xFFB197FC).withValues(alpha: 0.6)
-                        : const Color(0x26FFFFFF),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_audioFilterLanguage(_selectedAudioFilter) != null)
-                      FlagIcon(
-                        language: _audioFilterLanguage(_selectedAudioFilter)!,
-                        height: 13,
-                      )
-                    else
-                      Icon(
-                        Icons.audiotrack_rounded,
-                        color: isActive ? const Color(0xFFB197FC) : Colors.white70,
-                        size: 16,
-                      ),
-                    const SizedBox(width: 6),
-                    Text(
-                      currentText,
-                      style: TextStyle(
-                        color: isActive ? const Color(0xFFB197FC) : Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.arrow_drop_down,
-                      color: Colors.white70,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+      label: 'Audio',
+      value: _getAudioFilterLabel(_selectedAudioFilter),
+      isActive: isActive,
+      onTap: (ctx) => _isDesktop()
+          ? _showAudioGlassDropdown(ctx)
+          : _showAudioBottomSheet(),
     );
   }
 
