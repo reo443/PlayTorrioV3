@@ -11,7 +11,7 @@ import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/movie/movie_card.dart';
-import 'discover_filter_sheet.dart';
+import '../search/search_page.dart';
 
 class DiscoverPage extends StatefulWidget {
   final String? query;
@@ -41,35 +41,15 @@ class _DiscoverPageState extends State<DiscoverPage> {
   List<MovieSection> _legacySections = [];
 
   // Full Discover state
-  List<({InstalledAddon addon, AddonCatalog catalog})> _allCatalogs = [];
   String _selectedType = 'movie';
 
   ({InstalledAddon addon, AddonCatalog catalog})? _selectedCatalogEntry;
   final Map<String, String> _selectedExtras = {};
 
-  // Client-side filters (applied locally to loaded items)
-  int? _minYear;
-  int? _maxYear;
-  double? _minRating;
-  double? _maxRating;
-  int? _minDuration;
-  int? _maxDuration;
-
-  // Client-side sorting
-  String? _sortKey; // null | 'title' | 'trending' | 'popularity' | 'score'
-  bool _sortDescending = true;
-
   final List<Movie> _items = [];
   bool _isLoading = false;
   bool _hasMore = true;
   String? _error;
-
-  // Per-genre skip offsets for multi-genre fan-out pagination
-  final Map<String, int> _genreSkip = {};
-
-  String _searchQuery = '';
-  bool _isSearching = false;
-  final TextEditingController _searchController = TextEditingController();
 
   final ScrollController _scrollController = ScrollController();
 
@@ -88,7 +68,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -161,7 +140,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     initialEntry ??= catalogs.where((c) => c.catalog.type == initialType).firstOrNull ?? catalogs.firstOrNull;
 
     setState(() {
-      _allCatalogs = catalogs;
       _selectedType = initialType;
       _selectedCatalogEntry = initialEntry;
     });
@@ -169,201 +147,20 @@ class _DiscoverPageState extends State<DiscoverPage> {
     _checkAndLoadCatalog();
   }
 
-  // ── Client-side filter & sort helpers ──
-  static int? _extractYear(String? s) {
-    if (s == null || s.isEmpty) return null;
-    final m = RegExp(r'(19|20)\d{2}').firstMatch(s);
-    return m != null ? int.tryParse(m.group(0)!) : null;
-  }
+  // ── Results ──────────────────────────────────────────────────────────
 
-  static double? _ratingOf(Movie m) => double.tryParse(m.imdbRating ?? '');
-
-  bool get _hasClientFilters =>
-      _minYear != null ||
-      _maxYear != null ||
-      _minRating != null ||
-      _maxRating != null ||
-      _minDuration != null ||
-      _maxDuration != null;
-
-  double? _trendingScore(Movie m) {
-    final rating = _ratingOf(m);
-    if (rating == null) return null;
-    final y = _extractYear(m.year);
-    final now = DateTime.now().year;
-    var bonus = 0.0;
-    if (y != null) {
-      final age = (now - y).clamp(0, 99);
-      if (age < 5) bonus = (5 - age) * 0.2;
-    }
-    return rating + bonus;
-  }
-
-  int _cmpNullsLast(double? va, double? vb) {
-    if (va == null && vb == null) return 0;
-    if (va == null) return 1;
-    if (vb == null) return -1;
-    return _sortDescending ? vb.compareTo(va) : va.compareTo(vb);
-  }
-
-  int _compareBySort(Movie a, Movie b) {
-    switch (_sortKey) {
-      case 'title':
-        final an = a.name.toLowerCase();
-        final bn = b.name.toLowerCase();
-        return _sortDescending ? bn.compareTo(an) : an.compareTo(bn);
-      case 'trending':
-        return _cmpNullsLast(_trendingScore(a), _trendingScore(b));
-      case 'popularity':
-        return _cmpNullsLast(
-          a.popularity ?? _ratingOf(a),
-          b.popularity ?? _ratingOf(b),
-        );
-      case 'score':
-        return _cmpNullsLast(_ratingOf(a), _ratingOf(b));
-      default:
-        return 0;
-    }
-  }
-
+  /// Catalog order as-served, deduplicated by id across paginated loads.
   List<Movie> get _visibleItems {
-    if (!_hasClientFilters && _sortKey == null) return _items;
-    var items = List<Movie>.of(_items);
-    if (_hasClientFilters) {
-      items = items.where(_matchesClientFilters).toList();
-    }
-    if (_sortKey != null) {
-      items.sort(_compareBySort);
-    }
-    return items;
+    if (_items.isEmpty) return _items;
+    final seen = <String>{};
+    return _items.where((m) => seen.add(m.id)).toList();
   }
 
-  bool _matchesClientFilters(Movie m) {
-    if (_minYear != null || _maxYear != null) {
-      final y = _extractYear(m.year);
-      if (y == null) return false;
-      if (_minYear != null && y < _minYear!) return false;
-      if (_maxYear != null && y > _maxYear!) return false;
-    }
-    if (_minRating != null || _maxRating != null) {
-      final r = double.tryParse(m.imdbRating ?? '');
-      if (r == null) return false;
-      if (_minRating != null && r < _minRating!) return false;
-      if (_maxRating != null && r > _maxRating!) return false;
-    }
-    if (_minDuration != null || _maxDuration != null) {
-      final d = m.runtime;
-      if (d == null) return false;
-      if (_minDuration != null && d < _minDuration!) return false;
-      if (_maxDuration != null && d > _maxDuration!) return false;
-    }
-    return true;
-  }
-
-  int get _activeFilterCount {
-    var count = _selectedExtras.length;
-    if (_sortKey != null) count++;
-    if (_minYear != null || _maxYear != null) count++;
-    if (_minRating != null || _maxRating != null) count++;
-    if (_minDuration != null || _maxDuration != null) count++;
-    return count;
-  }
-
-  static bool _mapsEqual(Map<String, String> a, Map<String, String> b) {
-    if (a.length != b.length) return false;
-    for (final e in a.entries) {
-      if (b[e.key] != e.value) return false;
-    }
-    return true;
-  }
-
-  void _applyFilters(DiscoverFilterResult result) {
-    final newExtras = <String, String>{};
-    if (result.genres.isNotEmpty) {
-      newExtras['genre'] = result.genres.join(',');
-    }
-
-    final typeChanged = result.type != _selectedType;
-    final catalogChanged = result.catalogEntry != _selectedCatalogEntry;
-    final extrasChanged = !_mapsEqual(_selectedExtras, newExtras);
-    final needsReload = typeChanged || catalogChanged || extrasChanged;
-
-    setState(() {
-      if (needsReload) {
-        _selectedType = result.type;
-        _selectedCatalogEntry = result.catalogEntry;
-        _selectedExtras.clear();
-        _selectedExtras.addAll(newExtras);
-        _searchQuery = '';
-        _isSearching = false;
-        _searchController.clear();
-      }
-      _sortKey = result.sortKey;
-      _sortDescending = result.sortDescending;
-      _minYear = result.minYear;
-      _maxYear = result.maxYear;
-      _minRating = result.minRating;
-      _maxRating = result.maxRating;
-      _minDuration = result.minDuration;
-      _maxDuration = result.maxDuration;
-    });
-
-    if (needsReload) {
-      _checkAndLoadCatalog();
-    } else {
-      _ensureScreenFilled();
-    }
-  }
-
-  void _clearAllFilters() {
-    final hadExtras = _selectedExtras.isNotEmpty;
-    setState(() {
-      _minYear = null;
-      _maxYear = null;
-      _minRating = null;
-      _maxRating = null;
-      _minDuration = null;
-      _maxDuration = null;
-      _sortKey = null;
-      _sortDescending = true;
-      if (hadExtras) {
-        _selectedExtras.clear();
-        _searchQuery = '';
-        _isSearching = false;
-        _searchController.clear();
-      }
-    });
-    if (hadExtras) {
-      _checkAndLoadCatalog();
-    } else {
-      _ensureScreenFilled();
-    }
-  }
-
-  void _openFilterSheet() {
-    if (_selectedCatalogEntry == null) return;
-    final genres = _selectedExtras['genre']
-            ?.split(',')
-            .map((g) => g.trim())
-            .where((g) => g.isNotEmpty)
-            .toList() ??
-        <String>[];
-
-    showDiscoverFilterSheet(
-      context: context,
-      selectedType: _selectedType,
-      catalogs: _allCatalogs,
-      selectedCatalogEntry: _selectedCatalogEntry!,
-      selectedGenres: genres,
-      sortKey: _sortKey,
-      sortDescending: _sortDescending,
-      minYear: _minYear,
-      maxYear: _maxYear,
-      minRating: _minRating,
-      maxRating: _maxRating,
-      minDuration: _minDuration,
-      maxDuration: _maxDuration,
-      onApply: _applyFilters,
+  /// Search lives in the dedicated global search page (same as home).
+  void _navigateToSearch() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SearchPage()),
     );
   }
 
@@ -386,9 +183,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
       } else {
         _selectedExtras[extraName] = value.trim();
       }
-      _isSearching = false;
-      _searchQuery = '';
-      _searchController.clear();
     });
     _checkAndLoadCatalog();
   }
@@ -449,7 +243,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
         _hasMore = true;
         _error = null;
       });
-      _genreSkip.clear();
     }
 
     if (!_hasMore) return;
@@ -458,78 +251,17 @@ class _DiscoverPageState extends State<DiscoverPage> {
     setState(() => _isLoading = true);
 
     try {
-      List<Movie> newItems = [];
-      var fetchedCount = 0;
+      final newItems = await MetadataService.fetchCatalog(
+        baseUrl: entry.addon.baseUrl,
+        type: entry.catalog.type,
+        catalogId: entry.catalog.id,
+        extraParams: _selectedExtras.isNotEmpty ? _selectedExtras : null,
+        skip: entry.catalog.supportsSkip ? _items.length : 0,
+      );
+      final fetchedCount = newItems.length;
 
-      final params = Map<String, String>.from(_selectedExtras);
-      if (_searchQuery.isNotEmpty) {
-        params['search'] = _searchQuery;
-      }
-
-      final selectedGenres = (params['genre'] ?? '')
-          .split(',')
-          .map((g) => g.trim())
-          .where((g) => g.isNotEmpty)
-          .toList();
-      final isMultiGenre = selectedGenres.length > 1 && _searchQuery.isEmpty;
-
-      if (_isSearching && _searchQuery.isNotEmpty && !entry.catalog.supportsSkip) {
-        newItems = await MetadataService.search(
-          baseUrl: entry.addon.baseUrl,
-          type: entry.catalog.type,
-          catalogId: entry.catalog.id,
-          query: _searchQuery,
-        );
-        fetchedCount = newItems.length;
+      if (!entry.catalog.supportsSkip) {
         _hasMore = false;
-      } else if (isMultiGenre) {
-        // Addons like Cinemeta only accept a single genre per request —
-        // fan out one request per genre and merge + dedupe client-side.
-        final results = await Future.wait(
-          selectedGenres.map((g) async {
-            try {
-              final movies = await MetadataService.fetchCatalog(
-                baseUrl: entry.addon.baseUrl,
-                type: entry.catalog.type,
-                catalogId: entry.catalog.id,
-                extraParams: {...params, 'genre': g},
-                skip: entry.catalog.supportsSkip ? (_genreSkip[g] ?? 0) : 0,
-              );
-              return (g, movies);
-            } catch (_) {
-              return (g, <Movie>[]);
-            }
-          }),
-        );
-
-        final existingIds = _items.map((m) => m.id).toSet();
-        final batchIds = <String>{};
-        for (final (genre, movies) in results) {
-          _genreSkip[genre] = (_genreSkip[genre] ?? 0) + movies.length;
-          fetchedCount += movies.length;
-          for (final m in movies) {
-            if (existingIds.contains(m.id) || batchIds.contains(m.id)) continue;
-            batchIds.add(m.id);
-            newItems.add(m);
-          }
-        }
-
-        if (!entry.catalog.supportsSkip || fetchedCount < 10) {
-          _hasMore = false;
-        }
-      } else {
-        newItems = await MetadataService.fetchCatalog(
-          baseUrl: entry.addon.baseUrl,
-          type: entry.catalog.type,
-          catalogId: entry.catalog.id,
-          extraParams: params.isNotEmpty ? params : null,
-          skip: entry.catalog.supportsSkip ? _items.length : 0,
-        );
-        fetchedCount = newItems.length;
-
-        if (!entry.catalog.supportsSkip) {
-          _hasMore = false;
-        }
       }
 
       if (!mounted) return;
@@ -568,61 +300,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     });
   }
 
-  Widget _buildDiscoverSearchField() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10),
-      child: Container(
-        height: 34,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-        ),
-        child: TextField(
-          controller: _searchController,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-          textInputAction: TextInputAction.search,
-          onSubmitted: _onSearchSubmitted,
-          decoration: InputDecoration(
-            hintText: 'Search within ${_selectedCatalogEntry?.catalog.name ?? 'catalog'}...',
-            hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-            border: InputBorder.none,
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(vertical: 8),
-            prefixIcon: const Icon(Icons.search_rounded, size: 17, color: Colors.white38),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _onSearchSubmitted(String query) {
-    if (query.trim().isEmpty) {
-      setState(() {
-        _isSearching = false;
-        _searchQuery = '';
-      });
-      _checkAndLoadCatalog();
-      return;
-    }
-
-    setState(() {
-      _isSearching = true;
-      _searchQuery = query.trim();
-    });
-    _checkAndLoadCatalog();
-  }
-
-  void _clearSearch() {
-    _searchController.clear();
-    setState(() {
-      _isSearching = false;
-      _searchQuery = '';
-    });
-    _checkAndLoadCatalog();
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLegacyMode) {
@@ -654,7 +331,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
             child: _buildDiscoverContent(headerHeight, sizing, bottomInset),
           ),
 
-          // ── Glass App Bar & Filters ──
+          // ── Glass App Bar ──
           Positioned(
             top: 0,
             left: 0,
@@ -663,19 +340,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
               topPadding: topPadding,
               title: 'Discover',
               showBack: true,
-              isSearching: _isSearching,
-              searchField: _isSearching ? _buildDiscoverSearchField() : null,
-              onSearchTap: (_isSearching || (_selectedCatalogEntry?.catalog.supportsSearch ?? false))
-                  ? () {
-                      if (_isSearching) {
-                        _clearSearch();
-                      } else {
-                        setState(() => _isSearching = true);
-                      }
-                    }
-                  : null,
-              onFilterTap: _openFilterSheet,
-              filterCount: _activeFilterCount,
+              onSearchTap: _navigateToSearch,
             ),
           ),
 
@@ -763,43 +428,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
 
     final visibleItems = _visibleItems;
-
-    if (visibleItems.isEmpty) {
-      if (_hasMore) {
-        return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
-        );
-      }
-      return Center(
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(20, topOffset + 30, 20, 100),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.filter_alt_off_rounded, size: 48, color: Colors.white.withValues(alpha: 0.3)),
-              const SizedBox(height: 12),
-              const Text(
-                'No titles match your active filters',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7C5CFF),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: _clearAllFilters,
-                icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
-                label: const Text('Clear Filters'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
 
     final screenWidth = MediaQuery.sizeOf(context).width;
     final columns = ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /

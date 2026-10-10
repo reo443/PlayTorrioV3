@@ -16,8 +16,8 @@ import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/common/slider_arrow.dart';
 import '../../widgets/manga/manga_card.dart';
 import '../../models/manga/manga_browse_filter.dart';
-import 'manga_filter_sheet.dart';
 import 'manga_reader_page.dart';
+import 'manga_search_page.dart';
 
 class MangaPage extends StatefulWidget {
   const MangaPage({super.key});
@@ -31,8 +31,6 @@ class _MangaPageState extends State<MangaPage> {
   static List<Manga>? _cachedMangaList;
   static List<Map<String, dynamic>>? _cachedReadingHistory;
   static int _cachedCurrentPage = 1;
-  static String _cachedSearchQuery = '';
-  static MangaBrowseFilter _cachedFilters = const MangaBrowseFilter();
   static double _cachedScrollOffset = 0.0;
 
   // Editorial section caches (Popular / Latest / Recently Added / Most Followed)
@@ -43,7 +41,6 @@ class _MangaPageState extends State<MangaPage> {
 
   final MangaService _mangaService = MangaService();
   late final ScrollController _scrollController;
-  final TextEditingController _searchController = TextEditingController();
 
   List<Manga> _mangaList = [];
   List<Map<String, dynamic>> _readingHistory = [];
@@ -56,10 +53,7 @@ class _MangaPageState extends State<MangaPage> {
 
   bool _isLoading = false;
   bool _isLoadingMore = false;
-  bool _isSearching = false;
   int _currentPage = 1;
-  String _searchQuery = '';
-  MangaBrowseFilter _filters = const MangaBrowseFilter();
 
   // Track grid layout dimensions
   late double _screenWidth;
@@ -67,10 +61,9 @@ class _MangaPageState extends State<MangaPage> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController(initialScrollOffset: _cachedScrollOffset);
-    _searchController.text = _cachedSearchQuery;
-    _filters = _cachedFilters;
-    _isSearching = _cachedSearchQuery.isNotEmpty;
+    _scrollController = ScrollController(
+      initialScrollOffset: _cachedScrollOffset,
+    );
 
     MangaSettings.changeNotifier.addListener(_onSettingsChanged);
     AppThemeService.currentPalette.addListener(_onSettingsChanged);
@@ -79,8 +72,6 @@ class _MangaPageState extends State<MangaPage> {
       _mangaList = _cachedMangaList!;
       _readingHistory = _cachedReadingHistory!;
       _currentPage = _cachedCurrentPage;
-      _searchQuery = _cachedSearchQuery;
-      _filters = _cachedFilters;
       // Refresh reading history in background silently
       _mangaService.getReadingHistory().then((history) {
         if (mounted) {
@@ -101,19 +92,18 @@ class _MangaPageState extends State<MangaPage> {
     _scrollController.addListener(_onScroll);
   }
 
-  void _onSettingsChanged() {
-    if (!mounted) return;
-    setState(() {});
-  }
-
   @override
   void dispose() {
     MangaSettings.changeNotifier.removeListener(_onSettingsChanged);
     AppThemeService.currentPalette.removeListener(_onSettingsChanged);
     MangaService.readingHistoryRevision.removeListener(_loadHistory);
     _scrollController.dispose();
-    _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   void _onScroll() {
@@ -121,9 +111,10 @@ class _MangaPageState extends State<MangaPage> {
       _cachedScrollOffset = _scrollController.offset;
     }
     if (_isLoading || _isLoadingMore) return;
-    
+
     // If we're within 800 pixels of the bottom, load more
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 800) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 800) {
       _loadMore();
     }
   }
@@ -143,11 +134,9 @@ class _MangaPageState extends State<MangaPage> {
       _currentPage = 1;
       _mangaList.clear();
     });
-    
+
     final results = await Future.wait([
-      _searchQuery.isEmpty
-          ? _mangaService.browseManga(page: _currentPage, filter: _filters)
-          : _mangaService.searchManga(_searchQuery, page: _currentPage),
+      _mangaService.browseManga(page: _currentPage),
       _mangaService.getReadingHistory(),
     ]);
 
@@ -160,35 +149,25 @@ class _MangaPageState extends State<MangaPage> {
         _cachedMangaList = _mangaList;
         _cachedReadingHistory = _readingHistory;
         _cachedCurrentPage = _currentPage;
-        _cachedSearchQuery = _searchQuery;
-        _cachedFilters = _filters;
       });
     }
   }
 
   Future<void> _loadMore() async {
     setState(() => _isLoadingMore = true);
-    
+
     _currentPage++;
-    final newManga = _searchQuery.isEmpty
-        ? await _mangaService.browseManga(page: _currentPage, filter: _filters)
-        : await _mangaService.searchManga(_searchQuery, page: _currentPage);
-        
+    final newManga = await _mangaService.browseManga(page: _currentPage);
+
     if (mounted) {
       setState(() {
         _mangaList.addAll(newManga);
         _isLoadingMore = false;
-        
+
         _cachedMangaList = _mangaList;
         _cachedCurrentPage = _currentPage;
       });
     }
-  }
-  
-  void _onSearchChanged(String query) {
-    if (_searchQuery == query) return;
-    _searchQuery = query;
-    _loadInitialData();
   }
 
   /// Loads the editorial discover sections — Popular, Latest Updates,
@@ -210,13 +189,21 @@ class _MangaPageState extends State<MangaPage> {
     try {
       final results = await Future.wait([
         _mangaService.browseManga(
-            page: 1, filter: const MangaBrowseFilter(sort: 'Popularity')),
+          page: 1,
+          filter: const MangaBrowseFilter(sort: 'Popularity'),
+        ),
         _mangaService.browseManga(
-            page: 1, filter: const MangaBrowseFilter(sort: 'Latest Updates')),
+          page: 1,
+          filter: const MangaBrowseFilter(sort: 'Latest Updates'),
+        ),
         _mangaService.browseManga(
-            page: 1, filter: const MangaBrowseFilter(sort: 'Recently Added')),
+          page: 1,
+          filter: const MangaBrowseFilter(sort: 'Recently Added'),
+        ),
         _mangaService.browseManga(
-            page: 1, filter: const MangaBrowseFilter(sort: 'Subscribers')),
+          page: 1,
+          filter: const MangaBrowseFilter(sort: 'Subscribers'),
+        ),
       ]);
 
       if (!mounted) return;
@@ -236,52 +223,24 @@ class _MangaPageState extends State<MangaPage> {
     }
   }
 
-  void _toggleSearch() {
-    if (_isSearching && _searchQuery.isNotEmpty) {
-      _searchController.clear();
-      _searchQuery = '';
-      _cachedSearchQuery = '';
-      _loadInitialData();
-    }
-    setState(() => _isSearching = !_isSearching);
-  }
-
-  void _applyFilters(MangaBrowseFilter result) {
-    if (result == _filters && _searchQuery.isEmpty) return;
-    setState(() {
-      _filters = result;
-      _cachedFilters = result;
-      _searchQuery = '';
-      _searchController.clear();
-      _cachedSearchQuery = '';
-    });
-    _loadInitialData();
-  }
-
-  void _openFilterSheet() {
-    showMangaFilterSheet(
-      context: context,
-      current: _filters,
-      onApply: _applyFilters,
-    );
-  }
-
-
   void _resumeReading(Map<String, dynamic> historyEntry) {
     final mangaJson = historyEntry['manga'];
     final manga = Manga.fromJson(mangaJson);
     final chapterIndex = historyEntry['chapterIndex'] as int;
     final pageIndex = historyEntry['pageIndex'] as int;
-    final chaptersList = (historyEntry['chapters'] as List).map((c) => MangaChapter.fromJson(c)).toList();
+    final chaptersList = (historyEntry['chapters'] as List)
+        .map((c) => MangaChapter.fromJson(c))
+        .toList();
 
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => MangaReaderPage(
-          manga: manga,
-          chapters: chaptersList,
-          currentChapterIndex: chapterIndex,
-          resumePageIndex: pageIndex,
-        ),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            MangaReaderPage(
+              manga: manga,
+              chapters: chaptersList,
+              currentChapterIndex: chapterIndex,
+              resumePageIndex: pageIndex,
+            ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -322,7 +281,7 @@ class _MangaPageState extends State<MangaPage> {
               children: [
                 // Top App Bar / Search / Customize
                 _buildAppBar(),
-                
+
                 // Custom Scroll Track (Desktop only)
                 if (_screenWidth > 800 && showScrollTrack)
                   Positioned(
@@ -349,7 +308,6 @@ class _MangaPageState extends State<MangaPage> {
   }
 
   Widget _buildScrollableContent() {
-    final palette = AppThemeService.currentPalette.value;
     final density = MangaSettings.cardDensity.value;
     final sizing = MangaCardSizing.fromWidth(_screenWidth, density: density);
     final showContinue = MangaSettings.showContinueReading.value;
@@ -364,9 +322,9 @@ class _MangaPageState extends State<MangaPage> {
         SliverToBoxAdapter(
           child: SizedBox(height: 76.0 + topInset), // Spacer for top app bar
         ),
-        
+
         // ── Continue Reading ──
-        if (showContinue && _readingHistory.isNotEmpty && _searchQuery.isEmpty) ...[
+        if (showContinue && _readingHistory.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -393,30 +351,48 @@ class _MangaPageState extends State<MangaPage> {
               isMobile: isMobile,
             ),
           ),
-          SliverToBoxAdapter(
-            child: SizedBox(height: isMobile ? 24 : 40),
-          ),
+          SliverToBoxAdapter(child: SizedBox(height: isMobile ? 24 : 40)),
         ],
 
         // ── Discover Sections (Popular / Latest / Recent / Most Followed) ──
-        if (_searchQuery.isEmpty && _popularSection.isNotEmpty) ...[
+        if (_popularSection.isNotEmpty) ...[
           SliverToBoxAdapter(
-            child: _buildMangaSection('Popular Manga', _popularSection, sizing, isMobile),
+            child: _buildMangaSection(
+              'Popular Manga',
+              _popularSection,
+              sizing,
+              isMobile,
+            ),
           ),
         ],
-        if (_searchQuery.isEmpty && _latestSection.isNotEmpty) ...[
+        if (_latestSection.isNotEmpty) ...[
           SliverToBoxAdapter(
-            child: _buildMangaSection('Latest Updates', _latestSection, sizing, isMobile),
+            child: _buildMangaSection(
+              'Latest Updates',
+              _latestSection,
+              sizing,
+              isMobile,
+            ),
           ),
         ],
-        if (_searchQuery.isEmpty && _recentSection.isNotEmpty) ...[
+        if (_recentSection.isNotEmpty) ...[
           SliverToBoxAdapter(
-            child: _buildMangaSection('Recently Added', _recentSection, sizing, isMobile),
+            child: _buildMangaSection(
+              'Recently Added',
+              _recentSection,
+              sizing,
+              isMobile,
+            ),
           ),
         ],
-        if (_searchQuery.isEmpty && _followedSection.isNotEmpty) ...[
+        if (_followedSection.isNotEmpty) ...[
           SliverToBoxAdapter(
-            child: _buildMangaSection('Most Followed', _followedSection, sizing, isMobile),
+            child: _buildMangaSection(
+              'Most Followed',
+              _followedSection,
+              sizing,
+              isMobile,
+            ),
           ),
         ],
 
@@ -432,7 +408,7 @@ class _MangaPageState extends State<MangaPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _searchQuery.isNotEmpty ? 'Search Results' : 'Discover Manga',
+                        'Discover Manga',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 22,
@@ -440,55 +416,26 @@ class _MangaPageState extends State<MangaPage> {
                           letterSpacing: -0.5,
                         ),
                       ),
-                      if (_filters.activeCount > 0 && _searchQuery.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            '${_filters.activeCount} filters active',
-                            style: TextStyle(
-                              color: palette.primaryColor,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
                     ],
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _searchQuery.isNotEmpty ? 'Search Results' : 'Discover Manga',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          if (_filters.activeCount > 0 && _searchQuery.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                '${_filters.activeCount} filters active',
-                                style: TextStyle(
-                                  color: palette.primaryColor,
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                        ],
+                      Text(
+                        'Discover Manga',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ),
                       ),
                     ],
                   ),
           ),
         ),
-        
+
         if (_isLoading && _mangaList.isEmpty)
           const SliverFillRemaining(
             hasScrollBody: false,
@@ -508,7 +455,10 @@ class _MangaPageState extends State<MangaPage> {
           )
         else
           SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: sizing.sidePadding, vertical: 8.0),
+            padding: EdgeInsets.symmetric(
+              horizontal: sizing.sidePadding,
+              vertical: 8.0,
+            ),
             sliver: SliverGrid(
               gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: sizing.cardWidth + sizing.spacing * 2,
@@ -516,25 +466,26 @@ class _MangaPageState extends State<MangaPage> {
                 crossAxisSpacing: sizing.spacing,
                 mainAxisExtent: sizing.totalHeight,
               ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  return MangaCard(manga: _mangaList[index]);
-                },
-                childCount: _mangaList.length,
-              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                return MangaCard(manga: _mangaList[index]);
+              }, childCount: _mangaList.length),
             ),
           ),
-          
+
         if (_isLoadingMore)
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(32.0),
-              child: Center(child: CircularProgressIndicator(color: Colors.white)),
+              child: Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
             ),
           ),
-        
+
         SliverToBoxAdapter(
-          child: SizedBox(height: 110.0 + bottomInset), // Bottom padding for dock
+          child: SizedBox(
+            height: 110.0 + bottomInset,
+          ), // Bottom padding for dock
         ),
       ],
     );
@@ -550,12 +501,15 @@ class _MangaPageState extends State<MangaPage> {
       child: PageTopBar(
         topPadding: topInset,
         title: 'Manga',
-        isSearching: _isSearching,
-        searchField: _isSearching ? _buildMangaSearchField() : null,
-        onSearchTap: _toggleSearch,
-        onFilterTap: _openFilterSheet,
-        filterCount: _filters.activeCount,
+        onSearchTap: _navigateToSearch,
       ),
+    );
+  }
+
+  void _navigateToSearch() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MangaSearchPage()),
     );
   }
 
@@ -606,35 +560,6 @@ class _MangaPageState extends State<MangaPage> {
       ),
     );
   }
-
-  Widget _buildMangaSearchField() {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10),
-      child: Container(
-        height: 34,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-        ),
-        child: TextField(
-          controller: _searchController,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-          textInputAction: TextInputAction.search,
-          onSubmitted: _onSearchChanged,
-          decoration: const InputDecoration(
-            hintText: 'Search manga, manhwa, manhua...',
-            hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
-            prefixIcon: Icon(Icons.search_rounded, size: 17, color: Colors.white38),
-            border: InputBorder.none,
-            isDense: true,
-            contentPadding: EdgeInsets.symmetric(vertical: 8),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _ContinueReadingSlider extends StatefulWidget {
@@ -682,7 +607,8 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
   void _updateScrollButtons() {
     if (!_scrollController.hasClients) return;
     final canLeft = _scrollController.position.pixels > 10;
-    final canRight = _scrollController.position.pixels <
+    final canRight =
+        _scrollController.position.pixels <
         _scrollController.position.maxScrollExtent - 10;
     if (canLeft != _canScrollLeft || canRight != _canScrollRight) {
       setState(() {
@@ -776,11 +702,14 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
     final mangaJson = entry['manga'];
     final mangaId = (mangaJson['id'] ?? '').toString();
     final title = mangaJson['title'] ?? 'Unknown';
-    final coverUrl = mangaJson['cover_normal'] ?? mangaJson['cover_small'] ?? '';
+    final coverUrl =
+        mangaJson['cover_normal'] ?? mangaJson['cover_small'] ?? '';
     final chapterIndex = entry['chapterIndex'] as int;
     final chaptersList = entry['chapters'] as List;
-    final chapterTitle = chaptersList.isNotEmpty && chapterIndex < chaptersList.length
-        ? chaptersList[chapterIndex]['name'] ?? 'Chapter ${chaptersList[chapterIndex]['number']}'
+    final chapterTitle =
+        chaptersList.isNotEmpty && chapterIndex < chaptersList.length
+        ? chaptersList[chapterIndex]['name'] ??
+              'Chapter ${chaptersList[chapterIndex]['number']}'
         : 'Resume';
 
     return GestureDetector(
@@ -788,7 +717,9 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
-          width: widget.isMobile ? math.min(320.0, widget.screenWidth * 0.82) : 380,
+          width: widget.isMobile
+              ? math.min(320.0, widget.screenWidth * 0.82)
+              : 380,
           margin: const EdgeInsets.symmetric(horizontal: 8.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
@@ -818,10 +749,7 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Color(0xCC000000),
-                      ],
+                      colors: [Colors.transparent, Color(0xCC000000)],
                     ),
                   ),
                 ),
@@ -838,7 +766,9 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
                         padding: const EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.1),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -858,7 +788,11 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(Icons.menu_book_rounded, color: palette.primaryColor, size: 16),
+                                Icon(
+                                  Icons.menu_book_rounded,
+                                  color: palette.primaryColor,
+                                  size: 16,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -866,7 +800,9 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                       fontSize: 14,
                                     ),
                                   ),
@@ -932,7 +868,11 @@ class _ContinueReadingSliderState extends State<_ContinueReadingSlider> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+                    child: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                 ),
               ],

@@ -3,31 +3,33 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../models/anime/anime_media.dart';
-import '../../services/anime/anilist_service.dart';
-import '../../utils/navigation/route_transitions.dart';
-import '../../widgets/anime/anime_card.dart';
-import '../../widgets/movie/movie_card.dart';
-import 'anime_details_page.dart';
-import 'anime_search_filter_sheet.dart';
+import '../../models/manga/manga.dart';
+import '../../models/manga/manga_browse_filter.dart';
+import '../../services/manga/manga_service.dart';
+import '../../services/manga/manga_settings.dart';
+import '../../widgets/manga/manga_card.dart';
+import 'manga_filter_sheet.dart';
 
-/// Clean dedicated anime search page: back button, search bar, filter
-/// button, results in a responsive poster grid, recent searches.
-class AnimeSearchPage extends StatefulWidget {
-  const AnimeSearchPage({super.key});
+/// Clean dedicated manga search page: back button, search bar, filter
+/// button (the full WeebCentral browse filter sheet, applied server-side
+/// alongside the query), results in a responsive poster grid, recent
+/// searches.
+class MangaSearchPage extends StatefulWidget {
+  const MangaSearchPage({super.key});
 
   @override
-  State<AnimeSearchPage> createState() => _AnimeSearchPageState();
+  State<MangaSearchPage> createState() => _MangaSearchPageState();
 }
 
-class _AnimeSearchPageState extends State<AnimeSearchPage> {
+class _MangaSearchPageState extends State<MangaSearchPage> {
+  final MangaService _mangaService = MangaService();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
   Timer? _debounce;
   bool _isLoading = false;
-  List<AnimeMedia> _results = [];
-  AnimeSearchFilterState _filters = const AnimeSearchFilterState();
+  List<Manga> _results = [];
+  MangaBrowseFilter _filters = const MangaBrowseFilter();
 
   List<String> _searchHistory = [];
 
@@ -52,7 +54,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
 
   Future<void> _loadSearchHistory() async {
     final prefs = await SharedPreferences.getInstance();
-    final history = prefs.getStringList('anime_search_history') ?? [];
+    final history = prefs.getStringList('manga_search_history') ?? [];
     if (mounted) {
       setState(() {
         _searchHistory = history;
@@ -62,11 +64,11 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
 
   Future<void> _saveSearchHistory(String query) async {
     final prefs = await SharedPreferences.getInstance();
-    final history = prefs.getStringList('anime_search_history') ?? [];
+    final history = prefs.getStringList('manga_search_history') ?? [];
     history.remove(query);
     history.insert(0, query);
     if (history.length > 10) history.removeLast();
-    await prefs.setStringList('anime_search_history', history);
+    await prefs.setStringList('manga_search_history', history);
     if (mounted) {
       setState(() {
         _searchHistory = history;
@@ -76,9 +78,9 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
 
   Future<void> _removeSearchHistory(String query) async {
     final prefs = await SharedPreferences.getInstance();
-    final history = prefs.getStringList('anime_search_history') ?? [];
+    final history = prefs.getStringList('manga_search_history') ?? [];
     history.remove(query);
-    await prefs.setStringList('anime_search_history', history);
+    await prefs.setStringList('manga_search_history', history);
     if (mounted) {
       setState(() {
         _searchHistory = history;
@@ -88,7 +90,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
 
   Future<void> _clearSearchHistory() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('anime_search_history');
+    await prefs.remove('manga_search_history');
     if (mounted) {
       setState(() {
         _searchHistory = [];
@@ -102,13 +104,6 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     final trimmed = query.trim();
-    if (trimmed.isEmpty && !_filters.isDefault) {
-      // Keep filtered browse when the text is cleared.
-      _debounce = Timer(const Duration(milliseconds: 400), () {
-        _performSearch('');
-      });
-      return;
-    }
     if (trimmed.isEmpty) {
       setState(() {
         _results.clear();
@@ -124,34 +119,13 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
 
   void _performSearch([String? query]) async {
     final q = (query ?? _searchController.text).trim();
-    final hasText = q.isNotEmpty;
+    if (q.isEmpty) return;
 
-    if (!hasText && _filters.isDefault) {
-      setState(() {
-        _results.clear();
-        _isLoading = false;
-      });
-      return;
-    }
-
-    if (hasText) {
-      _saveSearchHistory(q);
-    }
-
+    _saveSearchHistory(q);
     setState(() => _isLoading = true);
 
     try {
-      final results = await AnilistService.instance.searchAnime(
-        q,
-        genre: _filters.genre,
-        year: _filters.year,
-        season: _filters.season,
-        format: _filters.format,
-        status: _filters.status,
-        sort: _filters.sort,
-        isAdult: _filters.adult,
-        perPage: 40,
-      );
+      final results = await _mangaService.searchManga(q, page: 1, filter: _filters);
       if (!mounted) return;
       setState(() {
         _results = results;
@@ -166,20 +140,22 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
     }
   }
 
-  void _applyFilters(AnimeSearchFilterState result) {
+  void _applyFilters(MangaBrowseFilter result) {
     if (result == _filters) return;
     setState(() {
       _filters = result;
     });
-    _performSearch();
+    // Re-run the search with the new server-side filters applied.
+    if (_searchController.text.trim().isNotEmpty) {
+      _performSearch();
+    }
   }
 
-  void _openDetails(AnimeMedia anime) {
-    Navigator.push(
-      context,
-      CinematicSlideRoute(page: AnimeDetailsPage(anime: anime)),
-    );
-  }
+  // ── Results ──────────────────────────────────────────────────────────
+
+  /// Filtering happens server-side (WeebCentral's search endpoint accepts
+  /// the same params as browse), so the raw results list is used as-is.
+  List<Manga> get _visibleResults => _results;
 
   // ── UI ────────────────────────────────────────────────────────────────
 
@@ -189,7 +165,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => showAnimeSearchFilterSheet(
+      onTap: () => showMangaFilterSheet(
         context: context,
         current: _filters,
         onApply: _applyFilters,
@@ -250,6 +226,8 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top;
+    final visible = _visibleResults;
+    final hasQuery = _searchController.text.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
@@ -311,9 +289,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
                             onChanged: _onSearchChanged,
                             onSubmitted: (q) => _performSearch(),
                             decoration: InputDecoration(
-                              hintText: _filters.isDefault
-                                  ? 'Search anime...'
-                                  : 'Search anime (filtered)...',
+                              hintText: 'Search manga, manhwa, manhua...',
                               hintStyle: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.35),
                                 fontSize: 14,
@@ -359,20 +335,16 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
           ? const Center(
               child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
             )
-          : _results.isEmpty
-          ? _buildEmptyState(topPadding)
-          : _buildResultsGrid(topPadding),
+          : visible.isEmpty
+          ? _buildEmptyState(topPadding, hasQuery)
+          : _buildResultsGrid(topPadding, visible),
     );
   }
 
-  Widget _buildResultsGrid(double topPadding) {
+  Widget _buildResultsGrid(double topPadding, List<Manga> results) {
+    final density = MangaSettings.cardDensity.value;
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final sizing = MovieCardSizing.fromWidth(screenWidth);
-    final columns =
-        ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /
-                (sizing.cardWidth + sizing.spacing))
-            .floor()
-            .clamp(2, 10);
+    final sizing = MangaCardSizing.fromWidth(screenWidth, density: density);
 
     return GridView.builder(
       padding: EdgeInsets.only(
@@ -382,32 +354,26 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
         bottom: 40 + MediaQuery.paddingOf(context).bottom,
       ),
       physics: const ClampingScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        childAspectRatio: sizing.cardWidth / sizing.totalHeight,
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: sizing.cardWidth + sizing.spacing * 2,
+        mainAxisSpacing: 20.0,
         crossAxisSpacing: sizing.spacing,
-        mainAxisSpacing: sizing.spacing,
+        mainAxisExtent: sizing.totalHeight,
       ),
-      itemCount: _results.length,
+      itemCount: results.length,
       itemBuilder: (context, index) {
         return SizedBox(
           width: sizing.cardWidth,
-          child: AnimeCard(
-            anime: _results[index],
-            width: sizing.cardWidth,
-            onTap: () => _openDetails(_results[index]),
-          ),
+          child: MangaCard(manga: results[index]),
         );
       },
     );
   }
 
-  Widget _buildEmptyState(double topPadding) {
+  Widget _buildEmptyState(double topPadding, bool hasQuery) {
     final filtered = !_filters.isDefault;
-    final hasQueryOrFilters =
-        _searchController.text.trim().isNotEmpty || filtered;
 
-    if (hasQueryOrFilters) {
+    if (hasQuery || filtered) {
       return Center(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
@@ -445,7 +411,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
                     ),
                   ),
                   onPressed: () =>
-                      setState(() => _filters = const AnimeSearchFilterState()),
+                      setState(() => _filters = const MangaBrowseFilter()),
                   icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
                   label: const Text('Clear Filters'),
                 ),
@@ -471,7 +437,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
         const SizedBox(height: 12),
         const Center(
           child: Text(
-            'Search for anime, or filter by genre, season, format and more',
+            'Search manga, manhwa and manhua',
             style: TextStyle(
               color: Colors.white54,
               fontSize: 14,

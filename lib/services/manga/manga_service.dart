@@ -81,13 +81,34 @@ class MangaService {
     }
   }
 
-  Future<List<Manga>> searchManga(String query, {int page = 1, bool allowAdult = false}) async {
+  /// Search by text query, optionally combined with the full browse
+  /// filter set. WeebCentral serves both from the same /search/data
+  /// endpoint, so filters (type, status, tags, official, adult) apply
+  /// server-side alongside the text. Sort defaults to Best Match unless
+  /// the filter overrides it.
+  Future<List<Manga>> searchManga(
+    String query, {
+    int page = 1,
+    MangaBrowseFilter filter = const MangaBrowseFilter(),
+  }) async {
     try {
       final offset = (page - 1) * _pageSize;
-      final adult = allowAdult ? 'Any' : 'False';
-      final encodedQuery = Uri.encodeComponent(query);
-      final url =
-          '$_baseUrl/search/data?text=$encodedQuery&display_mode=Full+Display&sort=Best+Match&order=Descending&official=Any&adult=$adult&offset=$offset';
+      final encodedQuery = Uri.encodeComponent(query.trim());
+      final sort = filter.isDefault ? 'Best+Match' : Uri.encodeComponent(filter.sort);
+      final params = <String>[
+        'text=$encodedQuery',
+        'display_mode=Full+Display',
+        'sort=$sort',
+        'order=${filter.descending ? 'Descending' : 'Ascending'}',
+        'official=${Uri.encodeComponent(filter.official)}',
+        'adult=${Uri.encodeComponent(filter.adult)}',
+        'offset=$offset',
+        ...filter.types.map((t) => 'included_type=${Uri.encodeComponent(t)}'),
+        ...filter.statuses.map((s) => 'included_status=${Uri.encodeComponent(s)}'),
+        ...filter.includedTags.map((t) => 'included_tag=${Uri.encodeComponent(t)}'),
+        ...filter.excludedTags.map((t) => 'excluded_tag=${Uri.encodeComponent(t)}'),
+      ];
+      final url = '$_baseUrl/search/data?${params.join('&')}';
       debugPrint('[MangaService] Searching page $page: $url');
       final html = await _fetchHtml(url);
       return _parseSearchResults(html);

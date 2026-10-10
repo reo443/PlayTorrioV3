@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/manga/manga_browse_filter.dart';
 import '../../services/manga/manga_service.dart';
@@ -444,7 +445,9 @@ class _MangaFilterSheetState extends State<_MangaFilterSheet> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w800,
-            color: selected ? (label == 'Exclude' ? Colors.redAccent : const Color(0xFF9D85FF)) : Colors.white38,
+            color: selected
+                ? (label == 'Exclude' ? Colors.redAccent : const Color(0xFF9D85FF))
+                : Colors.white38,
           ),
         ),
       ),
