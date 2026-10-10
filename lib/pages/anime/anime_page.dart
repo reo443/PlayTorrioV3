@@ -42,10 +42,9 @@ class _AnimePageState extends State<AnimePage> {
   List<AnimeMedia> _popularSeason = [];
   List<AnimeMedia> _topRated = [];
   List<AnimeMedia> _upcoming = [];
-  List<AnimeMedia> _actionAnime = [];
-  List<AnimeMedia> _romanceAnime = [];
-  List<AnimeMedia> _fantasyAnime = [];
-  List<AnimeMedia> _sciFiAnime = [];
+  List<AnimeMedia> _trendingToday = [];
+  List<AnimeMedia> _trendingWeek = [];
+  List<AnimeMedia> _newEpisodes = [];
 
   @override
   void initState() {
@@ -77,20 +76,28 @@ class _AnimePageState extends State<AnimePage> {
       final seasonFut = _anilistService.fetchPopularThisSeason(perPage: 18);
       final topRatedFut = _anilistService.fetchTopRated(perPage: 18);
       final upcomingFut = _anilistService.fetchUpcomingNextSeason(perPage: 18);
-      final actionFut = _anilistService.fetchByGenre('Action', perPage: 18);
-      final romanceFut = _anilistService.fetchByGenre('Romance', perPage: 18);
-      final fantasyFut = _anilistService.fetchByGenre('Fantasy', perPage: 18);
-      final sciFiFut = _anilistService.fetchByGenre('Sci-Fi', perPage: 18);
+      final trendingTodayFut = _anilistService.fetchRecentlyAired(
+        window: const Duration(days: 1),
+        sortByPopularity: true,
+      );
+      final trendingWeekFut = _anilistService.fetchRecentlyAired(
+        window: const Duration(days: 7),
+        maxPages: 4,
+        sortByPopularity: true,
+      );
+      final newEpisodesFut = _anilistService.fetchRecentlyAired(
+        window: const Duration(days: 1),
+        sortByPopularity: false,
+      );
 
       final results = await Future.wait([
         trendingFut,
         seasonFut,
         topRatedFut,
         upcomingFut,
-        actionFut,
-        romanceFut,
-        fantasyFut,
-        sciFiFut,
+        trendingTodayFut,
+        trendingWeekFut,
+        newEpisodesFut,
       ]);
 
       if (mounted) {
@@ -100,10 +107,9 @@ class _AnimePageState extends State<AnimePage> {
           _popularSeason = results[1];
           _topRated = results[2];
           _upcoming = results[3];
-          _actionAnime = results[4];
-          _romanceAnime = results[5];
-          _fantasyAnime = results[6];
-          _sciFiAnime = results[7];
+          _trendingToday = results[4];
+          _trendingWeek = results[5];
+          _newEpisodes = results[6];
           _loading = false;
           if (!hasAnyData) {
             _error = 'Failed to load Anime catalog. Please check your internet connection or retry.';
@@ -240,6 +246,24 @@ class _AnimePageState extends State<AnimePage> {
                       const SizedBox(height: 8),
 
                       // 3. Sliders with Desktop Scroll Arrows
+                      if (_trendingToday.isNotEmpty)
+                        AnimeSliderSection(
+                          title: 'Trending Today',
+                          animeList: _trendingToday,
+                          onAnimeTap: _openDetails,
+                        ),
+                      if (_trendingWeek.isNotEmpty)
+                        AnimeSliderSection(
+                          title: 'Trending This Week',
+                          animeList: _trendingWeek,
+                          onAnimeTap: _openDetails,
+                        ),
+                      if (_newEpisodes.isNotEmpty)
+                        AnimeSliderSection(
+                          title: 'New Episodes',
+                          animeList: _newEpisodes,
+                          onAnimeTap: _openDetails,
+                        ),
                       AnimeSliderSection(
                         title: 'Trending Anime',
                         animeList: _trending,
@@ -260,26 +284,7 @@ class _AnimePageState extends State<AnimePage> {
                         animeList: _upcoming,
                         onAnimeTap: _openDetails,
                       ),
-                      AnimeSliderSection(
-                        title: 'Action & Adventure',
-                        animeList: _actionAnime,
-                        onAnimeTap: _openDetails,
-                      ),
-                      AnimeSliderSection(
-                        title: 'Romance & Drama',
-                        animeList: _romanceAnime,
-                        onAnimeTap: _openDetails,
-                      ),
-                      AnimeSliderSection(
-                        title: 'Fantasy & Isekai',
-                        animeList: _fantasyAnime,
-                        onAnimeTap: _openDetails,
-                      ),
-                      AnimeSliderSection(
-                        title: 'Sci-Fi & Cyberpunk',
-                        animeList: _sciFiAnime,
-                        onAnimeTap: _openDetails,
-                      ),
+                     
 
                       SizedBox(height: 110.0 + MediaQuery.paddingOf(context).bottom),
                     ],

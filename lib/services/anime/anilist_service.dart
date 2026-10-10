@@ -194,6 +194,76 @@ class AnilistService {
     return _parseMediaList(data);
   }
 
+  /// Anime that aired within [window] ending now, built from AniList's
+  /// airing schedules. Deduplicated by show (most recent episode kept).
+  /// With [sortByPopularity] the list is ranked by AniList popularity —
+  /// use for "Trending Today / This Week"; otherwise it stays in most-
+  /// recent-episode order — use for "New Episodes".
+  Future<List<AnimeMedia>> fetchRecentlyAired({
+    Duration window = const Duration(days: 1),
+    int maxPages = 1,
+    int perPage = 50,
+    int limit = 20,
+    bool sortByPopularity = true,
+  }) async {
+    final nowSec = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final fromSec = nowSec - window.inSeconds;
+
+    const query = '''
+      query (\$page: Int, \$perPage: Int, \$from: Int, \$to: Int) {
+        Page(page: \$page, perPage: \$perPage) {
+          airingSchedules(airingAt_greater: \$from, airingAt_lesser: \$to, sort: TIME_DESC) {
+            episode
+            airingAt
+            media {
+              $_mediaFields
+            }
+          }
+        }
+      }
+    ''';
+
+    try {
+      final results = await Future.wait(
+        List.generate(maxPages, (i) {
+          return _postGraphQL(query, {
+            'page': i + 1,
+            'perPage': perPage,
+            'from': fromSec,
+            'to': nowSec,
+          });
+        }),
+      );
+
+      // Deduplicate by show id — schedules are TIME_DESC, so the first
+      // entry per show is its most recent aired episode.
+      final byId = <int, AnimeMedia>{};
+      for (final data in results) {
+        final page = data?['Page'];
+        if (page is Map<String, dynamic> && page['airingSchedules'] is List) {
+          for (final sched in (page['airingSchedules'] as List).whereType<Map<String, dynamic>>()) {
+            final media = sched['media'];
+            if (media is Map<String, dynamic> && media['id'] is int) {
+              final id = media['id'] as int;
+              if (!byId.containsKey(id)) {
+                byId[id] = AnimeMedia.fromAnilistJson(media);
+              }
+            }
+          }
+        }
+      }
+
+      var list = byId.values.toList();
+      if (sortByPopularity) {
+        list.sort((a, b) => b.popularity.compareTo(a.popularity));
+      }
+      if (list.length > limit) list = list.sublist(0, limit);
+      return list;
+    } catch (_) {
+      return [];
+    }
+  }
+
   /// All-Time Top Rated
   Future<List<AnimeMedia>> fetchTopRated({
     int page = 1,
