@@ -15,6 +15,7 @@ import '../../widgets/anime/anime_slider_section.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/custom_scroll_track.dart';
+import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/home/continue_watching_slider.dart';
 import '../settings/settings_page.dart';
 import 'anime_details_page.dart';
@@ -294,9 +295,10 @@ class _AnimePageState extends State<AnimePage> {
             top: 0,
             left: 0,
             right: 0,
-            child: _AnimeGlassAppBar(
+            child: PageTopBar(
               topPadding: topPadding,
-              onSearchTap: _navigateToSearch,
+              title: 'Anime',
+              onSearchTap: () => _navigateToSearch(null),
             ),
           ),
 
@@ -352,110 +354,6 @@ class _AnimePageState extends State<AnimePage> {
           ),
         );
       },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Frosted Glass App Bar for Anime (Matching Home Page GlassAppBar)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _AnimeGlassAppBar extends StatelessWidget {
-  final double topPadding;
-  final void Function(Offset?) onSearchTap;
-
-  const _AnimeGlassAppBar({
-    required this.topPadding,
-    required this.onSearchTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isMobile = MediaQuery.sizeOf(context).width < 430;
-
-    return RepaintBoundary(
-      child: Container(
-        padding: EdgeInsets.only(
-          top: topPadding + 10,
-          bottom: 14,
-          left: isMobile ? 8 : 20,
-          right: 8,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xF5080A0F), Color(0xE6080A0F)],
-          ),
-          border: Border(
-            bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-          ),
-        ),
-        child: Row(
-          children: [
-            // Back button
-            IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
-            if (!isMobile) ...[
-              const SizedBox(width: 4),
-
-              // Logo
-              Image.asset(
-                'assets/icon.png',
-                width: 32,
-                height: 32,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(width: 10),
-              RichText(
-                text: const TextSpan(
-                  text: 'PlayTorrio ',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    color: Colors.white,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: 'Anime',
-                      style: TextStyle(
-                        color: Color(0xFF7C5CFF),
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            const Spacer(),
-
-            // Search Button
-            Builder(
-              builder: (context) {
-                return IconButton(
-                  icon: Icon(
-                    Icons.search_rounded,
-                    color: Colors.white.withValues(alpha: 0.65),
-                    size: 25,
-                  ),
-                  onPressed: () {
-                    final box = context.findRenderObject() as RenderBox?;
-                    final offset = box?.localToGlobal(box.size.center(Offset.zero));
-                    onSearchTap(offset);
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

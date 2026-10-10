@@ -9,6 +9,7 @@ import '../../services/metadata/metadata_service.dart';
 import '../../services/theme/dock_settings.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/error_view.dart';
+import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/movie/movie_card.dart';
 import 'discover_filter_sheet.dart';
 
@@ -567,6 +568,35 @@ class _DiscoverPageState extends State<DiscoverPage> {
     });
   }
 
+  Widget _buildDiscoverSearchField() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: Container(
+        height: 34,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        ),
+        child: TextField(
+          controller: _searchController,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          textInputAction: TextInputAction.search,
+          onSubmitted: _onSearchSubmitted,
+          decoration: InputDecoration(
+            hintText: 'Search within ${_selectedCatalogEntry?.catalog.name ?? 'catalog'}...',
+            hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+            prefixIcon: const Icon(Icons.search_rounded, size: 17, color: Colors.white38),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _onSearchSubmitted(String query) {
     if (query.trim().isEmpty) {
       setState(() {
@@ -609,14 +639,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
     final topPadding = mediaQuery.padding.top;
     final bottomInset = mediaQuery.padding.bottom;
     final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
-    final isCompactScreen = screenHeight < 520;
 
     final sizing = MovieCardSizing.fromWidth(screenWidth);
 
-    final toolbarH = isCompactScreen ? 46.0 : kToolbarHeight;
-
-    final headerHeight = topPadding + toolbarH;
+    // PageTopBar height: status bar + top pad 6 + row ~38 + bottom pad 10
+    final headerHeight = topPadding + 56;
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
@@ -632,10 +659,23 @@ class _DiscoverPageState extends State<DiscoverPage> {
             top: 0,
             left: 0,
             right: 0,
-            child: _buildHeader(
-              topPadding,
-              isCompactScreen: isCompactScreen,
-              toolbarH: toolbarH,
+            child: PageTopBar(
+              topPadding: topPadding,
+              title: 'Discover',
+              showBack: true,
+              isSearching: _isSearching,
+              searchField: _isSearching ? _buildDiscoverSearchField() : null,
+              onSearchTap: (_isSearching || (_selectedCatalogEntry?.catalog.supportsSearch ?? false))
+                  ? () {
+                      if (_isSearching) {
+                        _clearSearch();
+                      } else {
+                        setState(() => _isSearching = true);
+                      }
+                    }
+                  : null,
+              onFilterTap: _openFilterSheet,
+              filterCount: _activeFilterCount,
             ),
           ),
 
@@ -992,171 +1032,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
             child: const Text('Apply'),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(
-    double topPadding, {
-    bool isCompactScreen = false,
-    double toolbarH = kToolbarHeight,
-  }) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isDesktop = screenWidth >= 800;
-    final isNarrow = screenWidth < 400;
-
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-        child: Container(
-          padding: EdgeInsets.only(top: topPadding),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                const Color(0xFF080A0F).withValues(alpha: 0.95),
-                const Color(0xFF080A0F).withValues(alpha: 0.80),
-              ],
-            ),
-            border: Border(
-              bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── Top Title Row ──
-              SizedBox(
-                height: toolbarH,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_rounded, size: 19, color: Colors.white),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    const SizedBox(width: 2),
-                    if (!_isSearching) ...[
-                      const Icon(Icons.explore_rounded, color: Color(0xFF7C5CFF), size: 21),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Discover',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: isDesktop ? 20 : (isNarrow ? 17 : 18),
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                    if (_isSearching)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: TextField(
-                            controller: _searchController,
-                            autofocus: true,
-                            style: const TextStyle(color: Colors.white, fontSize: 15),
-                            textInputAction: TextInputAction.search,
-                            onSubmitted: _onSearchSubmitted,
-                            decoration: InputDecoration(
-                              hintText: isNarrow
-                                  ? 'Search...'
-                                  : 'Search within ${_selectedCatalogEntry?.catalog.name ?? 'catalog'}...',
-                              hintStyle: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.4),
-                                fontSize: 14,
-                              ),
-                              border: InputBorder.none,
-                              suffixIcon: IconButton(
-                                icon: const Icon(Icons.close_rounded, size: 18, color: Colors.white70),
-                                onPressed: _clearSearch,
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      const Spacer(),
-
-                    // Search toggle button
-                    if (!_isSearching && (_selectedCatalogEntry?.catalog.supportsSearch ?? false))
-                      IconButton(
-                        icon: const Icon(Icons.search_rounded, color: Colors.white70, size: 22),
-                        tooltip: 'Search catalog',
-                        onPressed: () => setState(() => _isSearching = true),
-                      ),
-
-                    // Filters button
-                    _buildFilterButton(isNarrow),
-                    const SizedBox(width: 12),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterButton(bool isNarrow) {
-    final count = _activeFilterCount;
-    final hasActive = count > 0;
-
-    return GestureDetector(
-      onTap: _openFilterSheet,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: isNarrow ? 10 : 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: hasActive
-              ? const Color(0xFF7C5CFF)
-              : Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: hasActive
-                ? const Color(0xFF7C5CFF)
-                : Colors.white.withValues(alpha: 0.12),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.tune_rounded,
-              size: 15,
-              color: hasActive ? Colors.white : Colors.white70,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              'Filters',
-              style: TextStyle(
-                color: hasActive ? Colors.white : Colors.white70,
-                fontWeight: FontWeight.bold,
-                fontSize: isNarrow ? 12 : 13,
-              ),
-            ),
-            if (count > 0) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '$count',
-                  style: const TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }

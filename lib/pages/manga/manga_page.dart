@@ -12,6 +12,7 @@ import '../../services/manga/manga_settings.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/custom_scroll_track.dart';
+import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/common/slider_arrow.dart';
 import '../../widgets/manga/manga_card.dart';
 import '../../models/manga/manga_browse_filter.dart';
@@ -34,6 +35,12 @@ class _MangaPageState extends State<MangaPage> {
   static MangaBrowseFilter _cachedFilters = const MangaBrowseFilter();
   static double _cachedScrollOffset = 0.0;
 
+  // Editorial section caches (Popular / Latest / Recently Added / Most Followed)
+  static List<Manga>? _cachedPopularSection;
+  static List<Manga>? _cachedLatestSection;
+  static List<Manga>? _cachedRecentSection;
+  static List<Manga>? _cachedFollowedSection;
+
   final MangaService _mangaService = MangaService();
   late final ScrollController _scrollController;
   final TextEditingController _searchController = TextEditingController();
@@ -41,12 +48,19 @@ class _MangaPageState extends State<MangaPage> {
   List<Manga> _mangaList = [];
   List<Map<String, dynamic>> _readingHistory = [];
 
+  // Discover-style editorial sections
+  List<Manga> _popularSection = [];
+  List<Manga> _latestSection = [];
+  List<Manga> _recentSection = [];
+  List<Manga> _followedSection = [];
+
   bool _isLoading = false;
   bool _isLoadingMore = false;
+  bool _isSearching = false;
   int _currentPage = 1;
   String _searchQuery = '';
   MangaBrowseFilter _filters = const MangaBrowseFilter();
-  
+
   // Track grid layout dimensions
   late double _screenWidth;
 
@@ -56,6 +70,7 @@ class _MangaPageState extends State<MangaPage> {
     _scrollController = ScrollController(initialScrollOffset: _cachedScrollOffset);
     _searchController.text = _cachedSearchQuery;
     _filters = _cachedFilters;
+    _isSearching = _cachedSearchQuery.isNotEmpty;
 
     MangaSettings.changeNotifier.addListener(_onSettingsChanged);
     AppThemeService.currentPalette.addListener(_onSettingsChanged);
@@ -79,7 +94,9 @@ class _MangaPageState extends State<MangaPage> {
       _isLoading = true;
       _loadInitialData();
     }
-    
+
+    _loadSectionData();
+
     MangaService.readingHistoryRevision.addListener(_loadHistory);
     _scrollController.addListener(_onScroll);
   }
@@ -174,6 +191,61 @@ class _MangaPageState extends State<MangaPage> {
     _loadInitialData();
   }
 
+  /// Loads the editorial discover sections — Popular, Latest Updates,
+  /// Recently Added and Most Followed — cached statically across visits.
+  Future<void> _loadSectionData() async {
+    if (_cachedPopularSection != null &&
+        _cachedLatestSection != null &&
+        _cachedRecentSection != null &&
+        _cachedFollowedSection != null) {
+      setState(() {
+        _popularSection = _cachedPopularSection!;
+        _latestSection = _cachedLatestSection!;
+        _recentSection = _cachedRecentSection!;
+        _followedSection = _cachedFollowedSection!;
+      });
+      return;
+    }
+
+    try {
+      final results = await Future.wait([
+        _mangaService.browseManga(
+            page: 1, filter: const MangaBrowseFilter(sort: 'Popularity')),
+        _mangaService.browseManga(
+            page: 1, filter: const MangaBrowseFilter(sort: 'Latest Updates')),
+        _mangaService.browseManga(
+            page: 1, filter: const MangaBrowseFilter(sort: 'Recently Added')),
+        _mangaService.browseManga(
+            page: 1, filter: const MangaBrowseFilter(sort: 'Subscribers')),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _popularSection = results[0];
+        _latestSection = results[1];
+        _recentSection = results[2];
+        _followedSection = results[3];
+
+        _cachedPopularSection = _popularSection;
+        _cachedLatestSection = _latestSection;
+        _cachedRecentSection = _recentSection;
+        _cachedFollowedSection = _followedSection;
+      });
+    } catch (_) {
+      // Sections are editorial — a failure just means they don't render.
+    }
+  }
+
+  void _toggleSearch() {
+    if (_isSearching && _searchQuery.isNotEmpty) {
+      _searchController.clear();
+      _searchQuery = '';
+      _cachedSearchQuery = '';
+      _loadInitialData();
+    }
+    setState(() => _isSearching = !_isSearching);
+  }
+
   void _applyFilters(MangaBrowseFilter result) {
     if (result == _filters && _searchQuery.isEmpty) return;
     setState(() {
@@ -194,69 +266,6 @@ class _MangaPageState extends State<MangaPage> {
     );
   }
 
-  /// Glass "Filters" button for the app bar, with an active-filter count
-  /// badge. Opens the manga filter sheet.
-  Widget _buildAppBarFilterButton() {
-    final count = _filters.activeCount;
-    final hasActive = count > 0;
-    final palette = AppThemeService.currentPalette.value;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: hasActive
-                ? palette.primaryColor.withValues(alpha: 0.25)
-                : Colors.white.withValues(alpha: 0.05),
-            border: Border.all(
-              color: hasActive
-                  ? palette.primaryColor.withValues(alpha: 0.6)
-                  : Colors.white.withValues(alpha: 0.1),
-              width: 1.5,
-            ),
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: IconButton(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Icon(
-                  Icons.tune_rounded,
-                  color: hasActive ? palette.primaryColor : Colors.white70,
-                ),
-                if (count > 0)
-                  Positioned(
-                    top: -4,
-                    right: -5,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: palette.primaryColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF10131C), width: 1.5),
-                      ),
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            tooltip: 'Filters',
-            onPressed: _openFilterSheet,
-            splashRadius: 20,
-          ),
-        ),
-      ),
-    );
-  }
 
   void _resumeReading(Map<String, dynamic> historyEntry) {
     final mangaJson = historyEntry['manga'];
@@ -389,6 +398,28 @@ class _MangaPageState extends State<MangaPage> {
           ),
         ],
 
+        // ── Discover Sections (Popular / Latest / Recent / Most Followed) ──
+        if (_searchQuery.isEmpty && _popularSection.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: _buildMangaSection('Popular Manga', _popularSection, sizing, isMobile),
+          ),
+        ],
+        if (_searchQuery.isEmpty && _latestSection.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: _buildMangaSection('Latest Updates', _latestSection, sizing, isMobile),
+          ),
+        ],
+        if (_searchQuery.isEmpty && _recentSection.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: _buildMangaSection('Recently Added', _recentSection, sizing, isMobile),
+          ),
+        ],
+        if (_searchQuery.isEmpty && _followedSection.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: _buildMangaSection('Most Followed', _followedSection, sizing, isMobile),
+          ),
+        ],
+
         // ── Discovery / Search Results & Filters ──
         SliverToBoxAdapter(
           child: Padding(
@@ -511,89 +542,96 @@ class _MangaPageState extends State<MangaPage> {
 
   Widget _buildAppBar() {
     final topInset = MediaQuery.paddingOf(context).top;
-    final isMobile = _screenWidth < 600;
-    final palette = AppThemeService.currentPalette.value;
 
     return Positioned(
-      top: 12.0 + topInset,
-      left: isMobile ? 12 : 24,
-      right: isMobile ? 12 : 24,
-      child: Row(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: PageTopBar(
+        topPadding: topInset,
+        title: 'Manga',
+        isSearching: _isSearching,
+        searchField: _isSearching ? _buildMangaSearchField() : null,
+        onSearchTap: _toggleSearch,
+        onFilterTap: _openFilterSheet,
+        filterCount: _filters.activeCount,
+      ),
+    );
+  }
+
+  /// Discover-style horizontal slider: section title + a row of manga
+  /// posters.
+  Widget _buildMangaSection(
+    String title,
+    List<Manga> list,
+    MangaCardSizing sizing,
+    bool isMobile,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isMobile ? 22 : 30, top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Back Button
-          ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                  onPressed: () => Navigator.of(context).pop(),
-                  splashRadius: 20,
-                ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : 32.0),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: isMobile ? 20 : 24,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5,
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          
-          // Search Bar
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 16.0, sigmaY: 16.0),
-                child: Container(
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    border: Border.all(
-                      color: _searchQuery.isNotEmpty ? palette.primaryColor : Colors.white.withValues(alpha: 0.1),
-                      width: 1.5,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onSubmitted: _onSearchChanged,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                    decoration: InputDecoration(
-                      hintText: 'Search Manga, Manhwa, Manhua...',
-                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
-                      prefixIcon: Icon(Icons.search_rounded, color: palette.primaryColor),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.close_rounded, color: Colors.white54),
-                              onPressed: () {
-                                _searchController.clear();
-                                _onSearchChanged('');
-                              },
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-              ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: sizing.totalHeight,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : 32.0),
+              physics: const ClampingScrollPhysics(),
+              itemCount: list.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                return SizedBox(
+                  width: sizing.cardWidth,
+                  height: sizing.totalHeight,
+                  child: MangaCard(manga: list[index]),
+                );
+              },
             ),
           ),
-
-          const SizedBox(width: 12),
-
-          // Filters Button
-          _buildAppBarFilterButton(),
-          
-          // Spacer so search bar doesn't touch the right edge on wide desktop screens
-          if (_screenWidth > 800) const SizedBox(width: 80),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMangaSearchField() {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: Container(
+        height: 34,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        ),
+        child: TextField(
+          controller: _searchController,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+          textInputAction: TextInputAction.search,
+          onSubmitted: _onSearchChanged,
+          decoration: const InputDecoration(
+            hintText: 'Search manga, manhwa, manhua...',
+            hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
+            prefixIcon: Icon(Icons.search_rounded, size: 17, color: Colors.white38),
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(vertical: 8),
+          ),
+        ),
       ),
     );
   }

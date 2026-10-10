@@ -20,6 +20,7 @@ import '../../services/my_list/my_list_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import '../../widgets/common/error_view.dart';
+import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/home/continue_watching_slider.dart';
 import '../../widgets/movie/movie_slider_section.dart';
 import '../../widgets/home/support_dev_cards.dart';
@@ -424,9 +425,52 @@ class _HomePageState extends State<HomePage> {
         top: 0,
         left: 0,
         right: 0,
-        child: _GlassAppBar(
+        child: PageTopBar(
           topPadding: topPadding,
-          onSearchTap: _navigateToSearch,
+          onSearchTap: () => _navigateToSearch(null),
+          trailing: [
+            // TV Shows Airing Calendar
+            ValueListenableBuilder<bool>(
+              valueListenable: HomePageSettings.enableCalendar,
+              builder: (context, calEnabled, _) {
+                if (!calEnabled) return const SizedBox.shrink();
+                return IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: Icon(
+                    Icons.calendar_month_rounded,
+                    color: Colors.white.withValues(alpha: 0.75),
+                    size: 20,
+                  ),
+                  tooltip: 'TV Airing Calendar',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TvCalendarPage()),
+                    );
+                  },
+                );
+              },
+            ),
+            // Fullscreen Toggle (Desktops only)
+            if (WindowService.instance.isDesktop)
+              ValueListenableBuilder<bool>(
+                valueListenable: WindowService.instance.isFullscreenNotifier,
+                builder: (context, isFullscreen, _) {
+                  return IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
+                      color: isFullscreen
+                          ? const Color(0xFFFFB300)
+                          : Colors.white.withValues(alpha: 0.75),
+                      size: 22,
+                    ),
+                    tooltip: isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)',
+                    onPressed: () => WindowService.instance.toggleFullscreen(),
+                  );
+                },
+              ),
+          ],
         ),
       ),
 
@@ -534,120 +578,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Frosted Glass App Bar
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _GlassAppBar extends StatelessWidget {
-  final double topPadding;
-  final void Function(Offset?) onSearchTap;
-
-  const _GlassAppBar({
-    required this.topPadding,
-    required this.onSearchTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Container(
-        padding: EdgeInsets.only(
-          top: topPadding + 6,
-          bottom: 10,
-          left: 16,
-          right: 8,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xF5080A0F), Color(0xE6080A0F)],
-          ),
-          border: Border(
-            bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-          ),
-        ),
-        child: Row(
-          children: [
-            // Logo
-            Image.asset(
-              'assets/icon.png',
-              width: 26,
-              height: 26,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(width: 9),
-            const Text(
-              'PlayTorrio',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.4,
-                color: Colors.white,
-              ),
-            ),
-            const Spacer(),
-
-            // Search
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              icon: Icon(
-                Icons.search_rounded,
-                color: Colors.white.withValues(alpha: 0.75),
-                size: 22,
-              ),
-              tooltip: 'Search',
-              onPressed: () => onSearchTap(null),
-            ),
-
-            // TV Shows Airing Calendar
-            ValueListenableBuilder<bool>(
-              valueListenable: HomePageSettings.enableCalendar,
-              builder: (context, calEnabled, _) {
-                if (!calEnabled) return const SizedBox.shrink();
-                return IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(
-                    Icons.calendar_month_rounded,
-                    color: Colors.white.withValues(alpha: 0.75),
-                    size: 20,
-                  ),
-                  tooltip: 'TV Airing Calendar',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TvCalendarPage()),
-                    );
-                  },
-                );
-              },
-            ),
-            // Fullscreen Toggle (Desktops only)
-            if (WindowService.instance.isDesktop)
-              ValueListenableBuilder<bool>(
-                valueListenable: WindowService.instance.isFullscreenNotifier,
-                builder: (context, isFullscreen, _) {
-                  return IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(
-                      isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
-                      color: isFullscreen
-                          ? const Color(0xFFFFB300)
-                          : Colors.white.withValues(alpha: 0.75),
-                      size: 22,
-                    ),
-                    tooltip: isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)',
-                    onPressed: () => WindowService.instance.toggleFullscreen(),
-                  );
-                },
-              ),
-          ],
         ),
       ),
     );

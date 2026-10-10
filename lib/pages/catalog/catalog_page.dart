@@ -1,10 +1,10 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../models/movie/movie.dart';
 import '../../models/movie/movie_section.dart';
 import '../../services/metadata/metadata_service.dart';
 import '../../widgets/common/error_view.dart';
+import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/movie/movie_card.dart';
 
 class CatalogPage extends StatefulWidget {
@@ -207,54 +207,10 @@ class _CatalogPageState extends State<CatalogPage> {
             top: 0,
             left: 0,
             right: 0,
-            child: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-                child: Container(
-                  padding: EdgeInsets.only(top: topPadding),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFF080A0F).withValues(alpha: 0.90),
-                        const Color(0xFF080A0F).withValues(alpha: 0.60),
-                      ],
-                    ),
-                    border: Border(
-                      bottom: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.06),
-                      ),
-                    ),
-                  ),
-                  child: SizedBox(
-                    height: kToolbarHeight,
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-                          color: Colors.white,
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        Expanded(
-                          child: Text(
-                            widget.section.title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            child: PageTopBar(
+              topPadding: topPadding,
+              title: widget.section.title,
+              showBack: true,
             ),
           ),
         ],
