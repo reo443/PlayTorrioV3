@@ -10,16 +10,8 @@ import '../../widgets/anime/anime_slider_section.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import 'anime_details_page.dart';
 
-import '../../services/anime_arabic/anime_arabic_service.dart';
-import '../anime_arabic/anime_arabic_details_page.dart';
-
 class AnimeSearchPage extends StatefulWidget {
-  final bool initialArabicMode;
-
-  const AnimeSearchPage({
-    super.key,
-    this.initialArabicMode = false,
-  });
+  const AnimeSearchPage({super.key});
 
   @override
   State<AnimeSearchPage> createState() => _AnimeSearchPageState();
@@ -29,12 +21,10 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
-  bool _isArabicMode = false;
   Timer? _debounce;
   bool _isLoading = false;
   bool _allowAdult = false;
   List<AnimeMedia> _allResults = [];
-  final Map<int, ArabicAnimeCard> _arabicCardsMap = {};
 
   // Filter selections
   String? _genre;
@@ -73,7 +63,6 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
   @override
   void initState() {
     super.initState();
-    _isArabicMode = widget.initialArabicMode;
     _loadInitialSliders();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
@@ -99,31 +88,6 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
   void _loadInitialSliders() async {
     setState(() => _loadingInitial = true);
     try {
-      if (_isArabicMode) {
-        final feed = await AnimeArabicService.instance.getHome();
-        if (mounted) {
-          setState(() {
-            _trendingList = (feed.trending.isNotEmpty ? feed.trending : feed.spotlight)
-                .map((c) {
-                  _arabicCardsMap[c.slug.hashCode.abs()] = c;
-                  return c.toAnimeMedia();
-                }).toList();
-            _popularSeasonList = feed.recentEpisodes
-                .map((c) {
-                  _arabicCardsMap[c.slug.hashCode.abs()] = c;
-                  return c.toAnimeMedia();
-                }).toList();
-            _topRatedList = (feed.topSeasonal.isNotEmpty ? feed.topSeasonal : feed.legendary)
-                .map((c) {
-                  _arabicCardsMap[c.slug.hashCode.abs()] = c;
-                  return c.toAnimeMedia();
-                }).toList();
-            _loadingInitial = false;
-          });
-        }
-        return;
-      }
-
       final results = await Future.wait([
         AnilistService.instance.fetchTrendingAnime(page: 1, perPage: 20),
         AnilistService.instance.fetchPopularThisSeason(page: 1, perPage: 20),
@@ -171,21 +135,6 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
     });
 
     try {
-      if (_isArabicMode) {
-        final cards = await AnimeArabicService.instance.search(q);
-        if (!mounted) return;
-        final list = <AnimeMedia>[];
-        for (final c in cards) {
-          _arabicCardsMap[c.slug.hashCode.abs()] = c;
-          list.add(c.toAnimeMedia());
-        }
-        setState(() {
-          _allResults = list;
-          _isLoading = false;
-        });
-        return;
-      }
-
       final results = await AnilistService.instance.searchAnime(
         q,
         genre: _genre,
@@ -445,24 +394,6 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
   }
 
   void _openDetails(AnimeMedia anime) {
-    if (_isArabicMode || anime.isArabic || _arabicCardsMap.containsKey(anime.id)) {
-      final card = _arabicCardsMap[anime.id] ??
-          ArabicAnimeCard(
-            slug: (anime.slug != null && anime.slug!.isNotEmpty)
-                ? anime.slug!
-                : anime.titleEnglish.toLowerCase().replaceAll(' ', '-'),
-            title: anime.displayTitle,
-            cover: anime.coverUrl,
-          );
-      Navigator.push(
-        context,
-        CinematicSlideRoute(
-          page: AnimeArabicDetailsPage(anime: card),
-        ),
-      );
-      return;
-    }
-
     Navigator.push(
       context,
       CinematicSlideRoute(
@@ -586,59 +517,9 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
                           ),
                         ),
 
-                        // Language Switcher Pill (General vs Arabic Anime)
+                        // 18+ Adult Toggle Pill
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isArabicMode = !_isArabicMode;
-                                _allResults.clear();
-                              });
-                              if (_searchController.text.trim().isNotEmpty) {
-                                _performSearch(_searchController.text.trim());
-                              } else {
-                                _loadInitialSliders();
-                              }
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: _isArabicMode
-                                    ? palette.primaryColor.withValues(alpha: 0.25)
-                                    : Colors.white.withValues(alpha: 0.06),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: _isArabicMode
-                                      ? palette.primaryColor
-                                      : Colors.white.withValues(alpha: 0.12),
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _isArabicMode ? '🇸🇦 Arabic' : '🇯🇵 Anime',
-                                    style: TextStyle(
-                                      color: _isArabicMode
-                                          ? palette.primaryColor
-                                          : Colors.white70,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // 18+ Adult Toggle Pill (only in general mode)
-                        if (!_isArabicMode)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
                             child: GestureDetector(
                               onTap: () => _toggleAdult(!_allowAdult),
                               child: AnimatedContainer(
