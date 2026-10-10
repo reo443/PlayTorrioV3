@@ -26,10 +26,17 @@ class AppearanceSettingsPage extends StatefulWidget {
 class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
   @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<AppThemePalette>(
+      valueListenable: AppThemeService.currentPalette,
+      builder: (context, _, __) => _buildPage(context),
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080A0F),
+      backgroundColor: AppThemeService.currentPalette.value.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
+        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
@@ -105,13 +112,13 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                     builder: (context, preset, _) {
                       return _buildSectionButton(
                         icon: Icons.blur_on_rounded,
-                        iconColor: const Color(0xFF7C5CFF),
+                        iconColor: AppThemeService.currentPalette.value.primaryColor,
                         title: 'Liquid Glass Setup',
                         subtitle:
                             'Adjust hover impact, wobble spring physics, lens refraction, and chromatic aberration',
                         badgeText: glassEnabled ? preset.label : 'Disabled',
                         badgeColor: glassEnabled
-                            ? const Color(0xFF7C5CFF)
+                            ? AppThemeService.currentPalette.value.primaryColor
                             : Colors.white38,
                         onTap: () async {
                           await Navigator.push(
@@ -138,13 +145,13 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                   final activeCount = enabledMap.values.where((v) => v).length;
                   return _buildSectionButton(
                     icon: Icons.dock_rounded,
-                    iconColor: const Color(0xFF7C5CFF),
+                    iconColor: AppThemeService.currentPalette.value.primaryColor,
                     title: 'Navigation',
                     subtitle:
                         'Choose which navigation shortcuts appear in the bottom dock.',
                     badgeText:
                         '$activeCount / ${DockItemKey.values.length} Items',
-                    badgeColor: const Color(0xFF7C5CFF),
+                    badgeColor: AppThemeService.currentPalette.value.primaryColor,
                     onTap: () async {
                       await Navigator.push(
                         context,
@@ -317,40 +324,6 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                 },
               ),
 
-              const SizedBox(height: 28),
-
-              // Visual Overview Notes
-              Text(
-                'LIVE CUSTOMIZATION SCOPE',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              _buildScopeTile(
-                icon: Icons.dock_rounded,
-                title: 'Bottom Liquid Dock',
-                description:
-                    'Dock items react dynamically with your custom hover magnification, proximity ripples, and wobble springs.',
-              ),
-              const SizedBox(height: 10),
-              _buildScopeTile(
-                icon: Icons.play_circle_outline_rounded,
-                title: 'Video Player & Watch Screens',
-                description:
-                    'Overlays, glass sheets, and media controls render with your custom optical blur, refraction index, and border shimmer.',
-              ),
-              const SizedBox(height: 10),
-              _buildScopeTile(
-                icon: Icons.home_rounded,
-                title: 'Home Page & Discovery',
-                description:
-                    'Adapts to your chosen theme accent colors, smart BestSimilar recommendation slider, and chosen poster density.',
-              ),
             ],
           ),
         ),
@@ -375,7 +348,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFF12151E),
+            color: AppThemeService.currentPalette.value.cardBackgroundColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
@@ -455,61 +428,6 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildScopeTile({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 2),
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: Colors.white70, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.4),
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/scraper/builtin_providers_settings_service.dart';
+import '../../services/theme/app_theme_service.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 
 class BuiltinProvidersSettingsPage extends StatefulWidget {
@@ -28,6 +29,13 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
 
   @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<AppThemePalette>(
+      valueListenable: AppThemeService.currentPalette,
+      builder: (context, _, __) => _buildPage(context),
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isCompact = screenWidth < 500;
@@ -38,7 +46,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017).withValues(alpha: 0.85),
+        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor.withValues(alpha: 0.85),
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
@@ -55,7 +63,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
               if (!_service.isCustom) return const SizedBox.shrink();
               return TextButton.icon(
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF7C5CFF),
+                  foregroundColor: AppThemeService.currentPalette.value.primaryColor,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
                 icon: const Icon(Icons.restore_rounded, size: 18),
@@ -64,7 +72,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      backgroundColor: const Color(0xFF151822),
+                      backgroundColor: AppThemeService.currentPalette.value.cardBackgroundColor,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                       title: const Text('Reset Providers Order?', style: TextStyle(fontWeight: FontWeight.bold)),
                       content: const Text(
@@ -78,7 +86,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF7C5CFF),
+                            backgroundColor: AppThemeService.currentPalette.value.primaryColor,
                             foregroundColor: Colors.white,
                           ),
                           child: const Text('Reset'),
@@ -221,7 +229,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
       return Container(
         padding: const EdgeInsets.all(5),
         decoration: BoxDecoration(
-          color: const Color(0xFF13151C),
+          color: AppThemeService.currentPalette.value.cardBackgroundColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
@@ -240,10 +248,10 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
             _buildModeTabItem(
               isSelected: isCustom,
               icon: Icons.tune_rounded,
-              iconColor: const Color(0xFF7C5CFF),
+              iconColor: AppThemeService.currentPalette.value.primaryColor,
               title: 'Custom Mode',
               subtitle: 'Manual provider order, toggles & priority scraping',
-              activeColor: const Color(0xFF7C5CFF),
+              activeColor: AppThemeService.currentPalette.value.primaryColor,
               onTap: () => _service.setMode(BuiltinProvidersMode.customMode),
             ),
           ],
@@ -254,7 +262,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: const Color(0xFF13151C),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
@@ -276,10 +284,10 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
             child: _buildModeTabItem(
               isSelected: isCustom,
               icon: Icons.tune_rounded,
-              iconColor: const Color(0xFF7C5CFF),
+              iconColor: AppThemeService.currentPalette.value.primaryColor,
               title: 'Custom',
               subtitle: 'Manual order & toggles',
-              activeColor: const Color(0xFF7C5CFF),
+              activeColor: AppThemeService.currentPalette.value.primaryColor,
               onTap: () => _service.setMode(BuiltinProvidersMode.customMode),
             ),
           ),
@@ -356,7 +364,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
     return Container(
       padding: EdgeInsets.all(isCompact ? 16 : 22),
       decoration: BoxDecoration(
-        color: const Color(0xFF13151C),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
       ),
@@ -404,8 +412,8 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
             width: isCompact ? double.infinity : null,
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF7C5CFF),
-                side: BorderSide(color: const Color(0xFF7C5CFF).withValues(alpha: 0.4)),
+                foregroundColor: AppThemeService.currentPalette.value.primaryColor,
+                side: BorderSide(color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.4)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
@@ -425,14 +433,14 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF7C5CFF).withValues(alpha: 0.16),
-            const Color(0xFF00E5FF).withValues(alpha: 0.04),
+            AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.16),
+            AppThemeService.currentPalette.value.accentColor.withValues(alpha: 0.04),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF7C5CFF).withValues(alpha: 0.35)),
+        border: Border.all(color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,10 +448,10 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF7C5CFF).withValues(alpha: 0.25),
+              color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.arrow_upward_rounded, color: Color(0xFF7C5CFF), size: 18),
+            child: Icon(Icons.arrow_upward_rounded, color: AppThemeService.currentPalette.value.primaryColor, size: 18),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -476,7 +484,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
           Container(
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF13151C),
+              color: AppThemeService.currentPalette.value.cardBackgroundColor,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
@@ -510,7 +518,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF13151C),
+                  color: AppThemeService.currentPalette.value.cardBackgroundColor,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
@@ -563,7 +571,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF13151C),
+                  color: AppThemeService.currentPalette.value.cardBackgroundColor,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
@@ -594,7 +602,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
-                color: const Color(0xFF13151C),
+                color: AppThemeService.currentPalette.value.cardBackgroundColor,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
@@ -657,12 +665,12 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF13151C).withValues(alpha: isEnabled ? 0.8 : 0.4),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor.withValues(alpha: isEnabled ? 0.8 : 0.4),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isEnabled
               ? (isTop3
-                  ? const Color(0xFF7C5CFF).withValues(alpha: 0.4)
+                  ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.4)
                   : Colors.white.withValues(alpha: 0.08))
               : Colors.white.withValues(alpha: 0.04),
         ),
@@ -698,12 +706,12 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isTop3 && isEnabled
-                    ? const Color(0xFF7C5CFF).withValues(alpha: 0.25)
+                    ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25)
                     : Colors.white.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isTop3 && isEnabled
-                      ? const Color(0xFF7C5CFF).withValues(alpha: 0.6)
+                      ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
                       : Colors.transparent,
                 ),
               ),
@@ -808,7 +816,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
               scale: isCompact ? 0.82 : 0.95,
               child: Switch.adaptive(
                 value: isEnabled,
-                activeColor: const Color(0xFF7C5CFF),
+                activeColor: AppThemeService.currentPalette.value.primaryColor,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 onChanged: (val) => _service.toggleProvider(provider.id, val),
               ),

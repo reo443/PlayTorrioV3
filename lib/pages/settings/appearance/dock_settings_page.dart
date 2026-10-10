@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/theme/app_theme_service.dart';
 import '../../../services/theme/dock_settings.dart';
 import '../../../widgets/common/app_liquid_dock.dart';
 
@@ -12,17 +13,24 @@ class DockSettingsPage extends StatefulWidget {
 class _DockSettingsPageState extends State<DockSettingsPage> {
   @override
   Widget build(BuildContext context) {
+    return ValueListenableBuilder<AppThemePalette>(
+      valueListenable: AppThemeService.currentPalette,
+      builder: (context, _, __) => _buildPage(context),
+    );
+  }
+
+  Widget _buildPage(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080A0F),
+      backgroundColor: AppThemeService.currentPalette.value.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
+        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Navbar',
+          'Navigation',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
         ),
         actions: [
@@ -32,10 +40,10 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
               setState(() {});
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Dock items reset to default layout.'),
+                SnackBar(
+                  content: const Text('Dock items reset to default layout.'),
                   behavior: SnackBarBehavior.floating,
-                  backgroundColor: Color(0xFF7C5CFF),
+                  backgroundColor: AppThemeService.currentPalette.value.primaryColor,
                 ),
               );
             },
@@ -130,7 +138,7 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.only(top: 12, bottom: 20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0D1017),
+                  color: AppThemeService.currentPalette.value.appBarBackgroundColor,
                   border: Border(
                     top: BorderSide(
                       color: Colors.white.withValues(alpha: 0.08),
@@ -172,11 +180,11 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF12151E),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isEnabled
-              ? const Color(0xFF7C5CFF).withValues(alpha: 0.35)
+              ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.35)
               : Colors.white.withValues(alpha: 0.06),
           width: 1,
         ),
@@ -188,14 +196,14 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
             height: 40,
             decoration: BoxDecoration(
               color: isEnabled
-                  ? const Color(0xFF7C5CFF).withValues(alpha: 0.15)
+                  ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.15)
                   : Colors.white.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               item.icon,
               color: isEnabled
-                  ? const Color(0xFF7C5CFF)
+                  ? AppThemeService.currentPalette.value.primaryColor
                   : Colors.white.withValues(alpha: 0.3),
               size: 20,
             ),
@@ -261,7 +269,7 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
           Switch.adaptive(
             value: isPinned ? true : isEnabled,
             onChanged: isPinned ? null : onToggle,
-            activeColor: const Color(0xFF7C5CFF),
+            activeColor: AppThemeService.currentPalette.value.primaryColor,
           ),
         ],
       ),

@@ -21,38 +21,46 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
   Widget build(BuildContext context) {
     final myListCount = MyListService.items.value.length;
 
+    return ValueListenableBuilder<AppThemePalette>(
+      valueListenable: AppThemeService.currentPalette,
+      builder: (context, _, __) => _buildPage(myListCount),
+    );
+  }
+
+  Widget _buildPage(int myListCount) {
     return Scaffold(
-      backgroundColor: const Color(0xFF080A0F),
+      backgroundColor: AppThemeService.currentPalette.value.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
+        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Home Page UI & Themes',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Appearance',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+            ),
+            SizedBox(height: 1),
+            Text(
+              'Personalize your app',
+              style: TextStyle(fontSize: 11.5, color: Color(0xFF9299AB)),
+            ),
+          ],
         ),
       ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
           child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             children: [
-              // ── 1. Color Schemes & Themes ──
-              Text(
-                'COLOR THEMES & ACCENTS',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildThemesGrid(),
+              // ── 1. Appearance & Current Theme ──
+              _buildThemeCard(),
 
               const SizedBox(height: 28),
 
@@ -101,7 +109,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF12151E),
+                        color: AppThemeService.currentPalette.value.cardBackgroundColor,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: hasWallpaper
@@ -241,114 +249,85 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
     );
   }
 
-  Widget _buildThemesGrid() {
+  /// Compact current-theme card. Tapping opens the theme picker sheet.
+  Widget _buildThemeCard() {
     return ValueListenableBuilder<AppThemePalette>(
       valueListenable: AppThemeService.currentPalette,
       builder: (context, current, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final w = constraints.maxWidth;
-            final int crossAxisCount = w < 400 ? 1 : (w < 700 ? 2 : 3);
-            final double childAspectRatio = w < 400 ? 4.2 : 2.6;
-
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                childAspectRatio: childAspectRatio,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _showThemePicker,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppThemeService.currentPalette.value.cardBackgroundColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF292D39)),
               ),
-              itemCount: AppThemeService.palettes.length,
-              itemBuilder: (context, index) {
-                final palette = AppThemeService.palettes[index];
-                final isSelected = palette.id == current.id;
-
-                return InkWell(
-                  onTap: () async {
-                    await AppThemeService.setPalette(palette);
-                    setState(() {});
-                  },
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF12151E),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected
-                            ? palette.primaryColor
-                            : Colors.white.withValues(alpha: 0.08),
-                        width: isSelected ? 2 : 1,
-                      ),
+                      shape: BoxShape.circle,
+                      color: current.primaryColor,
                     ),
-                    child: Row(
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Swatch circles
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [palette.primaryColor, palette.accentColor],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              if (isSelected)
-                                BoxShadow(
-                                  color: palette.primaryColor.withValues(alpha: 0.4),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                ),
-                            ],
+                        Text(
+                          current.name,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFF4F6FC),
                           ),
-                          child: isSelected
-                              ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
-                              : null,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                palette.name,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                                  color: isSelected ? Colors.white : Colors.white70,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                isSelected ? 'Active Theme' : 'Tap to apply',
-                                style: TextStyle(
-                                  fontSize: 10.5,
-                                  color: isSelected
-                                      ? palette.primaryColor
-                                      : Colors.white.withValues(alpha: 0.35),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Current theme',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF9299AB),
                           ),
                         ),
                       ],
                     ),
                   ),
-                );
-              },
-            );
-          },
+                  const SizedBox(width: 12),
+                  _AccentDots(primary: current.primaryColor, accent: current.accentColor),
+                  const SizedBox(width: 10),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 22,
+                    color: Color(0xFF9299AB),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
+    );
+  }
+
+  void _showThemePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _ThemePickerSheet(
+        current: AppThemeService.currentPalette.value,
+      ),
     );
   }
 
@@ -361,7 +340,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
         return Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: const Color(0xFF12151E),
+            color: AppThemeService.currentPalette.value.cardBackgroundColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: enabled
@@ -493,7 +472,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                           label: Text(pat.label),
                           selected: isSelected,
                           selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                          backgroundColor: const Color(0xFF0D1017),
+                          backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
                           labelStyle: TextStyle(
                             color: isSelected ? palette.primaryColor : Colors.white70,
                             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
@@ -632,10 +611,10 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF12151E),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF7C5CFF).withValues(alpha: 0.25),
+          color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
         ),
       ),
       child: Column(
@@ -647,12 +626,12 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF7C5CFF).withValues(alpha: 0.14),
+                  color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.auto_awesome_rounded,
-                  color: Color(0xFF7C5CFF),
+                  color: AppThemeService.currentPalette.value.primaryColor,
                   size: 22,
                 ),
               ),
@@ -801,10 +780,10 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
             builder: (context, pos, _) {
               return DropdownButtonFormField<SimilarSectionPosition>(
                 value: pos,
-                dropdownColor: const Color(0xFF151822),
+                dropdownColor: AppThemeService.currentPalette.value.cardBackgroundColor,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: const Color(0xFF0D1017),
+                  fillColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -883,7 +862,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               const SizedBox(width: 12),
               Switch.adaptive(
                 value: enabled,
-                activeColor: const Color(0xFF7C5CFF),
+                activeColor: AppThemeService.currentPalette.value.primaryColor,
                 onChanged: onChanged,
               ),
             ],
@@ -897,7 +876,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF12151E),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
@@ -914,12 +893,12 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF7C5CFF).withValues(alpha: 0.14),
+                      color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.movie_filter_rounded,
-                      color: Color(0xFF7C5CFF),
+                      color: AppThemeService.currentPalette.value.primaryColor,
                       size: 20,
                     ),
                   ),
@@ -946,7 +925,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                   ),
                   Switch.adaptive(
                     value: enabled,
-                    activeColor: const Color(0xFF7C5CFF),
+                    activeColor: AppThemeService.currentPalette.value.primaryColor,
                     onChanged: (val) {
                       HomePageSettings.setEnableSpotlight(val);
                       setState(() {});
@@ -991,16 +970,16 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                           return ChoiceChip(
                             label: Text(style.label),
                             selected: isSelected,
-                            selectedColor: const Color(0xFF7C5CFF).withValues(alpha: 0.25),
-                            backgroundColor: const Color(0xFF0D1017),
+                            selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
+                            backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
                             labelStyle: TextStyle(
-                              color: isSelected ? const Color(0xFF7C5CFF) : Colors.white70,
+                              color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                               fontSize: 12,
                             ),
                             side: BorderSide(
                               color: isSelected
-                                  ? const Color(0xFF7C5CFF).withValues(alpha: 0.6)
+                                  ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
                                   : Colors.white.withValues(alpha: 0.08),
                             ),
                             onSelected: (selected) {
@@ -1045,7 +1024,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ),
                       Switch.adaptive(
                         value: autoRotate,
-                        activeColor: const Color(0xFF7C5CFF),
+                        activeColor: AppThemeService.currentPalette.value.primaryColor,
                         onChanged: (val) {
                           HomePageSettings.setHeroAutoRotate(val);
                           setState(() {});
@@ -1067,9 +1046,9 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                             Expanded(
                               child: SliderTheme(
                                 data: SliderTheme.of(context).copyWith(
-                                  activeTrackColor: const Color(0xFF7C5CFF),
+                                  activeTrackColor: AppThemeService.currentPalette.value.primaryColor,
                                   inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
-                                  thumbColor: const Color(0xFF7C5CFF),
+                                  thumbColor: AppThemeService.currentPalette.value.primaryColor,
                                   trackHeight: 3,
                                 ),
                                 child: Slider(
@@ -1124,7 +1103,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                   ),
                   Switch.adaptive(
                     value: glow,
-                    activeColor: const Color(0xFF7C5CFF),
+                    activeColor: AppThemeService.currentPalette.value.primaryColor,
                     onChanged: (val) {
                       HomePageSettings.setAmbientGlow(val);
                       setState(() {});
@@ -1147,7 +1126,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF12151E),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
@@ -1207,16 +1186,16 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                   return ChoiceChip(
                     label: Text(density.label),
                     selected: isSelected,
-                    selectedColor: const Color(0xFF7C5CFF).withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0D1017),
+                    selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
+                    backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
                     labelStyle: TextStyle(
-                      color: isSelected ? const Color(0xFF7C5CFF) : Colors.white70,
+                      color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
                       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                       fontSize: 12,
                     ),
                     side: BorderSide(
                       color: isSelected
-                          ? const Color(0xFF7C5CFF).withValues(alpha: 0.6)
+                          ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
                           : Colors.white.withValues(alpha: 0.08),
                     ),
                     onSelected: (selected) {
@@ -1282,19 +1261,19 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ),
                       Text(
                         '${(scale * 100).round()}%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF7C5CFF),
+                          color: AppThemeService.currentPalette.value.primaryColor,
                         ),
                       ),
                     ],
                   ),
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: const Color(0xFF7C5CFF),
+                      activeTrackColor: AppThemeService.currentPalette.value.primaryColor,
                       inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
-                      thumbColor: const Color(0xFF7C5CFF),
+                      thumbColor: AppThemeService.currentPalette.value.primaryColor,
                       trackHeight: 3,
                     ),
                     child: Slider(
@@ -1342,7 +1321,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                   ),
                   Switch.adaptive(
                     value: showRating,
-                    activeColor: const Color(0xFF7C5CFF),
+                    activeColor: AppThemeService.currentPalette.value.primaryColor,
                     onChanged: (val) {
                       HomePageSettings.setShowRating(val);
                       setState(() {});
@@ -1378,10 +1357,10 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ),
                       Text(
                         '${zoom.toStringAsFixed(2)}x',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF7C5CFF),
+                          color: AppThemeService.currentPalette.value.primaryColor,
                         ),
                       ),
                     ],
@@ -1389,9 +1368,9 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                   const SizedBox(height: 4),
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: const Color(0xFF7C5CFF),
+                      activeTrackColor: AppThemeService.currentPalette.value.primaryColor,
                       inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
-                      thumbColor: const Color(0xFF7C5CFF),
+                      thumbColor: AppThemeService.currentPalette.value.primaryColor,
                       trackHeight: 3,
                     ),
                     child: Slider(
@@ -1416,16 +1395,16 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
-      selectedColor: const Color(0xFF7C5CFF).withValues(alpha: 0.25),
-      backgroundColor: const Color(0xFF0D1017),
+      selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
+      backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
       labelStyle: TextStyle(
-        color: isSelected ? const Color(0xFF7C5CFF) : Colors.white70,
+        color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
         fontSize: 12,
       ),
       side: BorderSide(
         color: isSelected
-            ? const Color(0xFF7C5CFF).withValues(alpha: 0.6)
+            ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
             : Colors.white.withValues(alpha: 0.08),
       ),
       onSelected: (selected) {
@@ -1441,7 +1420,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF12151E),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
@@ -1454,12 +1433,12 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF7C5CFF).withValues(alpha: 0.14),
+                  color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.movie_filter_outlined,
-                  color: Color(0xFF7C5CFF),
+                  color: AppThemeService.currentPalette.value.primaryColor,
                   size: 22,
                 ),
               ),
@@ -1498,16 +1477,16 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                   return ChoiceChip(
                     label: Text(bg.label),
                     selected: isSelected,
-                    selectedColor: const Color(0xFF7C5CFF).withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0D1017),
+                    selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
+                    backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
                     labelStyle: TextStyle(
-                      color: isSelected ? const Color(0xFF7C5CFF) : Colors.white70,
+                      color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
                       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                       fontSize: 12,
                     ),
                     side: BorderSide(
                       color: isSelected
-                          ? const Color(0xFF7C5CFF).withValues(alpha: 0.6)
+                          ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
                           : Colors.white.withValues(alpha: 0.08),
                     ),
                     onSelected: (selected) {
@@ -1530,7 +1509,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF12151E),
+        color: AppThemeService.currentPalette.value.cardBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
@@ -1648,6 +1627,215 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Theme Picker Sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Compact modal bottom sheet listing every existing theme. The selection is
+/// pending until the user taps "Apply theme"; dismissing the sheet keeps the
+/// active theme unchanged.
+class _ThemePickerSheet extends StatefulWidget {
+  final AppThemePalette current;
+
+  const _ThemePickerSheet({required this.current});
+
+  @override
+  State<_ThemePickerSheet> createState() => _ThemePickerSheetState();
+}
+
+class _ThemePickerSheetState extends State<_ThemePickerSheet> {
+  late AppThemePalette _pending;
+
+  @override
+  void initState() {
+    super.initState();
+    _pending = widget.current;
+  }
+
+  Future<void> _apply() async {
+    await AppThemeService.setPalette(_pending);
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<AppThemePalette>(
+      valueListenable: AppThemeService.currentPalette,
+      builder: (context, _, __) => _buildSheet(),
+    );
+  }
+
+  Widget _buildSheet() {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 560),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+        ),
+        decoration: BoxDecoration(
+          color: AppThemeService.currentPalette.value.cardBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+        ),
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 32,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF292D39),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Choose theme',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFF4F6FC),
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Select your preferred appearance',
+                style: TextStyle(fontSize: 12.5, color: Color(0xFF9299AB)),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  children: [
+                    for (final palette in AppThemeService.palettes)
+                      _buildThemeOption(palette),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppThemeService.currentPalette.value.primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _apply,
+                  child: const Text(
+                    'Apply theme',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeOption(AppThemePalette palette) {
+    final isSelected = palette.id == _pending.id;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _pending = palette),
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.14) : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? AppThemeService.currentPalette.value.primaryColor : const Color(0xFF292D39),
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: palette.primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    palette.name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: const Color(0xFFF4F6FC),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                _AccentDots(primary: palette.primaryColor, accent: palette.accentColor),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 24,
+                  child: isSelected
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: 22,
+                          color: AppThemeService.currentPalette.value.primaryColor,
+                        )
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AccentDots extends StatelessWidget {
+  final Color primary;
+  final Color accent;
+
+  const _AccentDots({required this.primary, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: primary),
+        ),
+        const SizedBox(width: 4),
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: accent),
+        ),
+      ],
     );
   }
 }
