@@ -197,7 +197,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
       child: Container(
         height: 42,
         width: 42,
-        margin: const EdgeInsets.only(right: 12),
+        margin: const EdgeInsets.only(left: 8, right: 12),
         decoration: BoxDecoration(
           color: isActive
               ? const Color(0xFF7C5CFF)
