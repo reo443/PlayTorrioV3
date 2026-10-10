@@ -127,25 +127,6 @@ class AnilistService {
     }
   ''';
 
-  /// Trending Anime
-  Future<List<AnimeMedia>> fetchTrendingAnime({
-    int page = 1,
-    int perPage = 20,
-  }) async {
-    const query = '''
-      query (\$page: Int, \$perPage: Int) {
-        Page(page: \$page, perPage: \$perPage) {
-          media(type: ANIME, sort: TRENDING_DESC, isAdult: false) {
-            $_mediaFields
-          }
-        }
-      }
-    ''';
-
-    final data = await _postGraphQL(query, {'page': page, 'perPage': perPage});
-    return _parseMediaList(data);
-  }
-
   /// Popular This Season
   Future<List<AnimeMedia>> fetchPopularThisSeason({
     int page = 1,

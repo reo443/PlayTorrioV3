@@ -38,7 +38,6 @@ class _AnimePageState extends State<AnimePage> {
   String? _error;
 
   // General Anime data
-  List<AnimeMedia> _trending = [];
   List<AnimeMedia> _popularSeason = [];
   List<AnimeMedia> _topRated = [];
   List<AnimeMedia> _upcoming = [];
@@ -72,7 +71,6 @@ class _AnimePageState extends State<AnimePage> {
     });
 
     try {
-      final trendingFut = _anilistService.fetchTrendingAnime(perPage: 18);
       final seasonFut = _anilistService.fetchPopularThisSeason(perPage: 18);
       final topRatedFut = _anilistService.fetchTopRated(perPage: 18);
       final upcomingFut = _anilistService.fetchUpcomingNextSeason(perPage: 18);
@@ -91,7 +89,6 @@ class _AnimePageState extends State<AnimePage> {
       );
 
       final results = await Future.wait([
-        trendingFut,
         seasonFut,
         topRatedFut,
         upcomingFut,
@@ -103,13 +100,12 @@ class _AnimePageState extends State<AnimePage> {
       if (mounted) {
         final hasAnyData = results.any((list) => list.isNotEmpty);
         setState(() {
-          _trending = results[0];
-          _popularSeason = results[1];
-          _topRated = results[2];
-          _upcoming = results[3];
-          _trendingToday = results[4];
-          _trendingWeek = results[5];
-          _newEpisodes = results[6];
+          _popularSeason = results[0];
+          _topRated = results[1];
+          _upcoming = results[2];
+          _trendingToday = results[3];
+          _trendingWeek = results[4];
+          _newEpisodes = results[5];
           _loading = false;
           if (!hasAnyData) {
             _error = 'Failed to load Anime catalog. Please check your internet connection or retry.';
@@ -180,11 +176,11 @@ class _AnimePageState extends State<AnimePage> {
           child: Stack(
             children: [
               // Main scrollable content
-              if (_loading && _trending.isEmpty)
+              if (_loading && _trendingWeek.isEmpty)
                 Center(
                   child: CircularProgressIndicator(color: palette.primaryColor),
                 )
-              else if (_error != null && _trending.isEmpty)
+              else if (_error != null && _trendingWeek.isEmpty)
                 Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -228,9 +224,13 @@ class _AnimePageState extends State<AnimePage> {
                     ),
                     children: [
                       // 1. Full Bleed Hero Carousel (Matching Home Page)
-                      if (_trending.isNotEmpty)
+                      if ((_trendingToday.isNotEmpty || _trendingWeek.isNotEmpty || _topRated.isNotEmpty))
                         _AnimeHeroCarousel(
-                          animeList: _trending.take(6).toList(),
+                          animeList: (_trendingToday.isNotEmpty
+                                  ? _trendingToday
+                                  : (_trendingWeek.isNotEmpty ? _trendingWeek : _topRated))
+                              .take(6)
+                              .toList(),
                           onWatchNow: (anime) => _playEpisode(anime, 1),
                           onDetailsTap: _openDetails,
                         ),
@@ -264,11 +264,6 @@ class _AnimePageState extends State<AnimePage> {
                           animeList: _newEpisodes,
                           onAnimeTap: _openDetails,
                         ),
-                      AnimeSliderSection(
-                        title: 'Trending Anime',
-                        animeList: _trending,
-                        onAnimeTap: _openDetails,
-                      ),
                       AnimeSliderSection(
                         title: 'Popular This  ${AnilistService.currentSeason()}',
                         animeList: _popularSeason,
