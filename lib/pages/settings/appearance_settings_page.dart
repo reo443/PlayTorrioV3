@@ -69,15 +69,21 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                       return _buildSectionButton(
                         icon: Icons.wallpaper_rounded,
                         iconColor: currentPalette.primaryColor,
-                        title: 'Custom Background & Wallpaper',
-                        subtitle: 'Upload custom photos, choose curated dark wallpapers, and blend theme ambient lighting',
-                        badgeText: customBg.hasCustomBackground ? 'Custom Active' : 'Default Theme',
-                        badgeColor: customBg.hasCustomBackground ? currentPalette.primaryColor : Colors.white38,
+                        title: 'Custom Background',
+                        subtitle:
+                            'Upload custom photos, choose curated dark wallpapers, and blend theme ambient lighting',
+                        badgeText: customBg.hasCustomBackground
+                            ? 'Custom Active'
+                            : 'Default Theme',
+                        badgeColor: customBg.hasCustomBackground
+                            ? currentPalette.primaryColor
+                            : Colors.white38,
                         onTap: () async {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const CustomBackgroundSettingsPage(),
+                              builder: (context) =>
+                                  const CustomBackgroundSettingsPage(),
                             ),
                           );
                           setState(() {});
@@ -101,14 +107,18 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                         icon: Icons.blur_on_rounded,
                         iconColor: const Color(0xFF7C5CFF),
                         title: 'Liquid Glass Setup',
-                        subtitle: 'Adjust hover impact, wobble spring physics, lens refraction, and chromatic aberration',
+                        subtitle:
+                            'Adjust hover impact, wobble spring physics, lens refraction, and chromatic aberration',
                         badgeText: glassEnabled ? preset.label : 'Disabled',
-                        badgeColor: glassEnabled ? const Color(0xFF7C5CFF) : Colors.white38,
+                        badgeColor: glassEnabled
+                            ? const Color(0xFF7C5CFF)
+                            : Colors.white38,
                         onTap: () async {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const LiquidGlassSettingsPage(),
+                              builder: (context) =>
+                                  const LiquidGlassSettingsPage(),
                             ),
                           );
                           setState(() {});
@@ -121,7 +131,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
 
               const SizedBox(height: 14),
 
-              // Button 2: Liquid Dock / Navbar Items
+              // Button 2: Navbar Items
               ValueListenableBuilder<Map<String, bool>>(
                 valueListenable: DockSettings.enabledNotifier,
                 builder: (context, enabledMap, _) {
@@ -129,9 +139,11 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                   return _buildSectionButton(
                     icon: Icons.dock_rounded,
                     iconColor: const Color(0xFF7C5CFF),
-                    title: 'Liquid Dock / Deck Navbar',
-                    subtitle: 'Choose which navigation shortcuts appear in the bottom liquid glass dock across all screens',
-                    badgeText: '$activeCount / ${DockItemKey.values.length} Items',
+                    title: 'Navigation',
+                    subtitle:
+                        'Choose which navigation shortcuts appear in the bottom dock.',
+                    badgeText:
+                        '$activeCount / ${DockItemKey.values.length} Items',
                     badgeColor: const Color(0xFF7C5CFF),
                     onTap: () async {
                       await Navigator.push(
@@ -155,8 +167,8 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                   return _buildSectionButton(
                     icon: Icons.palette_rounded,
                     iconColor: currentPalette.primaryColor,
-                    title: 'Home Page UI & Themes',
-                    subtitle: 'Color schemes, app-wide grid column count, "Because you have on your list" smart slider, hero spotlight, and card density',
+                    title: 'UI & Themes',
+                    subtitle: 'Make the interface look and feel your way',
                     badgeText: currentPalette.name,
                     badgeColor: currentPalette.primaryColor,
                     onTap: () async {
@@ -185,8 +197,11 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                         icon: Icons.live_tv_rounded,
                         iconColor: currentPalette.primaryColor,
                         title: 'Live TV & Sports UI',
-                        subtitle: 'Broadcast hero spotlight, channel card density, category ordering, and live badge styling',
-                        badgeText: spotlightEnabled ? 'Spotlight ON' : 'Compact',
+                        subtitle:
+                            'Broadcast hero spotlight, channel card density, category ordering, and live badge styling',
+                        badgeText: spotlightEnabled
+                            ? 'Spotlight ON'
+                            : 'Compact',
                         badgeColor: currentPalette.primaryColor,
                         onTap: () async {
                           await Navigator.push(
@@ -215,9 +230,12 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                       return _buildSectionButton(
                         icon: Icons.menu_book_rounded,
                         iconColor: currentPalette.primaryColor,
-                        title: 'Manga UI & Reader Atmosphere',
-                        subtitle: 'Ambient moving lighting, card density, reading layout widths, webtoon/horizontal modes, and page deck preview',
-                        badgeText: readingMode == MangaReadingMode.webtoon ? 'Webtoon' : 'Horizontal',
+                        title: 'Manga Reader & Display',
+                        subtitle:
+                            'Customize reading modes, page layouts, ambient lighting, and card spacing',
+                        badgeText: readingMode == MangaReadingMode.webtoon
+                            ? 'Webtoon'
+                            : 'Horizontal',
                         badgeColor: currentPalette.primaryColor,
                         onTap: () async {
                           await Navigator.push(
@@ -247,14 +265,16 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                         icon: Icons.headphones_rounded,
                         iconColor: currentPalette.primaryColor,
                         title: 'Audiobook UI & Player Studio',
-                        subtitle: 'Hero spotlight, 5 distinct player designs, drag & drop modular studio, waveform canvas scrubber, and custom controls',
+                        subtitle:
+                            'Hero spotlight, 5 distinct player designs, drag & drop modular studio, waveform canvas scrubber, and custom controls',
                         badgeText: playerPreset.label.split(' ').first,
                         badgeColor: currentPalette.primaryColor,
                         onTap: () async {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AudiobookSettingsPage(),
+                              builder: (context) =>
+                                  const AudiobookSettingsPage(),
                             ),
                           );
                           setState(() {});
@@ -278,7 +298,8 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                         icon: Icons.music_note_rounded,
                         iconColor: currentPalette.primaryColor,
                         title: 'Music UI & Player Studio',
-                        subtitle: 'Hero spotlight, lossless badges, dual-engine customizer for both mini dock bar and fullscreen turntable/equalizer',
+                        subtitle:
+                            'Hero spotlight, lossless badges, dual-engine customizer for both mini dock bar and fullscreen turntable/equalizer',
                         badgeText: fullPreset.label.split(' ').first,
                         badgeColor: currentPalette.primaryColor,
                         onTap: () async {
@@ -313,19 +334,22 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
               _buildScopeTile(
                 icon: Icons.dock_rounded,
                 title: 'Bottom Liquid Dock',
-                description: 'Dock items react dynamically with your custom hover magnification, proximity ripples, and wobble springs.',
+                description:
+                    'Dock items react dynamically with your custom hover magnification, proximity ripples, and wobble springs.',
               ),
               const SizedBox(height: 10),
               _buildScopeTile(
                 icon: Icons.play_circle_outline_rounded,
                 title: 'Video Player & Watch Screens',
-                description: 'Overlays, glass sheets, and media controls render with your custom optical blur, refraction index, and border shimmer.',
+                description:
+                    'Overlays, glass sheets, and media controls render with your custom optical blur, refraction index, and border shimmer.',
               ),
               const SizedBox(height: 10),
               _buildScopeTile(
                 icon: Icons.home_rounded,
                 title: 'Home Page & Discovery',
-                description: 'Adapts to your chosen theme accent colors, smart BestSimilar recommendation slider, and chosen poster density.',
+                description:
+                    'Adapts to your chosen theme accent colors, smart BestSimilar recommendation slider, and chosen poster density.',
               ),
             ],
           ),
@@ -353,9 +377,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
           decoration: BoxDecoration(
             color: const Color(0xFF12151E),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.08),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Row(
             children: [
@@ -390,7 +412,10 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                         ),
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: badgeColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
@@ -444,9 +469,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

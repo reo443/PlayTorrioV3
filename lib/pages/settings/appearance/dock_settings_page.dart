@@ -22,7 +22,7 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Liquid Dock & Navbar',
+          'Navbar',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
         ),
         actions: [
@@ -39,10 +39,17 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
                 ),
               );
             },
-            icon: const Icon(Icons.restore_rounded, size: 18, color: Colors.white70),
+            icon: const Icon(
+              Icons.restore_rounded,
+              size: 18,
+              color: Colors.white70,
+            ),
             label: const Text(
               'Reset',
-              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -55,70 +62,22 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
             children: [
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
                   children: [
-                    // Header Description Card
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF12151E),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(0xFF7C5CFF).withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF7C5CFF).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.dock_rounded,
-                              color: Color(0xFF7C5CFF),
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Customize Bottom Dock',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(height: 3),
-                                Text(
-                                  'Choose which navigation items appear in your bottom liquid glass dock across all screens. Home & Settings are essential and stay pinned.',
-                                  style: TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 12.5,
-                                    height: 1.35,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
                     const SizedBox(height: 20),
-
                     // Section Title
                     Padding(
                       padding: const EdgeInsets.only(left: 4, bottom: 12),
                       child: Row(
                         children: [
-                          const Icon(Icons.tune_rounded, size: 16, color: Colors.white54),
+                          const Icon(
+                            Icons.tune_rounded,
+                            size: 16,
+                            color: Colors.white54,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'NAVIGATION SHORTCUTS',
@@ -148,7 +107,10 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
                                 isEnabled: isEnabled,
                                 onToggle: (val) async {
                                   if (!item.isRemovable) return;
-                                  await DockSettings.setItemEnabled(item.key, val);
+                                  await DockSettings.setItemEnabled(
+                                    item.key,
+                                    val,
+                                  );
                                   setState(() {});
                                 },
                               ),
@@ -256,12 +218,19 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
                     if (isPinned) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          color: const Color(
+                            0xFF10B981,
+                          ).withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                            color: const Color(
+                              0xFF10B981,
+                            ).withValues(alpha: 0.3),
                           ),
                         ),
                         child: const Text(
