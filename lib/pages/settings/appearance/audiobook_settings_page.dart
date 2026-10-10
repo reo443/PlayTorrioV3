@@ -46,21 +46,14 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           child: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             children: [
-              // ── 1. Color Themes & Accents ──
-              _buildSectionHeader('COLOR THEMES & ACCENTS'),
-              const SizedBox(height: 12),
-              _buildThemesGrid(),
-
-              const SizedBox(height: 28),
-
-              // ── 2. Ambient Background Lighting ──
+              // 1. Ambient Background Lighting ──
               _buildSectionHeader('AMBIENT BACKGROUND LIGHTING & MOVING GLOWS'),
               const SizedBox(height: 12),
               _buildAmbientLightsCard(palette),
 
               const SizedBox(height: 28),
 
-              // ── 3. Discovery & Posters ──
+              // 2. Discovery & Posters ──
               _buildSectionHeader('DISCOVERY & AUDIOBOOK POSTERS'),
               const SizedBox(height: 12),
               _buildDiscoveryConfigCard(palette),
@@ -72,14 +65,14 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
 
               const SizedBox(height: 28),
 
-              // ── 4. Player Presets ──
+              // 3. Player Presets ──
               _buildSectionHeader('CHOOSE AUDIO PLAYER PRESET'),
               const SizedBox(height: 12),
               _buildPlayerPresetSelector(palette),
 
               const SizedBox(height: 28),
 
-              // ── 5. Make Your Custom Player Studio ──
+              // 4. Make Your Custom Player Studio ──
               _buildSectionHeader('MAKE YOUR CUSTOM AUDIOBOOK PLAYER (DRAG & DROP STUDIO)'),
               const SizedBox(height: 12),
               _buildCustomPlayerStudioCard(palette),
@@ -104,100 +97,7 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
     );
   }
 
-  // ── 1. Themes Grid ──
-  Widget _buildThemesGrid() {
-    return ValueListenableBuilder<AppThemePalette>(
-      valueListenable: AppThemeService.currentPalette,
-      builder: (context, current, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final w = constraints.maxWidth;
-            final int crossAxisCount = w < 400 ? 1 : (w < 700 ? 2 : 3);
-            final double childAspectRatio = w < 400 ? 4.2 : 2.6;
-
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                childAspectRatio: childAspectRatio,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: AppThemeService.palettes.length,
-              itemBuilder: (context, index) {
-                final palette = AppThemeService.palettes[index];
-                final isSelected = palette.id == current.id;
-
-                return InkWell(
-                  onTap: () async {
-                    await AppThemeService.setPalette(palette);
-                    setState(() {});
-                  },
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF12151E),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected
-                            ? palette.primaryColor
-                            : Colors.white.withValues(alpha: 0.08),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [palette.primaryColor, palette.accentColor],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              if (isSelected)
-                                BoxShadow(
-                                  color: palette.primaryColor.withValues(alpha: 0.4),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                ),
-                            ],
-                          ),
-                          child: isSelected
-                              ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
-                              : null,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            palette.name,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white70,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // ── 2. Ambient Lighting Card ──
+  // 1. Ambient Lighting Card ──
   Widget _buildAmbientLightsCard(AppThemePalette palette) {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -380,7 +280,7 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
     );
   }
 
-  // ── 3. Discovery & Posters Config Card ──
+  // 2. Discovery & Posters Config Card ──
   Widget _buildDiscoveryConfigCard(AppThemePalette palette) {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -501,7 +401,7 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
     );
   }
 
-  // ── 4. Player Presets Selector ──
+  // 3. Player Presets Selector ──
   Widget _buildPlayerPresetSelector(AppThemePalette palette) {
     return ValueListenableBuilder<AudiobookPlayerPreset>(
       valueListenable: AudiobookSettings.selectedPlayerPreset,
@@ -714,7 +614,7 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
     );
   }
 
-  // ── 5. Make Your Custom Player Studio ──
+  // 4. Make Your Custom Player Studio ──
   Widget _buildCustomPlayerStudioCard(AppThemePalette palette) {
     return Container(
       padding: const EdgeInsets.all(18),

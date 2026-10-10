@@ -46,37 +46,31 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
               _buildEnterPlayerStudioBanner(palette),
               const SizedBox(height: 28),
 
-              // 2. Visual Theme Palette
-              _buildSectionHeader('VISUAL THEME PALETTE'),
-              const SizedBox(height: 12),
-              _buildThemesGrid(),
-              const SizedBox(height: 28),
-
-              // 3. Ambient Moving Background Lights
+              // 2. Ambient Moving Background Lights
               _buildSectionHeader('AMBIENT ATMOSPHERE & GLOW'),
               const SizedBox(height: 12),
               _buildAmbientLightsCard(palette),
               const SizedBox(height: 28),
 
-              // 4. Discovery & Layout Settings
+              // 3. Discovery & Layout Settings
               _buildSectionHeader('DISCOVERY & CATALOG CONFIGURATION'),
               const SizedBox(height: 12),
               _buildDiscoveryConfigCard(palette),
               const SizedBox(height: 28),
 
-              // 5. Mini Player Bar Presets
+              // 4. Mini Player Bar Presets
               _buildSectionHeader('MINI PLAYER BAR PRESETS'),
               const SizedBox(height: 12),
               _buildMiniPlayerPresetSelector(palette),
               const SizedBox(height: 28),
 
-              // 6. Fullscreen Player Presets
+              // 5. Fullscreen Player Presets
               _buildSectionHeader('FULLSCREEN PLAYER PRESETS'),
               const SizedBox(height: 12),
               _buildFullscreenPlayerPresetSelector(palette),
               const SizedBox(height: 28),
 
-              // 7. Custom Player Quick Customizer
+              // 6. Custom Player Quick Customizer
               _buildSectionHeader('CUSTOM PLAYER ENGINE DESIGNER'),
               const SizedBox(height: 12),
               _buildCustomPlayerStudioCard(palette),
@@ -97,95 +91,6 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
         color: Colors.white.withValues(alpha: 0.35),
         letterSpacing: 1.1,
       ),
-    );
-  }
-
-  Widget _buildThemesGrid() {
-    return ValueListenableBuilder<AppThemePalette>(
-      valueListenable: AppThemeService.currentPalette,
-      builder: (context, currentPalette, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final w = constraints.maxWidth;
-            final int crossAxisCount = w < 400 ? 1 : (w < 700 ? 2 : 3);
-            final double childAspectRatio = w < 400 ? 4.2 : 2.6;
-
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                childAspectRatio: childAspectRatio,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: AppThemeService.palettes.length,
-              itemBuilder: (context, index) {
-                final theme = AppThemeService.palettes[index];
-                final isSelected = theme.name == currentPalette.name;
-
-                return InkWell(
-                  onTap: () {
-                    AppThemeService.setPalette(theme);
-                    setState(() {});
-                  },
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF12151E),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected
-                            ? currentPalette.primaryColor
-                            : Colors.white.withValues(alpha: 0.08),
-                        width: isSelected ? 1.8 : 1.0,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [theme.primaryColor, theme.accentColor],
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.primaryColor.withValues(alpha: 0.4),
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
-                          child: isSelected
-                              ? const Icon(Icons.check_rounded, color: Colors.white, size: 15)
-                              : null,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            theme.name,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white70,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              fontSize: 13,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
     );
   }
 
