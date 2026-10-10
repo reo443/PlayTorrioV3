@@ -91,6 +91,43 @@ class AnimeMedia {
     return (averageScore / 10.0).toStringAsFixed(1);
   }
 
+  /// Compact popularity label, e.g. 37283 -> "37.3K", 1200000 -> "1.2M".
+  String get formattedPopularity {
+    if (popularity <= 0) return '';
+    if (popularity >= 1000000) {
+      return '${(popularity / 1000000).toStringAsFixed(1)}M';
+    }
+    if (popularity >= 1000) {
+      final k = popularity / 1000;
+      return '${k >= 100 ? k.round().toString() : k.toStringAsFixed(1)}K';
+    }
+    return '$popularity';
+  }
+
+  /// Compact label for poster pills — short enough to never overlap the
+  /// score badge on narrow posters. Use [formattedFormat] for full prose.
+  String get formatTag {
+    switch (format.toUpperCase()) {
+      case 'TV':
+        return 'TV';
+      case 'TV_SHORT':
+        return 'SHORT';
+      case 'MOVIE':
+        return 'MOVIE';
+      case 'SPECIAL':
+        return 'SPECIAL';
+      case 'OVA':
+        return 'OVA';
+      case 'ONA':
+        return 'ONA';
+      case 'MUSIC':
+        return 'MUSIC';
+      default:
+        final raw = format.toUpperCase();
+        return raw.length > 7 ? raw.substring(0, 7) : raw;
+    }
+  }
+
   String get formattedFormat {
     switch (format.toUpperCase()) {
       case 'TV':

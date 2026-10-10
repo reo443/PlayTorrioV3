@@ -195,60 +195,49 @@ class _AnimePosterFrame extends StatelessWidget {
               ),
             ),
 
-            // Top Left Rating Badge
-            if (anime.averageScore > 0)
-              Positioned(
-                top: 9,
-                left: 9,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.72),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.35),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        size: 13,
-                        color: Color(0xFFFFD700),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        anime.formattedScore,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFFFFD700),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            // Top Left Rating Badge (score, or popularity fallback for
+            // unreleased titles like "Anticipated Next Season" that have no
+            // average score yet)
+            if (anime.averageScore > 0) ...[
+              _buildCornerBadge(
+                icon: Icons.star_rounded,
+                iconColor: const Color(0xFFFFD700),
+                borderColor: const Color(0xFFFFD700).withValues(alpha: 0.35),
+                label: anime.formattedScore,
               ),
+            ] else if (anime.popularity > 0) ...[
+              _buildCornerBadge(
+                icon: Icons.local_fire_department_rounded,
+                iconColor: const Color(0xFFFF9E45),
+                borderColor: const Color(0xFFFF9E45).withValues(alpha: 0.35),
+                label: anime.formattedPopularity,
+              ),
+            ],
 
-            // Top Right Format Pill
+            // Top Right Format Pill (compact — never wide enough to reach
+            // the rating badge on narrow posters)
             Positioned(
               top: 9,
               right: 9,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-                decoration: BoxDecoration(
-                  color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.90),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  anime.formattedFormat.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 74),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.90),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      anime.formatTag,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -294,6 +283,41 @@ class _AnimePosterFrame extends StatelessWidget {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCornerBadge({
+    required IconData icon,
+    required Color iconColor,
+    required Color borderColor,
+    required String label,
+  }) {
+    return Positioned(
+      top: 9,
+      left: 9,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: iconColor),
+            const SizedBox(width: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: iconColor,
+              ),
+            ),
           ],
         ),
       ),

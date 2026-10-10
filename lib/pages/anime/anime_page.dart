@@ -241,49 +241,41 @@ class _AnimePageState extends State<AnimePage> {
                       // 3. Sliders with Desktop Scroll Arrows
                       AnimeSliderSection(
                         title: 'Trending Anime',
-                        subtitle: 'Top popular and trending series',
                         animeList: _trending,
                         onAnimeTap: _openDetails,
                       ),
                       AnimeSliderSection(
                         title: 'Popular This  ${AnilistService.currentSeason()}',
-                        subtitle: 'Currently airing hits',
                         animeList: _popularSeason,
                         onAnimeTap: _openDetails,
                       ),
                       AnimeSliderSection(
                         title: 'All-Time Masterpieces',
-                        subtitle: 'Critically acclaimed top rated anime',
                         animeList: _topRated,
                         onAnimeTap: _openDetails,
                       ),
                       AnimeSliderSection(
                         title: 'Anticipated Next Season',
-                        subtitle: 'Upcoming anime you cannot miss',
                         animeList: _upcoming,
                         onAnimeTap: _openDetails,
                       ),
                       AnimeSliderSection(
                         title: 'Action & Adventure',
-                        subtitle: 'High octane battles and epic journeys',
                         animeList: _actionAnime,
                         onAnimeTap: _openDetails,
                       ),
                       AnimeSliderSection(
                         title: 'Romance & Drama',
-                        subtitle: 'Heartfelt emotional stories',
                         animeList: _romanceAnime,
                         onAnimeTap: _openDetails,
                       ),
                       AnimeSliderSection(
                         title: 'Fantasy & Isekai',
-                        subtitle: 'Magical realms and alternate worlds',
                         animeList: _fantasyAnime,
                         onAnimeTap: _openDetails,
                       ),
                       AnimeSliderSection(
                         title: 'Sci-Fi & Cyberpunk',
-                        subtitle: 'Futuristic technologies and dystopian worlds',
                         animeList: _sciFiAnime,
                         onAnimeTap: _openDetails,
                       ),
