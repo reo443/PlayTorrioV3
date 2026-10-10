@@ -298,6 +298,7 @@ class _AnimePageState extends State<AnimePage> {
             child: PageTopBar(
               topPadding: topPadding,
               title: 'Anime',
+              showBack: true,
               onSearchTap: () => _navigateToSearch(null),
             ),
           ),

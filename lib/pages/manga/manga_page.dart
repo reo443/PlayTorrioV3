@@ -501,6 +501,7 @@ class _MangaPageState extends State<MangaPage> {
       child: PageTopBar(
         topPadding: topInset,
         title: 'Manga',
+        showBack: true,
         onSearchTap: _navigateToSearch,
       ),
     );

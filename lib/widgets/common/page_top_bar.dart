@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// The single consistent top bar used across all pages: glass gradient,
@@ -52,7 +51,7 @@ class PageTopBar extends StatelessWidget {
 
     return RepaintBoundary(
       child: Container(
-        padding: EdgeInsets.only(top: topPadding + 6, bottom: 10, left: 16, right: 8),
+        padding: EdgeInsets.only(top: topPadding + 2, bottom: 6, left: 12, right: 6),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
@@ -68,7 +67,7 @@ class PageTopBar extends StatelessWidget {
             if (showBack) ...[
               IconButton(
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.arrow_back_ios_rounded, size: 19, color: Colors.white),
+                icon: const Icon(Icons.arrow_back_ios_rounded, size: 17, color: Colors.white),
                 tooltip: 'Back',
                 onPressed: onBackTap ?? () => Navigator.of(context).maybePop(),
               ),
@@ -80,11 +79,11 @@ class PageTopBar extends StatelessWidget {
             else ...[
               Image.asset(
                 'assets/icon.png',
-                width: 26,
-                height: 26,
+                width: 22,
+                height: 22,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 8),
               if (!isNarrow)
                 Flexible(
                   child: RichText(
@@ -93,9 +92,9 @@ class PageTopBar extends StatelessWidget {
                     text: TextSpan(
                       text: 'PlayTorrio ',
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 15.5,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: -0.4,
+                        letterSpacing: -0.3,
                         color: Colors.white,
                       ),
                       children: [
@@ -128,7 +127,7 @@ class PageTopBar extends StatelessWidget {
                 icon: Icon(
                   isSearching ? Icons.close_rounded : Icons.search_rounded,
                   color: Colors.white.withValues(alpha: 0.75),
-                  size: 22,
+                  size: 21,
                 ),
                 tooltip: isSearching ? 'Close search' : 'Search',
                 onPressed: onSearchTap,
@@ -147,8 +146,8 @@ class PageTopBar extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onFilterTap,
       child: Container(
-        height: 34,
-        width: 34,
+        height: 32,
+        width: 32,
         decoration: BoxDecoration(
           color: isActive
               ? const Color(0xFF7C5CFF)
@@ -165,7 +164,7 @@ class PageTopBar extends StatelessWidget {
             Center(
               child: Icon(
                 Icons.tune_rounded,
-                size: 17,
+                size: 16,
                 color: isActive ? Colors.white : Colors.white70,
               ),
             ),
