@@ -349,7 +349,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             color: AppThemeService.currentPalette.value.cardBackgroundColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Row(

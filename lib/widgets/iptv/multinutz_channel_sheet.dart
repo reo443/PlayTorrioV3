@@ -841,7 +841,7 @@ class _MultiNutzChannelSheetState extends State<MultiNutzChannelSheet>
                       child: isSelected ? const Icon(Icons.check_rounded, color: Colors.white, size: 14) : null,
                     )
                   else
-                    const SizedBox(width: 18, height: 8, child: DecoratedBox(decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle))),
+                    const SizedBox(width: 18, height: 8, child: DecoratedBox(decoration: BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle))),
                   Expanded(
                     child: Text(
                       p.name.isNotEmpty ? p.name : p.portal.url,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/debrid/debrid_service.dart';
+import '../../widgets/settings/settings_controls.dart';
 
 class DebridSettingsPage extends StatefulWidget {
   const DebridSettingsPage({super.key});
@@ -287,7 +288,7 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: const Color(0xFF12151E),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _useDebrid
                         ? const Color(0xFF00E5FF).withValues(alpha: 0.35)
@@ -336,9 +337,9 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Switch.adaptive(
+                        SettingsToggleSwitch(
                           value: _useDebrid,
-                          activeColor: const Color(0xFF00E5FF),
+                          semanticsLabel: 'Route torrent links through cloud servers',
                           onChanged: (val) async {
                             setState(() => _useDebrid = val);
                             await _debrid.saveUseDebridForStreams(val);
@@ -383,14 +384,14 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
               const SizedBox(height: 24),
 
               // Active Provider Selector
-              Text(
+              const Text(
                 'ACTIVE PROVIDER',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 10),
 
@@ -398,7 +399,7 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: const Color(0xFF12151E),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.08),
                   ),
@@ -484,14 +485,14 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
               const SizedBox(height: 24),
 
               // Provider API Keys
-              Text(
+              const Text(
                 'PROVIDER CREDENTIALS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 10),
 
@@ -592,7 +593,7 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isActive
               ? const Color(0xFF00E5FF).withValues(alpha: 0.3)

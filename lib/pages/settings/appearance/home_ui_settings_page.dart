@@ -7,6 +7,7 @@ import '../../../services/my_list/my_list_service.dart';
 import '../../../services/simkl/simkl_service.dart';
 import '../../../services/trakt/trakt_service.dart';
 import '../../../widgets/common/animated_ambient_background.dart';
+import '../../../widgets/settings/settings_controls.dart';
 import 'custom_background_settings_page.dart';
 
 class HomeUiSettingsPage extends StatefulWidget {
@@ -65,14 +66,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 2. Ambient Background Lighting & Moving Glows ──
-              Text(
+              const Text(
                 'AMBIENT BACKGROUND LIGHTING & MOVING GLOWS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildAmbientLightsCard(),
@@ -80,14 +81,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 2b. Custom Wallpaper & Background Photo ──
-              Text(
+              const Text(
                 'CUSTOM BACKGROUND & WALLPAPER',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               ValueListenableBuilder<CustomBackgroundData>(
@@ -110,7 +111,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppThemeService.currentPalette.value.cardBackgroundColor,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: hasWallpaper
                               ? palette.primaryColor.withValues(alpha: 0.40)
@@ -169,14 +170,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 3. "Because you have on your list" Section ──
-              Text(
+              const Text(
                 'SMART RECOMMENDATIONS ("BECAUSE YOU HAVE ON YOUR LIST")',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildSimilarRecommendationsCard(myListCount),
@@ -184,14 +185,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 4. Hero Carousel & Spotlight ──
-              Text(
+              const Text(
                 'HERO BANNER & SPOTLIGHT',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildHeroControlsCard(),
@@ -199,14 +200,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 5. Card Layout & Poster Density ──
-              Text(
+              const Text(
                 'POSTER CARDS & DENSITY',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildCardDensityCard(),
@@ -214,14 +215,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 5b. Details Page Background ──
-              Text(
+              const Text(
                 'DETAILS PAGE BACKGROUND',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildDetailsBackgroundCard(),
@@ -229,14 +230,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 6. Feature Shortcuts & Buttons ──
-              Text(
+              const Text(
                 'HEADER SHORTCUTS & BUTTONS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildFeatureTogglesCard(),
@@ -263,7 +264,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: AppThemeService.currentPalette.value.cardBackgroundColor,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: const Color(0xFF292D39)),
               ),
               child: Row(
@@ -341,7 +342,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: AppThemeService.currentPalette.value.cardBackgroundColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: enabled
                   ? palette.primaryColor.withValues(alpha: 0.35)
@@ -434,9 +435,9 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: enabled,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Moving Ambient Lights & Glows',
                     onChanged: (val) {
                       HomePageSettings.setEnableAmbientLights(val);
                       setState(() {});
@@ -463,34 +464,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                 ValueListenableBuilder<AmbientLightPattern>(
                   valueListenable: HomePageSettings.ambientLightPattern,
                   builder: (context, currentPattern, _) {
-                    return Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: AmbientLightPattern.values.map((pat) {
-                        final isSelected = pat == currentPattern;
-                        return ChoiceChip(
-                          label: Text(pat.label),
-                          selected: isSelected,
-                          selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                          backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-                          labelStyle: TextStyle(
-                            color: isSelected ? palette.primaryColor : Colors.white70,
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                            fontSize: 12,
-                          ),
-                          side: BorderSide(
-                            color: isSelected
-                                ? palette.primaryColor.withValues(alpha: 0.6)
-                                : Colors.white.withValues(alpha: 0.08),
-                          ),
-                          onSelected: (selected) {
-                            if (selected) {
-                              HomePageSettings.setAmbientLightPattern(pat);
-                              setState(() {});
-                            }
-                          },
-                        );
-                      }).toList(),
+                    return SettingsSegmentedControl<AmbientLightPattern>(
+                      values: AmbientLightPattern.values,
+                      selected: currentPattern,
+                      onChanged: (pat) {
+                        HomePageSettings.setAmbientLightPattern(pat);
+                        setState(() {});
+                      },
+                      label: (pat) => pat.label,
                     );
                   },
                 ),
@@ -612,7 +593,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppThemeService.currentPalette.value.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
         ),
@@ -860,9 +841,9 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              Switch.adaptive(
+              SettingsToggleSwitch(
                 value: enabled,
-                activeColor: AppThemeService.currentPalette.value.primaryColor,
+                semanticsLabel: title,
                 onChanged: onChanged,
               ),
             ],
@@ -877,7 +858,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppThemeService.currentPalette.value.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -923,9 +904,9 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: enabled,
-                    activeColor: AppThemeService.currentPalette.value.primaryColor,
+                    semanticsLabel: 'Show Hero Spotlight Banner',
                     onChanged: (val) {
                       HomePageSettings.setEnableSpotlight(val);
                       setState(() {});
@@ -962,34 +943,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                   ValueListenableBuilder<HeroStyle>(
                     valueListenable: HomePageSettings.heroStyle,
                     builder: (context, currentStyle, _) {
-                      return Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: HeroStyle.values.map((style) {
-                          final isSelected = style == currentStyle;
-                          return ChoiceChip(
-                            label: Text(style.label),
-                            selected: isSelected,
-                            selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
-                            backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-                            labelStyle: TextStyle(
-                              color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                              fontSize: 12,
-                            ),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
-                                  : Colors.white.withValues(alpha: 0.08),
-                            ),
-                            onSelected: (selected) {
-                              if (selected) {
-                                HomePageSettings.setHeroStyle(style);
-                                setState(() {});
-                              }
-                            },
-                          );
-                        }).toList(),
+                      return SettingsSegmentedControl<HeroStyle>(
+                        values: HeroStyle.values,
+                        selected: currentStyle,
+                        onChanged: (style) {
+                          HomePageSettings.setHeroStyle(style);
+                          setState(() {});
+                        },
+                        label: (style) => style.label,
                       );
                     },
                   ),
@@ -1022,9 +983,9 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                           ],
                         ),
                       ),
-                      Switch.adaptive(
+                      SettingsToggleSwitch(
                         value: autoRotate,
-                        activeColor: AppThemeService.currentPalette.value.primaryColor,
+                        semanticsLabel: 'Auto-Rotate Spotlight',
                         onChanged: (val) {
                           HomePageSettings.setHeroAutoRotate(val);
                           setState(() {});
@@ -1101,9 +1062,9 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: glow,
-                    activeColor: AppThemeService.currentPalette.value.primaryColor,
+                    semanticsLabel: 'Ambient Backdrop Lighting',
                     onChanged: (val) {
                       HomePageSettings.setAmbientGlow(val);
                       setState(() {});
@@ -1127,7 +1088,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppThemeService.currentPalette.value.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -1150,14 +1111,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
           ValueListenableBuilder<int>(
             valueListenable: HomePageSettings.gridColumns,
             builder: (context, columns, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildGridColumnChip('Auto', 0, columns),
-                  for (final n in const [2, 3, 4, 5, 6, 7, 8])
-                    _buildGridColumnChip('$n', n, columns),
-                ],
+              return SettingsSegmentedControl<int>(
+                values: const [0, 2, 3, 4, 5, 6, 7, 8],
+                selected: columns,
+                onChanged: (n) {
+                  HomePageSettings.setGridColumns(n);
+                  setState(() {});
+                },
+                label: (n) => n == 0 ? 'Auto' : '$n',
               );
             },
           ),
@@ -1178,34 +1139,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
           ValueListenableBuilder<CardDensity>(
             valueListenable: HomePageSettings.cardDensity,
             builder: (context, currentDensity, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: CardDensity.values.map((density) {
-                  final isSelected = density == currentDensity;
-                  return ChoiceChip(
-                    label: Text(density.label),
-                    selected: isSelected,
-                    selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-                    labelStyle: TextStyle(
-                      color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected
-                          ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        HomePageSettings.setCardDensity(density);
-                        setState(() {});
-                      }
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<CardDensity>(
+                values: CardDensity.values,
+                selected: currentDensity,
+                onChanged: (density) {
+                  HomePageSettings.setCardDensity(density);
+                  setState(() {});
+                },
+                label: (density) => density.label,
               );
             },
           ),
@@ -1319,9 +1260,9 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: showRating,
-                    activeColor: AppThemeService.currentPalette.value.primaryColor,
+                    semanticsLabel: 'Show IMDB Rating Badges',
                     onChanged: (val) {
                       HomePageSettings.setShowRating(val);
                       setState(() {});
@@ -1390,38 +1331,12 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
     );
   }
 
-  Widget _buildGridColumnChip(String label, int value, int current) {
-    final isSelected = value == current;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
-      backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-      labelStyle: TextStyle(
-        color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
-        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-        fontSize: 12,
-      ),
-      side: BorderSide(
-        color: isSelected
-            ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
-            : Colors.white.withValues(alpha: 0.08),
-      ),
-      onSelected: (selected) {
-        if (selected) {
-          HomePageSettings.setGridColumns(value);
-          setState(() {});
-        }
-      },
-    );
-  }
-
   Widget _buildDetailsBackgroundCard() {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppThemeService.currentPalette.value.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -1469,34 +1384,14 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
           ValueListenableBuilder<DetailsBackground>(
             valueListenable: HomePageSettings.detailsBackground,
             builder: (context, current, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: DetailsBackground.values.map((bg) {
-                  final isSelected = bg == current;
-                  return ChoiceChip(
-                    label: Text(bg.label),
-                    selected: isSelected,
-                    selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-                    labelStyle: TextStyle(
-                      color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected
-                          ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        HomePageSettings.setDetailsBackground(bg);
-                        setState(() {});
-                      }
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<DetailsBackground>(
+                values: DetailsBackground.values,
+                selected: current,
+                onChanged: (bg) {
+                  HomePageSettings.setDetailsBackground(bg);
+                  setState(() {});
+                },
+                label: (bg) => bg.label,
               );
             },
           ),
@@ -1510,7 +1405,7 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppThemeService.currentPalette.value.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -1559,10 +1454,10 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: enabled,
+                    semanticsLabel: 'TV Airing Calendar',
                     onChanged: (val) => HomePageSettings.setEnableCalendar(val),
-                    activeColor: const Color(0xFF38BDF8),
                   ),
                 ],
               );
@@ -1616,10 +1511,10 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: enabled,
+                    semanticsLabel: 'AI Recommendation Quiz',
                     onChanged: (val) => HomePageSettings.setEnableAiQuiz(val),
-                    activeColor: const Color(0xFFF472B6),
                   ),
                 ],
               );

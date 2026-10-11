@@ -104,7 +104,7 @@ class _UpdatesSettingsPageState extends State<UpdatesSettingsPage> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: const Color(0xFF12151E),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: const Color(0xFF7C5CFF).withValues(alpha: 0.2),
                       ),
@@ -197,14 +197,14 @@ class _UpdatesSettingsPageState extends State<UpdatesSettingsPage> {
               const SizedBox(height: 24),
 
               // Release Channel Info
-              Text(
+              const Text(
                 'RELEASE CHANNELS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
 

@@ -29,6 +29,7 @@ import '../../services/backup/backup_restore_service.dart';
 import '../../services/home/home_page_settings.dart';
 
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/settings/settings_controls.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -340,14 +341,14 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 24),
 
               // Section Label
-              Text(
+              const Text(
                 'CATEGORIES',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
 
@@ -364,7 +365,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: 'Appearance & Interface',
                         subtitle: 'Liquid Glass setup, color themes, and Home Page UI',
                         badgeText: glassEnabled ? '${currentPalette.name} · Glass ON' : currentPalette.name,
-                        badgeColor: currentPalette.primaryColor,
                         onTap: () => _navigateTo(const AppearanceSettingsPage()),
                       );
                     },
@@ -384,7 +384,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     title: 'Support The Developer',
                     subtitle: '1-click ad sponsor, help with uni tuition, and card visibility',
                     badgeText: isSupportEnabled ? 'Active' : 'Hidden',
-                    badgeColor: isSupportEnabled ? const Color(0xFFFFB300) : Colors.white38,
                     onTap: () => _navigateTo(const SupportDevSettingsPage()),
                   );
                 },
@@ -404,9 +403,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     badgeText: anime4kPreset == Anime4KPreset.off
                         ? 'Off'
                         : anime4kPreset.label.split('(').first.trim(),
-                    badgeColor: anime4kPreset == Anime4KPreset.off
-                        ? Colors.white38
-                        : const Color(0xFF7C5CFF),
                     onTap: () => _navigateTo(const VideoSettingsPage()),
                   );
                 },
@@ -423,7 +419,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 badgeText: _useDebrid
                     ? (_debridProvider != 'None' ? _debridProvider : 'Active')
                     : 'Disabled',
-                badgeColor: _useDebrid ? const Color(0xFF00E5FF) : Colors.white38,
                 onTap: () => _navigateTo(const DebridSettingsPage()),
               ),
 
@@ -436,7 +431,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'Addons',
                 subtitle: 'Stremio catalogs and content providers',
                 badgeText: '$addonCount Installed',
-                badgeColor: const Color(0xFF10B981),
                 onTap: () => _navigateTo(const AddonsSettingsPage()),
               ),
 
@@ -453,7 +447,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     title: 'Built-in Providers',
                     subtitle: 'PlayTorrioHTTP streaming sources, priority order & toggles',
                     badgeText: isCustom ? 'Custom' : 'Default',
-                    badgeColor: isCustom ? const Color(0xFF7C5CFF) : const Color(0xFF10B981),
                     onTap: () => _navigateTo(const BuiltinProvidersSettingsPage()),
                   );
                 },
@@ -472,8 +465,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     subtitle: isP2p
                         ? 'PlayTorrio torrent swarms (Knaben, TorrentGalaxy) active'
                         : 'P2P disabled. Using only direct HTTP streaming (PlayTorrioHTTP)',
-                    badgeText: isP2p ? 'P2P Active' : 'HTTP Only',
-                    badgeColor: isP2p ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
                     value: isP2p,
                     onChanged: (val) async {
                       await P2pSettingsService.setP2pEnabled(val);
@@ -501,8 +492,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     subtitle: isCalEnabled
                         ? 'Calendar buttons active on Home top bar and section headers'
                         : 'Calendar disabled and hidden across all pages',
-                    badgeText: isCalEnabled ? 'Enabled' : 'Disabled',
-                    badgeColor: isCalEnabled ? const Color(0xFF38BDF8) : Colors.white38,
                     value: isCalEnabled,
                     onChanged: (val) async {
                       await HomePageSettings.setEnableCalendar(val);
@@ -524,8 +513,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     subtitle: isAiEnabled
                         ? 'AI Taste Profile Quiz active on Home and Search bars'
                         : 'AI quiz disabled and hidden across all pages',
-                    badgeText: isAiEnabled ? 'Enabled' : 'Disabled',
-                    badgeColor: isAiEnabled ? const Color(0xFFF472B6) : Colors.white38,
                     value: isAiEnabled,
                     onChanged: (val) async {
                       await HomePageSettings.setEnableAiQuiz(val);
@@ -548,8 +535,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: isDiscordEnabled
                           ? 'Broadcasting movies, shows, music & live activity to Discord'
                           : 'Disabled. Activity is hidden from Discord',
-                      badgeText: isDiscordEnabled ? 'Active' : 'Disabled',
-                      badgeColor: isDiscordEnabled ? const Color(0xFF5865F2) : Colors.white38,
                       value: isDiscordEnabled,
                       onChanged: (val) async {
                         await DiscordRpcService.instance.setEnabled(val);
@@ -567,7 +552,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'Trakt.tv Sync',
                 subtitle: 'Cross-device watchlist, history & playback synchronization',
                 badgeText: _traktConnected ? 'Connected' : 'Offline',
-                badgeColor: _traktConnected ? const Color(0xFFED1C24) : Colors.white38,
                 onTap: () => _navigateTo(const TraktSettingsPage()),
               ),
 
@@ -580,7 +564,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'Simkl Sync',
                 subtitle: 'Cross-device Movies, TV & Anime synchronization',
                 badgeText: _simklConnected ? 'Connected' : 'Offline',
-                badgeColor: _simklConnected ? const Color(0xFF00ADFF) : Colors.white38,
                 onTap: () => _navigateTo(const SimklSettingsPage()),
               ),
 
@@ -593,7 +576,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'Backup & Restore',
                 subtitle: 'Export or import your settings, addons & IPTV portals (JSON)',
                 badgeText: 'JSON',
-                badgeColor: const Color(0xFF10B981),
                 onTap: _showBackupRestoreDialog,
               ),
 
@@ -606,7 +588,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'App Updates',
                 subtitle: 'Check for latest software versions and patches',
                 badgeText: _appVersion != null ? 'v$_appVersion' : 'Check',
-                badgeColor: const Color(0xFFF59E0B),
                 onTap: () => _navigateTo(const UpdatesSettingsPage()),
               ),
 
@@ -639,7 +620,6 @@ class _SettingsCategoryTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? badgeText;
-  final Color? badgeColor;
   final VoidCallback onTap;
 
   const _SettingsCategoryTile({
@@ -648,7 +628,6 @@ class _SettingsCategoryTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.badgeText,
-    this.badgeColor,
     required this.onTap,
   });
 
@@ -663,7 +642,7 @@ class _SettingsCategoryTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             color: const Color(0xFF12151E),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.08),
             ),
@@ -692,48 +671,23 @@ class _SettingsCategoryTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (badgeText != null) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: (badgeColor ?? iconColor).withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              badgeText!,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: badgeColor ?? iconColor,
-                              ),
-                              maxLines: 1,
-                            ),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.45),
-                        height: 1.25,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF8C8C98),
+                        height: 1.3,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -741,6 +695,20 @@ class _SettingsCategoryTile extends StatelessWidget {
                   ],
                 ),
               ),
+
+              if (badgeText != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  badgeText!,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF9D9DAA),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
 
               const SizedBox(width: 8),
 
@@ -767,8 +735,6 @@ class _SettingsSwitchTile extends StatelessWidget {
   final Color iconColor;
   final String title;
   final String subtitle;
-  final String? badgeText;
-  final Color? badgeColor;
   final bool value;
   final ValueChanged<bool> onChanged;
   final VoidCallback? onInfoTap;
@@ -778,8 +744,6 @@ class _SettingsSwitchTile extends StatelessWidget {
     required this.iconColor,
     required this.title,
     required this.subtitle,
-    this.badgeText,
-    this.badgeColor,
     required this.value,
     required this.onChanged,
     this.onInfoTap,
@@ -791,7 +755,7 @@ class _SettingsSwitchTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: value
               ? iconColor.withValues(alpha: 0.20)
@@ -846,34 +810,15 @@ class _SettingsSwitchTile extends StatelessWidget {
                         onPressed: onInfoTap,
                       ),
                     ],
-                    if (badgeText != null) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: (badgeColor ?? iconColor).withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          badgeText!,
-                          style: TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: badgeColor ?? iconColor,
-                          ),
-                          maxLines: 1,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
                 const SizedBox(height: 3),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: Colors.white.withValues(alpha: 0.45),
-                    height: 1.25,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF8C8C98),
+                    height: 1.3,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -885,16 +830,10 @@ class _SettingsSwitchTile extends StatelessWidget {
           const SizedBox(width: 8),
 
           // Switch
-          Transform.scale(
-            scale: 0.9,
-            child: Switch.adaptive(
-              value: value,
-              activeColor: const Color(0xFFF59E0B),
-              activeTrackColor: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-              inactiveThumbColor: Colors.white60,
-              inactiveTrackColor: Colors.white10,
-              onChanged: onChanged,
-            ),
+          SettingsToggleSwitch(
+            value: value,
+            semanticsLabel: title,
+            onChanged: onChanged,
           ),
         ],
       ),

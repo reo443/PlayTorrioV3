@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../services/theme/app_theme_service.dart';
 import '../../../services/theme/dock_settings.dart';
 import '../../../widgets/common/app_liquid_dock.dart';
+import '../../../widgets/settings/settings_controls.dart';
 
 class DockSettingsPage extends StatefulWidget {
   const DockSettingsPage({super.key});
@@ -266,10 +267,10 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
             ),
           ),
           const SizedBox(width: 8),
-          Switch.adaptive(
+          SettingsToggleSwitch(
             value: isPinned ? true : isEnabled,
+            semanticsLabel: item.label,
             onChanged: isPinned ? null : onToggle,
-            activeColor: AppThemeService.currentPalette.value.primaryColor,
           ),
         ],
       ),

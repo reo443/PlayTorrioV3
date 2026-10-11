@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../services/theme/app_theme_service.dart';
 import '../../../services/home/home_page_settings.dart';
 import '../../../services/iptv/iptv_settings.dart';
+import '../../../widgets/settings/settings_controls.dart';
 
 class LiveTvSettingsPage extends StatefulWidget {
   const LiveTvSettingsPage({super.key});
@@ -36,14 +37,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             children: [
               // ── 1. Hero Spotlight Carousel ──
-              Text(
+              const Text(
                 'LIVE SPOTLIGHT & HERO BANNER',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildHeroSpotlightCard(palette),
@@ -51,14 +52,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 2. Card Layout & Poster Density ──
-              Text(
+              const Text(
                 'CHANNEL CARDS & POSTER DENSITY',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildCardDensityCard(palette),
@@ -66,14 +67,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 3. Category Visibility & Ordering ──
-              Text(
+              const Text(
                 'SECTIONS & CATEGORY MANAGER',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildCategoryManagerCard(palette),
@@ -81,14 +82,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 4. Portals Modal Customization ──
-              Text(
+              const Text(
                 'PORTALS & PLAYLISTS MODAL',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildPortalsModalCustomizerCard(palette),
@@ -96,14 +97,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
               const SizedBox(height: 28),
 
               // ── 5. Portal Browser Customization ──
-              Text(
+              const Text(
                 'PORTAL BROWSER & CHANNEL GUIDE',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
               _buildPortalBrowserCustomizerCard(palette),
@@ -124,7 +125,7 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: const Color(0xFF12151E),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: enabled
                   ? palette.primaryColor.withValues(alpha: 0.35)
@@ -171,9 +172,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: enabled,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Hero Spotlight',
                     onChanged: (val) {
                       IptvSettings.setEnableSpotlight(val);
                       setState(() {});
@@ -200,34 +201,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                 ValueListenableBuilder<HeroStyle>(
                   valueListenable: IptvSettings.heroStyle,
                   builder: (context, currentStyle, _) {
-                    return Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: HeroStyle.values.map((style) {
-                        final isSelected = style == currentStyle;
-                        return ChoiceChip(
-                          label: Text(style.label),
-                          selected: isSelected,
-                          selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                          backgroundColor: const Color(0xFF0D1017),
-                          labelStyle: TextStyle(
-                            color: isSelected ? palette.primaryColor : Colors.white70,
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                            fontSize: 12,
-                          ),
-                          side: BorderSide(
-                            color: isSelected
-                                ? palette.primaryColor.withValues(alpha: 0.6)
-                                : Colors.white.withValues(alpha: 0.08),
-                          ),
-                          onSelected: (selected) {
-                            if (selected) {
-                              IptvSettings.setHeroStyle(style);
-                              setState(() {});
-                            }
-                          },
-                        );
-                      }).toList(),
+                    return SettingsSegmentedControl<HeroStyle>(
+                      values: HeroStyle.values,
+                      selected: currentStyle,
+                      onChanged: (style) {
+                        IptvSettings.setHeroStyle(style);
+                        setState(() {});
+                      },
+                      label: (style) => style.label,
                     );
                   },
                 ),
@@ -262,9 +243,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                             ],
                           ),
                         ),
-                        Switch.adaptive(
+                        SettingsToggleSwitch(
                           value: autoRotate,
-                          activeColor: palette.primaryColor,
+                          semanticsLabel: 'Auto-Rotate Channels',
                           onChanged: (val) => IptvSettings.setHeroAutoRotate(val),
                         ),
                       ],
@@ -339,7 +320,7 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -358,34 +339,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
           ValueListenableBuilder<CardDensity>(
             valueListenable: IptvSettings.cardDensity,
             builder: (context, currentDensity, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: CardDensity.values.map((density) {
-                  final isSelected = density == currentDensity;
-                  return ChoiceChip(
-                    label: Text(density.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0D1017),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected
-                          ? palette.primaryColor.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        IptvSettings.setCardDensity(density);
-                        setState(() {});
-                      }
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<CardDensity>(
+                values: CardDensity.values,
+                selected: currentDensity,
+                onChanged: (density) {
+                  IptvSettings.setCardDensity(density);
+                  setState(() {});
+                },
+                label: (density) => density.label,
               );
             },
           ),
@@ -474,9 +435,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: showHd,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Show LIVE / HD Stream Badge',
                     onChanged: (val) => IptvSettings.setShowHdBadge(val),
                   ),
                 ],
@@ -514,9 +475,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: showTag,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Show Channel Category Tag',
                     onChanged: (val) => IptvSettings.setShowCategoryTag(val),
                   ),
                 ],
@@ -536,7 +497,7 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: const Color(0xFF12151E),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Column(
@@ -609,7 +570,7 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -627,34 +588,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
           ValueListenableBuilder<PortalCardStyle>(
             valueListenable: IptvSettings.portalCardStyle,
             builder: (context, style, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: PortalCardStyle.values.map((s) {
-                  final isSelected = s == style;
-                  return ChoiceChip(
-                    label: Text(s.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0D1017),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected
-                          ? palette.primaryColor.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        IptvSettings.setPortalCardStyle(s);
-                        setState(() {});
-                      }
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<PortalCardStyle>(
+                values: PortalCardStyle.values,
+                selected: style,
+                onChanged: (s) {
+                  IptvSettings.setPortalCardStyle(s);
+                  setState(() {});
+                },
+                label: (s) => s.label,
               );
             },
           ),
@@ -688,9 +629,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: showExpiry,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Show Portal Expiry Date',
                     onChanged: (val) => IptvSettings.setShowPortalExpiry(val),
                   ),
                 ],
@@ -727,9 +668,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: showConn,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Show Max Active Connections Tag',
                     onChanged: (val) => IptvSettings.setShowPortalConnections(val),
                   ),
                 ],
@@ -753,48 +694,11 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
           ValueListenableBuilder<int>(
             valueListenable: IptvSettings.defaultPortalTab,
             builder: (context, tabIdx, _) {
-              return Row(
-                children: [
-                  ChoiceChip(
-                    label: const Text('Xtream Panels'),
-                    selected: tabIdx == 0,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0D1017),
-                    labelStyle: TextStyle(
-                      color: tabIdx == 0 ? palette.primaryColor : Colors.white70,
-                      fontWeight: tabIdx == 0 ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: tabIdx == 0
-                          ? palette.primaryColor.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) IptvSettings.setDefaultPortalTab(0);
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  ChoiceChip(
-                    label: const Text('M3U Playlists'),
-                    selected: tabIdx == 1,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0D1017),
-                    labelStyle: TextStyle(
-                      color: tabIdx == 1 ? palette.primaryColor : Colors.white70,
-                      fontWeight: tabIdx == 1 ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: tabIdx == 1
-                          ? palette.primaryColor.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) IptvSettings.setDefaultPortalTab(1);
-                    },
-                  ),
-                ],
+              return SettingsSegmentedControl<int>(
+                values: const [0, 1],
+                selected: tabIdx,
+                onChanged: (idx) => IptvSettings.setDefaultPortalTab(idx),
+                label: (idx) => idx == 0 ? 'Xtream Panels' : 'M3U Playlists',
               );
             },
           ),
@@ -808,7 +712,7 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -826,34 +730,14 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
           ValueListenableBuilder<PortalBrowserLayout>(
             valueListenable: IptvSettings.browserLayout,
             builder: (context, layout, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: PortalBrowserLayout.values.map((l) {
-                  final isSelected = l == layout;
-                  return ChoiceChip(
-                    label: Text(l.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0D1017),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected
-                          ? palette.primaryColor.withValues(alpha: 0.6)
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        IptvSettings.setBrowserLayout(l);
-                        setState(() {});
-                      }
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<PortalBrowserLayout>(
+                values: PortalBrowserLayout.values,
+                selected: layout,
+                onChanged: (l) {
+                  IptvSettings.setBrowserLayout(l);
+                  setState(() {});
+                },
+                label: (l) => l.label,
               );
             },
           ),
@@ -996,9 +880,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: showLogos,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Show Channel Stream Logos',
                     onChanged: (val) => IptvSettings.setShowStreamLogos(val),
                   ),
                 ],
@@ -1035,9 +919,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: showEpg,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Show EPG "Now Playing" Snippet',
                     onChanged: (val) => IptvSettings.setShowEpgSnippet(val),
                   ),
                 ],
@@ -1074,9 +958,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
                       ],
                     ),
                   ),
-                  Switch.adaptive(
+                  SettingsToggleSwitch(
                     value: showCount,
-                    activeColor: palette.primaryColor,
+                    semanticsLabel: 'Show Category Stream Counts',
                     onChanged: (val) => IptvSettings.setShowCategoryCount(val),
                   ),
                 ],

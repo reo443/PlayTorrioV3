@@ -169,7 +169,7 @@ class _TraktSettingsPageState extends State<TraktSettingsPage> {
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: const Color(0xFF12151E),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _isAuthed
                         ? const Color(0xFFED1C24).withValues(alpha: 0.35)

@@ -6,6 +6,7 @@ import '../../../services/home/home_page_settings.dart';
 import '../../../widgets/audiobook/audiobook_interactive_physics_button.dart';
 import '../../../widgets/audiobook/audiobook_waveform_seekbar.dart';
 import '../../../widgets/common/animated_ambient_background.dart';
+import '../../../widgets/settings/settings_controls.dart';
 import 'audiobook_player_studio_page.dart';
 
 class AudiobookSettingsPage extends StatefulWidget {
@@ -88,12 +89,12 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: Colors.white.withValues(alpha: 0.35),
-        letterSpacing: 1.1,
-      ),
+      style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
     );
   }
 
@@ -103,7 +104,7 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -112,18 +113,10 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.enableAmbientLights,
             builder: (context, enabled, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'Enable Moving Ambient Atmosphere',
-                  style: TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(
-                  'Soft flowing glowing orbs and aurora waves themed to ${palette.name}',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 12),
-                ),
+              return SettingsToggleRow(
+                label: 'Enable Moving Ambient Atmosphere',
+                description: 'Soft flowing glowing orbs and aurora waves themed to ${palette.name}',
                 value: enabled,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setEnableAmbientLights(val),
               );
             },
@@ -141,29 +134,11 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<AmbientLightPattern>(
             valueListenable: AudiobookSettings.ambientLightPattern,
             builder: (context, currentPattern, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AmbientLightPattern.values.map((p) {
-                  final isSelected = p == currentPattern;
-                  return ChoiceChip(
-                    label: Text(p.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) AudiobookSettings.setAmbientLightPattern(p);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<AmbientLightPattern>(
+                values: AmbientLightPattern.values,
+                selected: currentPattern,
+                onChanged: (p) => AudiobookSettings.setAmbientLightPattern(p),
+                label: (p) => p.label,
               );
             },
           ),
@@ -286,7 +261,7 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -295,12 +270,10 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.enableSpotlight,
             builder: (context, enabled, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Hero Spotlight Carousel', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                subtitle: const Text('Featured bestselling audiobook showcase at the top of the hub', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              return SettingsToggleRow(
+                label: 'Show Hero Spotlight Carousel',
+                description: 'Featured bestselling audiobook showcase at the top of the hub',
                 value: enabled,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setEnableSpotlight(val),
               );
             },
@@ -309,12 +282,10 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.showContinueListening,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show "Continue Listening" Carousel', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                subtitle: const Text('Quick resume cards with chapter progress bar and direct play', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              return SettingsToggleRow(
+                label: 'Show "Continue Listening" Carousel',
+                description: 'Quick resume cards with chapter progress bar and direct play',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setShowContinueListening(val),
               );
             },
@@ -329,29 +300,11 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<AudiobookCardDensity>(
             valueListenable: AudiobookSettings.cardDensity,
             builder: (context, currentDensity, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AudiobookCardDensity.values.map((d) {
-                  final isSelected = d == currentDensity;
-                  return ChoiceChip(
-                    label: Text(d.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) AudiobookSettings.setCardDensity(d);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<AudiobookCardDensity>(
+                values: AudiobookCardDensity.values,
+                selected: currentDensity,
+                onChanged: (d) => AudiobookSettings.setCardDensity(d),
+                label: (d) => d.label,
               );
             },
           ),
@@ -361,11 +314,9 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.showCategoryPills,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Quick Genre & Category Badges', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Quick Genre & Category Badges',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setShowCategoryPills(val),
               );
             },
@@ -374,11 +325,9 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.showDurationBadge,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Audiobook Runtime / Total Duration', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Audiobook Runtime / Total Duration',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setShowDurationBadge(val),
               );
             },
@@ -387,11 +336,9 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.cardHoverGlow,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Poster Card Hover Glow & Elevation', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Poster Card Hover Glow & Elevation',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setCardHoverGlow(val),
               );
             },
@@ -620,7 +567,7 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -820,29 +767,11 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<AudiobookSeekbarStyle>(
             valueListenable: AudiobookSettings.customSeekbarStyle,
             builder: (context, currentStyle, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AudiobookSeekbarStyle.values.map((s) {
-                  final isSelected = s == currentStyle;
-                  return ChoiceChip(
-                    label: Text(s.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) AudiobookSettings.setCustomSeekbarStyle(s);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<AudiobookSeekbarStyle>(
+                values: AudiobookSeekbarStyle.values,
+                selected: currentStyle,
+                onChanged: (s) => AudiobookSettings.setCustomSeekbarStyle(s),
+                label: (s) => s.label,
               );
             },
           ),
@@ -855,29 +784,11 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<AudiobookPlayButtonStyle>(
             valueListenable: AudiobookSettings.customPlayButtonStyle,
             builder: (context, currentStyle, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AudiobookPlayButtonStyle.values.map((s) {
-                  final isSelected = s == currentStyle;
-                  return ChoiceChip(
-                    label: Text(s.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) AudiobookSettings.setCustomPlayButtonStyle(s);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<AudiobookPlayButtonStyle>(
+                values: AudiobookPlayButtonStyle.values,
+                selected: currentStyle,
+                onChanged: (s) => AudiobookSettings.setCustomPlayButtonStyle(s),
+                label: (s) => s.label,
               );
             },
           ),
@@ -890,29 +801,11 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<AudiobookArtworkStyle>(
             valueListenable: AudiobookSettings.customArtworkStyle,
             builder: (context, currentStyle, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AudiobookArtworkStyle.values.map((s) {
-                  final isSelected = s == currentStyle;
-                  return ChoiceChip(
-                    label: Text(s.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) AudiobookSettings.setCustomArtworkStyle(s);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<AudiobookArtworkStyle>(
+                values: AudiobookArtworkStyle.values,
+                selected: currentStyle,
+                onChanged: (s) => AudiobookSettings.setCustomArtworkStyle(s),
+                label: (s) => s.label,
               );
             },
           ),
@@ -925,29 +818,11 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<AudiobookHoverEffect>(
             valueListenable: AudiobookSettings.customHoverEffect,
             builder: (context, currentEffect, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AudiobookHoverEffect.values.map((e) {
-                  final isSelected = e == currentEffect;
-                  return ChoiceChip(
-                    label: Text(e.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) AudiobookSettings.setCustomHoverEffect(e);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<AudiobookHoverEffect>(
+                values: AudiobookHoverEffect.values,
+                selected: currentEffect,
+                onChanged: (e) => AudiobookSettings.setCustomHoverEffect(e),
+                label: (e) => e.label,
               );
             },
           ),
@@ -1015,11 +890,9 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.enableLiquidGlass,
             builder: (context, enabled, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Liquid Glass Player Blur & Refraction', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Liquid Glass Player Blur & Refraction',
                 value: enabled,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setEnableLiquidGlass(val),
               );
             },
@@ -1028,11 +901,9 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.showSpeedControl,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Playback Speed Selector (0.5x - 2.5x)', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Playback Speed Selector (0.5x - 2.5x)',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setShowSpeedControl(val),
               );
             },
@@ -1041,11 +912,9 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.showSkip10Buttons,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Skip Forward/Rewind Buttons (±10s)', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Skip Forward/Rewind Buttons (±10s)',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setShowSkip10Buttons(val),
               );
             },
@@ -1054,11 +923,9 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: AudiobookSettings.showChaptersQuickButton,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Quick Chapters Sliding Drawer Button', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Quick Chapters Sliding Drawer Button',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => AudiobookSettings.setShowChaptersQuickButton(val),
               );
             },

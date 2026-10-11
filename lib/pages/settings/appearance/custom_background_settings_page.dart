@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../services/theme/app_theme_service.dart';
 import '../../../services/theme/custom_background_service.dart';
 import '../../../widgets/common/animated_ambient_background.dart';
+import '../../../widgets/settings/settings_controls.dart';
 
 class CustomBackgroundSettingsPage extends StatefulWidget {
   const CustomBackgroundSettingsPage({super.key});
@@ -294,14 +295,14 @@ class _CustomBackgroundSettingsPageState extends State<CustomBackgroundSettingsP
                       const SizedBox(height: 28),
 
                       // ── 3. Curated Wallpaper Presets ──
-                      Text(
+                      const Text(
                         'CURATED DARK WALLPAPERS',
                         style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.35),
-                          letterSpacing: 1.1,
-                        ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -406,14 +407,14 @@ class _CustomBackgroundSettingsPageState extends State<CustomBackgroundSettingsP
                       const SizedBox(height: 28),
 
                       // ── 4. Atmosphere & Blending Controls ──
-                      Text(
+                      const Text(
                         'WALLPAPER & LIGHT BLENDING CONTROLS',
                         style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white.withValues(alpha: 0.35),
-                          letterSpacing: 1.1,
-                        ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -421,7 +422,7 @@ class _CustomBackgroundSettingsPageState extends State<CustomBackgroundSettingsP
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: const Color(0xFF12151E),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                         ),
                         child: Column(
@@ -466,24 +467,9 @@ class _CustomBackgroundSettingsPageState extends State<CustomBackgroundSettingsP
                             const Divider(color: Colors.white10, height: 24),
 
                             // Moving Ambient Lights Switch
-                            SwitchListTile.adaptive(
-                              contentPadding: EdgeInsets.zero,
-                              activeColor: palette.primaryColor,
-                              title: const Text(
-                                'Blend Moving Ambient Lights',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'Softly illuminates and animates theme lights over your wallpaper',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white.withValues(alpha: 0.5),
-                                ),
-                              ),
+                            SettingsToggleRow(
+                              label: 'Blend Moving Ambient Lights',
+                              description: 'Softly illuminates and animates theme lights over your wallpaper',
                               value: customBg.blendThemeLights,
                               onChanged: (v) => CustomBackgroundService.setBlendThemeLights(v),
                             ),

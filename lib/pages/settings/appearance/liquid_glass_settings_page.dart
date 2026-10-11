@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../services/theme/app_theme_service.dart';
 import '../../../services/theme/glass_settings.dart';
+import '../../../widgets/settings/settings_controls.dart';
 
 class LiquidGlassSettingsPage extends StatefulWidget {
   const LiquidGlassSettingsPage({super.key});
@@ -71,7 +72,7 @@ class _LiquidGlassSettingsPageState extends State<LiquidGlassSettingsPage> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       color: AppThemeService.currentPalette.value.cardBackgroundColor,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: enabled
                             ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.45)
@@ -107,9 +108,9 @@ class _LiquidGlassSettingsPageState extends State<LiquidGlassSettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Switch.adaptive(
+                        SettingsToggleSwitch(
                           value: enabled,
-                          activeColor: AppThemeService.currentPalette.value.primaryColor,
+                          semanticsLabel: 'Enable Liquid Glass',
                           onChanged: (val) {
                             GlassSettings.setEnabled(val);
                             setState(() {});
@@ -129,14 +130,14 @@ class _LiquidGlassSettingsPageState extends State<LiquidGlassSettingsPage> {
               const SizedBox(height: 24),
 
               // Presets Selection
-              Text(
+              const Text(
                 'PRESETS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 10),
               _buildPresetsRow(),
@@ -144,14 +145,14 @@ class _LiquidGlassSettingsPageState extends State<LiquidGlassSettingsPage> {
               const SizedBox(height: 24),
 
               // Detailed Sliders
-              Text(
+              const Text(
                 'PHYSICS & OPTICAL PARAMETERS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
 
@@ -504,35 +505,16 @@ class _LiquidGlassSettingsPageState extends State<LiquidGlassSettingsPage> {
     return ValueListenableBuilder<GlassPreset>(
       valueListenable: GlassSettings.preset,
       builder: (context, currentPreset, _) {
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: GlassPreset.values.map((preset) {
-            final isSelected = preset == currentPreset;
-            return ChoiceChip(
-              label: Text(preset.label),
-              selected: isSelected,
-              selectedColor: AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.25),
-              backgroundColor: AppThemeService.currentPalette.value.cardBackgroundColor,
-              labelStyle: TextStyle(
-                color: isSelected ? AppThemeService.currentPalette.value.primaryColor : Colors.white70,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                fontSize: 12.5,
-              ),
-              side: BorderSide(
-                color: isSelected
-                    ? AppThemeService.currentPalette.value.primaryColor.withValues(alpha: 0.6)
-                    : Colors.white.withValues(alpha: 0.08),
-              ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              onSelected: (selected) {
-                if (selected && preset != GlassPreset.custom) {
-                  GlassSettings.applyPreset(preset);
-                  setState(() {});
-                }
-              },
-            );
-          }).toList(),
+        return SettingsSegmentedControl<GlassPreset>(
+          values: GlassPreset.values,
+          selected: currentPreset,
+          onChanged: (preset) {
+            if (preset != GlassPreset.custom) {
+              GlassSettings.applyPreset(preset);
+              setState(() {});
+            }
+          },
+          label: (preset) => preset.label,
         );
       },
     );
@@ -552,7 +534,7 @@ class _LiquidGlassSettingsPageState extends State<LiquidGlassSettingsPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppThemeService.currentPalette.value.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(

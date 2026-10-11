@@ -7,6 +7,7 @@ import '../../../services/theme/app_theme_service.dart';
 import '../../../services/music/music_settings.dart';
 import '../../../widgets/music/music_interactive_physics_button.dart';
 import '../../../widgets/music/music_waveform_seekbar.dart';
+import '../../../widgets/settings/settings_controls.dart';
 
 class MusicPlayerStudioPage extends StatefulWidget {
   const MusicPlayerStudioPage({super.key});
@@ -1159,20 +1160,31 @@ class _MusicPlayerStudioPageState extends State<MusicPlayerStudioPage> with Sing
         children: [
           // Studio Sub-Tabs
           Container(
-            height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFF0C0F17),
               border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
             ),
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildTabChip(0, Icons.drag_indicator_rounded, 'Drag & Drop Layout', palette),
-                _buildTabChip(1, Icons.graphic_eq_rounded, 'Seek Bar Canvas', palette),
-                _buildTabChip(2, Icons.touch_app_rounded, 'Play Button & Physics', palette),
-                _buildTabChip(3, Icons.album_rounded, 'Artwork & Turntable', palette),
-              ],
+            child: SettingsSegmentedControl<int>(
+              values: const [0, 1, 2, 3],
+              selected: _selectedStudioTab,
+              onChanged: (index) => setState(() => _selectedStudioTab = index),
+              label: (index) => const [
+                'Drag & Drop Layout',
+                'Seek Bar Canvas',
+                'Play Button & Physics',
+                'Artwork & Turntable',
+              ][index],
+              indicator: (index) => Icon(
+                const [
+                  Icons.drag_indicator_rounded,
+                  Icons.graphic_eq_rounded,
+                  Icons.touch_app_rounded,
+                  Icons.album_rounded,
+                ][index],
+                size: 15,
+                color: index == _selectedStudioTab ? Colors.white : Colors.white54,
+              ),
             ),
           ),
 
@@ -1190,30 +1202,6 @@ class _MusicPlayerStudioPageState extends State<MusicPlayerStudioPage> with Sing
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTabChip(int index, IconData icon, String label, AppThemePalette palette) {
-    final isSelected = _selectedStudioTab == index;
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        avatar: Icon(icon, color: isSelected ? Colors.white : Colors.white54, size: 16),
-        label: Text(label),
-        selected: isSelected,
-        selectedColor: palette.primaryColor,
-        backgroundColor: const Color(0xFF121520),
-        labelStyle: TextStyle(
-          color: isSelected ? Colors.white : Colors.white70,
-          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-          fontSize: 12,
-        ),
-        side: BorderSide(color: isSelected ? palette.primaryColor : Colors.white.withValues(alpha: 0.08)),
-        onSelected: (val) {
-          if (val) setState(() => _selectedStudioTab = index);
-        },
       ),
     );
   }
@@ -1444,29 +1432,11 @@ class _MusicPlayerStudioPageState extends State<MusicPlayerStudioPage> with Sing
         ValueListenableBuilder<MusicPlayButtonStyle>(
           valueListenable: MusicSettings.customPlayButtonStyle,
           builder: (context, activeBtnStyle, _) {
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: MusicPlayButtonStyle.values.map((b) {
-                final isSelected = activeBtnStyle == b;
-                return ChoiceChip(
-                  label: Text(b.label),
-                  selected: isSelected,
-                  selectedColor: palette.primaryColor,
-                  backgroundColor: const Color(0xFF121520),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white70,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                    fontSize: 12,
-                  ),
-                  side: BorderSide(
-                    color: isSelected ? palette.primaryColor : Colors.white.withValues(alpha: 0.08),
-                  ),
-                  onSelected: (val) {
-                    if (val) MusicSettings.setCustomPlayButtonStyle(b);
-                  },
-                );
-              }).toList(),
+            return SettingsSegmentedControl<MusicPlayButtonStyle>(
+              values: MusicPlayButtonStyle.values,
+              selected: activeBtnStyle,
+              onChanged: (b) => MusicSettings.setCustomPlayButtonStyle(b),
+              label: (b) => b.label,
             );
           },
         ),
@@ -1492,29 +1462,11 @@ class _MusicPlayerStudioPageState extends State<MusicPlayerStudioPage> with Sing
         ValueListenableBuilder<MusicHoverEffect>(
           valueListenable: MusicSettings.customHoverEffect,
           builder: (context, activeHover, _) {
-            return Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: MusicHoverEffect.values.map((h) {
-                final isSelected = activeHover == h;
-                return ChoiceChip(
-                  label: Text(h.label),
-                  selected: isSelected,
-                  selectedColor: palette.primaryColor,
-                  backgroundColor: const Color(0xFF121520),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white70,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                    fontSize: 12,
-                  ),
-                  side: BorderSide(
-                    color: isSelected ? palette.primaryColor : Colors.white.withValues(alpha: 0.08),
-                  ),
-                  onSelected: (val) {
-                    if (val) MusicSettings.setCustomHoverEffect(h);
-                  },
-                );
-              }).toList(),
+            return SettingsSegmentedControl<MusicHoverEffect>(
+              values: MusicHoverEffect.values,
+              selected: activeHover,
+              onChanged: (h) => MusicSettings.setCustomHoverEffect(h),
+              label: (h) => h.label,
             );
           },
         ),

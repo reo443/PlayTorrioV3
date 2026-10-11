@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../services/player/player_settings.dart';
+import '../../widgets/settings/settings_controls.dart';
 
 class VideoSettingsPage extends StatefulWidget {
   const VideoSettingsPage({super.key});
@@ -98,14 +99,14 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
               const SizedBox(height: 24),
 
               // ── Section: Presets ──
-              Text(
+              const Text(
                 'UPSCALING PRESETS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
 
@@ -181,14 +182,14 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
               const SizedBox(height: 28),
 
               // ── Section: Details & Performance Note ──
-              Text(
+              const Text(
                 'PIPELINE & COMPATIBILITY',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 12),
 
@@ -351,19 +352,12 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                                       ),
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Text(
-                                      'Active Watchdog',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF10B981),
-                                      ),
+                                  Text(
+                                    'Active Watchdog',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF10B981).withValues(alpha: 0.8),
                                     ),
                                   ),
                                 ],
@@ -381,9 +375,9 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Switch.adaptive(
+                        SettingsToggleSwitch(
                           value: autoRecover,
-                          activeColor: palette.primaryColor,
+                          semanticsLabel: 'Auto-Recover Black Screens',
                           onChanged: (val) {
                             PlayerSettings.setAutoRecoverBlackScreen(val);
                           },
@@ -507,9 +501,9 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Switch.adaptive(
+                        SettingsToggleSwitch(
                           value: isSurface,
-                          activeColor: palette.primaryColor,
+                          semanticsLabel: 'Android Surface Producer Rendering',
                           onChanged: (val) {
                             PlayerSettings.setEnableSurfaceProducer(val);
                           },
@@ -583,20 +577,12 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                                       ),
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: (gestures ? const Color(0xFF10B981) : Colors.white30)
-                                          .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      gestures ? 'Enabled' : 'Disabled',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: gestures ? const Color(0xFF10B981) : Colors.white54,
-                                      ),
+                                  Text(
+                                    gestures ? 'Enabled' : 'Disabled',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: gestures ? const Color(0xFF10B981) : Colors.white38,
                                     ),
                                   ),
                                 ],
@@ -614,9 +600,9 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Switch.adaptive(
+                        SettingsToggleSwitch(
                           value: gestures,
-                          activeColor: palette.primaryColor,
+                          semanticsLabel: 'Player Touch Gestures',
                           onChanged: (val) {
                             PlayerSettings.setEnablePlayerGestures(val);
                           },
@@ -698,20 +684,13 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: tagColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: tagColor.withValues(alpha: 0.3)),
-                        ),
-                        child: Text(
-                          tag,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: tagColor,
-                          ),
+                      const SizedBox(width: 8),
+                      Text(
+                        tag,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: tagColor.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
@@ -726,15 +705,6 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                     ),
                   ),
                 ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Icon(
-                isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_unchecked_rounded,
-                color: isSelected ? palette.primaryColor : Colors.white24,
-                size: 22,
               ),
             ),
           ],
@@ -809,19 +779,13 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: badgeColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            badgeText,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: badgeColor,
-                            ),
+                        const SizedBox(width: 8),
+                        Text(
+                          badgeText,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: badgeColor.withValues(alpha: 0.8),
                           ),
                         ),
                       ],
@@ -837,31 +801,6 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 20,
-                height: 20,
-                margin: const EdgeInsets.only(top: 2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? palette.primaryColor : Colors.white30,
-                    width: 2,
-                  ),
-                ),
-                child: isSelected
-                    ? Center(
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: palette.primaryColor,
-                          ),
-                        ),
-                      )
-                    : null,
               ),
             ],
           ),

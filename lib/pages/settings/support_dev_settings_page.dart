@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../services/home/home_page_settings.dart';
 import '../../widgets/home/support_dev_cards.dart';
+import '../../widgets/settings/settings_controls.dart';
 
 class SupportDevSettingsPage extends StatefulWidget {
   const SupportDevSettingsPage({super.key});
@@ -212,14 +213,14 @@ class _SupportDevSettingsPageState extends State<SupportDevSettingsPage>
               const SizedBox(height: 26),
 
               // ── 2. Visibility & Home Page Controls ──
-              Text(
+              const Text(
                 'HOME PAGE DISPLAY PREFERENCES',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 10),
 
@@ -227,7 +228,7 @@ class _SupportDevSettingsPageState extends State<SupportDevSettingsPage>
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: const Color(0xFF12151E),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
                 child: ValueListenableBuilder<bool>(
@@ -273,13 +274,13 @@ class _SupportDevSettingsPageState extends State<SupportDevSettingsPage>
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Switch.adaptive(
+                        SettingsToggleSwitch(
                           value: enabled,
+                          semanticsLabel: 'Show Support The Developer cards',
                           onChanged: (val) {
                             HomePageSettings.setEnableSupportDev(val);
                             setState(() {});
                           },
-                          activeColor: const Color(0xFFFFB300),
                         ),
                       ],
                     );
@@ -290,14 +291,14 @@ class _SupportDevSettingsPageState extends State<SupportDevSettingsPage>
               const SizedBox(height: 26),
 
               // ── 3. FAQ / Transparency Section ──
-              Text(
+              const Text(
                 'TRANSPARENCY & INFORMATION',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
               ),
               const SizedBox(height: 10),
 
@@ -305,7 +306,7 @@ class _SupportDevSettingsPageState extends State<SupportDevSettingsPage>
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: const Color(0xFF12151E),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
                 child: Column(

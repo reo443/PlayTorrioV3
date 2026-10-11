@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/scraper/builtin_providers_settings_service.dart';
 import '../../services/theme/app_theme_service.dart';
+import '../../widgets/settings/settings_controls.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 
 class BuiltinProvidersSettingsPage extends StatefulWidget {
@@ -263,7 +264,7 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: AppThemeService.currentPalette.value.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Row(
@@ -352,8 +353,6 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
                 ],
               ),
             ),
-            if (isSelected)
-              Icon(Icons.check_circle_rounded, size: 16, color: activeColor),
           ],
         ),
       ),
@@ -812,14 +811,10 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
             SizedBox(width: isCompact ? 4 : 8),
 
             // Enable / Disable Switch (compact)
-            Transform.scale(
-              scale: isCompact ? 0.82 : 0.95,
-              child: Switch.adaptive(
-                value: isEnabled,
-                activeColor: AppThemeService.currentPalette.value.primaryColor,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                onChanged: (val) => _service.toggleProvider(provider.id, val),
-              ),
+            SettingsToggleSwitch(
+              value: isEnabled,
+              semanticsLabel: 'Enable ${provider.name}',
+              onChanged: (val) => _service.toggleProvider(provider.id, val),
             ),
           ],
         ),

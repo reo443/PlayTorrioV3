@@ -8,6 +8,7 @@ import '../../models/cloudstream/cloudstream_source.dart';
 import '../../services/addon/addon_manager.dart';
 import '../../services/cloudstream/cloudstream_manager.dart';
 import '../../services/theme/app_theme_service.dart';
+import '../../widgets/settings/settings_controls.dart';
 import '../../services/cloudstream/runtime/cloudstream_downloader.dart';
 import 'cloudstream_marketplace_modal.dart';
 import 'cloudstream_repo_modal.dart';
@@ -738,15 +739,15 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
         // Section Header
         Row(
           children: [
-            Expanded(
+            const Expanded(
               child: Text(
                 'INSTALLED PROVIDERS & ADDONS',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.35),
-                  letterSpacing: 1.1,
-                ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -776,7 +777,7 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               color: AppThemeService.currentPalette.value.cardBackgroundColor,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
             ),
             child: Column(
@@ -883,7 +884,7 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
           margin: const EdgeInsets.only(bottom: 20),
           decoration: BoxDecoration(
             color: AppThemeService.currentPalette.value.cardBackgroundColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isReady
                   ? const Color(0xFF10B981).withValues(alpha: 0.4)
@@ -1289,15 +1290,15 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
                 children: [
                   Row(
                     children: [
-                      Expanded(
+                      const Expanded(
                         child: Text(
                           'INSTALLED EXTENSIONS',
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white.withValues(alpha: 0.35),
-                            letterSpacing: 1.1,
-                          ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -1323,14 +1324,14 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
 
             return Row(
               children: [
-                Text(
+                const Text(
                   'INSTALLED CLOUDSTREAM EXTENSIONS',
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white.withValues(alpha: 0.35),
-                    letterSpacing: 1.1,
-                  ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
                 ),
                 const Spacer(),
                 if (installed.isNotEmpty) ...[
@@ -1353,7 +1354,7 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               color: AppThemeService.currentPalette.value.cardBackgroundColor,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
             ),
             child: Column(
@@ -1409,14 +1410,14 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
         // Section: Added Repositories
         Row(
           children: [
-            Text(
+            const Text(
               'REPOSITORIES',
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.white.withValues(alpha: 0.35),
-                letterSpacing: 1.1,
-              ),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
             ),
             const Spacer(),
             Container(
@@ -1443,7 +1444,7 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: AppThemeService.currentPalette.value.cardBackgroundColor,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
             ),
             child: Row(
@@ -1732,11 +1733,10 @@ class _AddonCard extends StatelessWidget {
               ],
             );
 
-        Widget switchWidget() => Switch.adaptive(
+        Widget switchWidget() => SettingsToggleSwitch(
               value: addon.enabled,
+              semanticsLabel: 'Enable ${addon.manifest.name}',
               onChanged: onToggle,
-              activeColor: providerColor,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             );
 
         Widget builtInTag() => Container(
@@ -1771,7 +1771,7 @@ class _AddonCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppThemeService.currentPalette.value.cardBackgroundColor,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: addon.enabled
                   ? providerColor.withValues(alpha: 0.3)
@@ -2111,16 +2111,6 @@ class _FeatureToggleChipState extends State<_FeatureToggleChip> {
                       ? Colors.white
                       : Colors.white.withValues(alpha: 0.45),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Icon(
-                isEnabled
-                    ? Icons.check_circle_rounded
-                    : Icons.cancel_outlined,
-                size: 13,
-                color: isEnabled
-                    ? const Color(0xFF34D399)
-                    : Colors.white.withValues(alpha: 0.25),
               ),
             ],
           ),

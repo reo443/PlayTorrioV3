@@ -3,6 +3,7 @@ import '../../../services/theme/app_theme_service.dart';
 import '../../../services/home/home_page_settings.dart';
 import '../../../services/manga/manga_settings.dart';
 import '../../../widgets/common/animated_ambient_background.dart';
+import '../../../widgets/settings/settings_controls.dart';
 
 class MangaSettingsPage extends StatefulWidget {
   const MangaSettingsPage({super.key});
@@ -66,12 +67,12 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: Colors.white.withValues(alpha: 0.35),
-        letterSpacing: 1.1,
-      ),
+      style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
     );
   }
 
@@ -81,7 +82,7 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -90,18 +91,10 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.enableAmbientLights,
             builder: (context, enabled, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'Enable Moving Ambient Lighting',
-                  style: TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(
-                  'Soft flowing glowing orbs and aurora waves themed to ${palette.name}',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 12),
-                ),
+              return SettingsToggleRow(
+                label: 'Enable Moving Ambient Lighting',
+                description: 'Soft flowing glowing orbs and aurora waves themed to ${palette.name}',
                 value: enabled,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setEnableAmbientLights(val),
               );
             },
@@ -120,29 +113,11 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<AmbientLightPattern>(
             valueListenable: MangaSettings.ambientLightPattern,
             builder: (context, currentPattern, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AmbientLightPattern.values.map((p) {
-                  final isSelected = p == currentPattern;
-                  return ChoiceChip(
-                    label: Text(p.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) MangaSettings.setAmbientLightPattern(p);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<AmbientLightPattern>(
+                values: AmbientLightPattern.values,
+                selected: currentPattern,
+                onChanged: (p) => MangaSettings.setAmbientLightPattern(p),
+                label: (p) => p.label,
               );
             },
           ),
@@ -265,7 +240,7 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -274,12 +249,10 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.showContinueReading,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show "Continue Reading" Slider', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                subtitle: const Text('Display your active reading history at the top of the Manga page', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              return SettingsToggleRow(
+                label: 'Show "Continue Reading" Slider',
+                description: 'Display your active reading history at the top of the Manga page',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setShowContinueReading(val),
               );
             },
@@ -294,29 +267,11 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<MangaCardDensity>(
             valueListenable: MangaSettings.cardDensity,
             builder: (context, currentDensity, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: MangaCardDensity.values.map((d) {
-                  final isSelected = d == currentDensity;
-                  return ChoiceChip(
-                    label: Text(d.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) MangaSettings.setCardDensity(d);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<MangaCardDensity>(
+                values: MangaCardDensity.values,
+                selected: currentDensity,
+                onChanged: (d) => MangaSettings.setCardDensity(d),
+                label: (d) => d.label,
               );
             },
           ),
@@ -326,11 +281,9 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.showContentTypeBadge,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Content Type Badge (Manga/Manhwa)', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Content Type Badge (Manga/Manhwa)',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setShowContentTypeBadge(val),
               );
             },
@@ -339,11 +292,9 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.showMangaYear,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Publication Year on Cards', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Publication Year on Cards',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setShowMangaYear(val),
               );
             },
@@ -352,11 +303,9 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.ambientCardGlow,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Poster Card Hover Glow Effect', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Poster Card Hover Glow Effect',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setAmbientCardGlow(val),
               );
             },
@@ -365,11 +314,9 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.showScrollTrack,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Desktop Scroll Track', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Desktop Scroll Track',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setShowScrollTrack(val),
               );
             },
@@ -385,7 +332,7 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -397,29 +344,11 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<MangaReadingMode>(
             valueListenable: MangaSettings.defaultReadingMode,
             builder: (context, currentMode, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: MangaReadingMode.values.map((m) {
-                  final isSelected = m == currentMode;
-                  return ChoiceChip(
-                    label: Text(m.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) MangaSettings.setDefaultReadingMode(m);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<MangaReadingMode>(
+                values: MangaReadingMode.values,
+                selected: currentMode,
+                onChanged: (m) => MangaSettings.setDefaultReadingMode(m),
+                label: (m) => m.label,
               );
             },
           ),
@@ -432,29 +361,11 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<MangaReaderMaxWidth>(
             valueListenable: MangaSettings.readerMaxWidth,
             builder: (context, currentWidth, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: MangaReaderMaxWidth.values.map((w) {
-                  final isSelected = w == currentWidth;
-                  return ChoiceChip(
-                    label: Text(w.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) MangaSettings.setReaderMaxWidth(w);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<MangaReaderMaxWidth>(
+                values: MangaReaderMaxWidth.values,
+                selected: currentWidth,
+                onChanged: (w) => MangaSettings.setReaderMaxWidth(w),
+                label: (w) => w.label,
               );
             },
           ),
@@ -467,38 +378,20 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<MangaReaderBackground>(
             valueListenable: MangaSettings.readerBackground,
             builder: (context, currentBg, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: MangaReaderBackground.values.map((b) {
-                  final isSelected = b == currentBg;
-                  return ChoiceChip(
-                    avatar: Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: b.color,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white30),
-                      ),
-                    ),
-                    label: Text(b.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) MangaSettings.setReaderBackground(b);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<MangaReaderBackground>(
+                values: MangaReaderBackground.values,
+                selected: currentBg,
+                onChanged: (b) => MangaSettings.setReaderBackground(b),
+                label: (b) => b.label,
+                indicator: (b) => Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: b.color,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white30),
+                  ),
+                ),
               );
             },
           ),
@@ -511,29 +404,11 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<MangaControlBarStyle>(
             valueListenable: MangaSettings.readerControlBarStyle,
             builder: (context, currentStyle, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: MangaControlBarStyle.values.map((s) {
-                  final isSelected = s == currentStyle;
-                  return ChoiceChip(
-                    label: Text(s.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (selected) {
-                      if (selected) MangaSettings.setReaderControlBarStyle(s);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<MangaControlBarStyle>(
+                values: MangaControlBarStyle.values,
+                selected: currentStyle,
+                onChanged: (s) => MangaSettings.setReaderControlBarStyle(s),
+                label: (s) => s.label,
               );
             },
           ),
@@ -577,12 +452,10 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.showPageDeck,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Page Deck / Thumbnail Previews', style: TextStyle(color: Colors.white, fontSize: 13.5)),
-                subtitle: const Text('Interactive visual tray of thumbnail previews for instant page jumping', style: TextStyle(color: Colors.white54, fontSize: 11.5)),
+              return SettingsToggleRow(
+                label: 'Show Page Deck / Thumbnail Previews',
+                description: 'Interactive visual tray of thumbnail previews for instant page jumping',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setShowPageDeck(val),
               );
             },
@@ -591,11 +464,9 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.showPageScrubber,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Page Scrubber Slider', style: TextStyle(color: Colors.white, fontSize: 13.5)),
+              return SettingsToggleRow(
+                label: 'Show Page Scrubber Slider',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setShowPageScrubber(val),
               );
             },
@@ -604,12 +475,10 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MangaSettings.enableNextChapterDeck,
             builder: (context, show, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Enable Next Chapter Preview Card Deck', style: TextStyle(color: Colors.white, fontSize: 13.5)),
-                subtitle: const Text('Rich glass deck card at the end of each chapter with chapter art and direct launch', style: TextStyle(color: Colors.white54, fontSize: 11.5)),
+              return SettingsToggleRow(
+                label: 'Enable Next Chapter Preview Card Deck',
+                description: 'Rich glass deck card at the end of each chapter with chapter art and direct launch',
                 value: show,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MangaSettings.setEnableNextChapterDeck(val),
               );
             },

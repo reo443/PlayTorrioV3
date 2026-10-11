@@ -168,7 +168,7 @@ class _SimklSettingsPageState extends State<SimklSettingsPage> {
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: const Color(0xFF12151E),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _isAuthed
                         ? const Color(0xFF00ADFF).withValues(alpha: 0.35)

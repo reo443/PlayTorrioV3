@@ -3,6 +3,7 @@ import '../../../services/theme/app_theme_service.dart';
 import '../../../services/home/home_page_settings.dart';
 import '../../../services/music/music_settings.dart';
 import '../../../widgets/music/music_waveform_seekbar.dart';
+import '../../../widgets/settings/settings_controls.dart';
 import 'music_player_studio_page.dart';
 
 class MusicSettingsPage extends StatefulWidget {
@@ -85,12 +86,12 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: Colors.white.withValues(alpha: 0.35),
-        letterSpacing: 1.1,
-      ),
+      style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.9,
+          color: Color(0xFF7E7E8C),
+        ),
     );
   }
 
@@ -99,7 +100,7 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -108,18 +109,10 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MusicSettings.enableAmbientLights,
             builder: (context, enabled, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'Moving Background Ambient Lighting',
-                  style: TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(
-                  'Dynamic moving glowing orbs reacting with your theme accent colors',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 12),
-                ),
+              return SettingsToggleRow(
+                label: 'Moving Background Ambient Lighting',
+                description: 'Dynamic moving glowing orbs reacting with your theme accent colors',
                 value: enabled,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MusicSettings.setEnableAmbientLights(val),
               );
             },
@@ -136,29 +129,11 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
           ValueListenableBuilder<AmbientLightPattern>(
             valueListenable: MusicSettings.ambientLightPattern,
             builder: (context, currentPattern, _) {
-              return Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AmbientLightPattern.values.map((p) {
-                  final isSelected = currentPattern == p;
-                  return ChoiceChip(
-                    label: Text(p.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (val) {
-                      if (val) MusicSettings.setAmbientLightPattern(p);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<AmbientLightPattern>(
+                values: AmbientLightPattern.values,
+                selected: currentPattern,
+                onChanged: (p) => MusicSettings.setAmbientLightPattern(p),
+                label: (p) => p.label,
               );
             },
           ),
@@ -204,7 +179,7 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -213,12 +188,10 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MusicSettings.enableSpotlight,
             builder: (context, enabled, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Hero Spotlight Showcase', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                subtitle: const Text('Featured bestselling album & track showcase at the top of the music page', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              return SettingsToggleRow(
+                label: 'Show Hero Spotlight Showcase',
+                description: 'Featured bestselling album & track showcase at the top of the music page',
                 value: enabled,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MusicSettings.setEnableSpotlight(val),
               );
             },
@@ -227,12 +200,10 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
           ValueListenableBuilder<bool>(
             valueListenable: MusicSettings.showLosslessBadge,
             builder: (context, enabled, _) {
-              return SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Show Lossless Hi-Res Audio Badges', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                subtitle: const Text('Displays FLAC / Hi-Res lossless stream indicators on music cards and player', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              return SettingsToggleRow(
+                label: 'Show Lossless Hi-Res Audio Badges',
+                description: 'Displays FLAC / Hi-Res lossless stream indicators on music cards and player',
                 value: enabled,
-                activeColor: palette.primaryColor,
                 onChanged: (val) => MusicSettings.setShowLosslessBadge(val),
               );
             },
@@ -244,28 +215,11 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
           ValueListenableBuilder<MusicCardDensity>(
             valueListenable: MusicSettings.cardDensity,
             builder: (context, density, _) {
-              return Wrap(
-                spacing: 8,
-                children: MusicCardDensity.values.map((d) {
-                  final isSelected = density == d;
-                  return ChoiceChip(
-                    label: Text(d.label),
-                    selected: isSelected,
-                    selectedColor: palette.primaryColor.withValues(alpha: 0.25),
-                    backgroundColor: const Color(0xFF0C0F17),
-                    labelStyle: TextStyle(
-                      color: isSelected ? palette.primaryColor : Colors.white70,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                      fontSize: 12,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? palette.primaryColor.withValues(alpha: 0.6) : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    onSelected: (val) {
-                      if (val) MusicSettings.setCardDensity(d);
-                    },
-                  );
-                }).toList(),
+              return SettingsSegmentedControl<MusicCardDensity>(
+                values: MusicCardDensity.values,
+                selected: density,
+                onChanged: (d) => MusicSettings.setCardDensity(d),
+                label: (d) => d.label,
               );
             },
           ),
@@ -524,7 +478,7 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: const Color(0xFF12151E),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
