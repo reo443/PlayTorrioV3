@@ -524,7 +524,7 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    'Drag & drop layout elements, procedural waveform canvases, liquid glass buttons, and premade chapters panel in real-time.',
+                    'Drag & drop layouts, waveform canvases, glass buttons, and chapters panel.',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12.5,

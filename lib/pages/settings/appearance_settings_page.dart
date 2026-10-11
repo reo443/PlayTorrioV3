@@ -57,7 +57,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Text(
-                  'Fine-tune the visual atmosphere, custom wallpaper background, color palettes, and interface layouts.',
+                  'Themes, wallpapers, glass effects, and interface layouts.',
                   style: TextStyle(
                     fontSize: 13.5,
                     color: Colors.white.withValues(alpha: 0.5),
@@ -273,7 +273,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                         iconColor: currentPalette.primaryColor,
                         title: 'Audiobook UI & Player Studio',
                         subtitle:
-                            'Hero spotlight, 5 distinct player designs, drag & drop modular studio, waveform canvas scrubber, and custom controls',
+                            'Spotlight, 5 player presets, drag & drop studio, waveforms',
                         badgeText: playerPreset.label.split(' ').first,
                         badgeColor: currentPalette.primaryColor,
                         onTap: () async {
@@ -306,7 +306,7 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
                         iconColor: currentPalette.primaryColor,
                         title: 'Music UI & Player Studio',
                         subtitle:
-                            'Hero spotlight, lossless badges, dual-engine customizer for both mini dock bar and fullscreen turntable/equalizer',
+                            'Spotlight, lossless badges, mini bar & turntable customizer',
                         badgeText: fullPreset.label.split(' ').first,
                         badgeColor: currentPalette.primaryColor,
                         onTap: () async {

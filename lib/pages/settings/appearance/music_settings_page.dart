@@ -202,7 +202,7 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
             builder: (context, enabled, _) {
               return SettingsToggleRow(
                 label: 'Show Lossless Hi-Res Audio Badges',
-                description: 'Displays FLAC / Hi-Res lossless stream indicators on music cards and player',
+                description: 'FLAC / Hi-Res indicators on cards and player',
                 value: enabled,
                 onChanged: (val) => MusicSettings.setShowLosslessBadge(val),
               );
@@ -439,7 +439,7 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    'Customize BOTH Mini Player Dock and Fullscreen Player. Drag & drop blocks, waveform equalizers, vinyl turntable & liquid glass buttons.',
+                    'Customize both players: drag & drop blocks, waveform, vinyl, glass buttons.',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,

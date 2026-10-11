@@ -950,7 +950,7 @@ class _AudiobookPlayerStudioPageState extends State<AudiobookPlayerStudioPage> w
             ),
             const SizedBox(height: 6),
             Text(
-              'Hold and drag any block to reorder the vertical layout of your audio player in real-time.',
+              'Hold and drag blocks to reorder your player layout.',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 12),
             ),
             const SizedBox(height: 16),

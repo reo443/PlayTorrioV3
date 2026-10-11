@@ -454,7 +454,7 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
             builder: (context, show, _) {
               return SettingsToggleRow(
                 label: 'Show Page Deck / Thumbnail Previews',
-                description: 'Interactive visual tray of thumbnail previews for instant page jumping',
+                description: 'Thumbnail tray for instant page jumping',
                 value: show,
                 onChanged: (val) => MangaSettings.setShowPageDeck(val),
               );
@@ -477,7 +477,7 @@ class _MangaSettingsPageState extends State<MangaSettingsPage> {
             builder: (context, show, _) {
               return SettingsToggleRow(
                 label: 'Enable Next Chapter Preview Card Deck',
-                description: 'Rich glass deck card at the end of each chapter with chapter art and direct launch',
+                description: 'Glass deck of upcoming chapters at each chapter end',
                 value: show,
                 onChanged: (val) => MangaSettings.setEnableNextChapterDeck(val),
               );

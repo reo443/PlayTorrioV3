@@ -4,7 +4,7 @@ import '../home/home_page_settings.dart';
 import 'iptv_network.dart';
 
 enum PortalCardStyle {
-  rich('Rich Card with Badges'),
+  rich('Rich Card'),
   compact('Compact Row');
 
   final String label;

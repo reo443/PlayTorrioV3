@@ -274,7 +274,7 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Text('Install Repository Plugins?'),
             content: const Text(
-              'Would you like to install all plugins from this repository now so their streaming sources become available immediately on the watch screen?',
+              'Install all plugins from this repository now?',
               style: TextStyle(color: Colors.white70, fontSize: 13.5),
             ),
             actions: [
@@ -542,8 +542,8 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
           ),
           content: Text(
             count == installed.length
-                ? 'Are you sure you want to remove all $count installed CloudStream plugins? All downloaded plugin files (.jar/.cs3) will be deleted.'
-                : 'Are you sure you want to remove the $count selected CloudStream plugins? Their downloaded files will be deleted from your device.',
+                ? 'Remove all $count CloudStream plugins? Their files will be deleted.'
+                : 'Remove the $count selected CloudStream plugins? Their files will be deleted.',
             style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13.5, height: 1.4),
           ),
           actions: [
@@ -723,7 +723,7 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 20),
           child: Text(
-            'Addons provide metadata, catalogs, and streaming sources. Hold and drag to reorder priority. Providers higher up load and appear first in watch sources.',
+            'Addons supply catalogs and streams. Drag to reorder — top addons load first.',
             style: TextStyle(
               fontSize: 13.5,
               color: Colors.white.withValues(alpha: 0.5),
@@ -869,7 +869,7 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
         Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: Text(
-            'CloudStream (.cs3) extensions provide stream providers directly from popular media sites. Extensions run locally in a sandboxed sidecar or native ART engine.',
+            'CloudStream (.cs3) extensions add streams from popular media sites, running locally.',
             style: TextStyle(
               fontSize: 13.5,
               color: Colors.white.withValues(alpha: 0.5),

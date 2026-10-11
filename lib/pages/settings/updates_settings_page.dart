@@ -211,13 +211,13 @@ class _UpdatesSettingsPageState extends State<UpdatesSettingsPage> {
               _buildInfoTile(
                 icon: Icons.verified_rounded,
                 title: 'Official Stable Channel',
-                subtitle: 'Direct GitHub release distribution with automated checksum verification.',
+                subtitle: 'GitHub releases with checksum verification.',
               ),
               const SizedBox(height: 10),
               _buildInfoTile(
                 icon: Icons.security_rounded,
                 title: 'Seamless In-App Patching',
-                subtitle: 'Downloads and applies executable updates directly without manual file downloads.',
+                subtitle: 'One-tap in-app updates, no manual downloads.',
               ),
             ],
           ),

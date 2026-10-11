@@ -1250,7 +1250,7 @@ class _MusicPlayerStudioPageState extends State<MusicPlayerStudioPage> with Sing
             ),
             const SizedBox(height: 6),
             Text(
-              'Hold and drag any block to reorder the layout of your ${isMini ? "mini player bar" : "fullscreen player"} in real-time.',
+              'Hold and drag blocks to reorder your ${isMini ? "mini player bar" : "fullscreen player"} layout.',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 12),
             ),
             const SizedBox(height: 16),

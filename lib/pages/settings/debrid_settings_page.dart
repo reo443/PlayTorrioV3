@@ -274,7 +274,7 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Text(
-                  'Stream torrents and magnet links instantly through high-speed cloud debrid providers without local peer-to-peer downloading.',
+                  'Stream torrents instantly via high-speed cloud debrid — no local P2P.',
                   style: TextStyle(
                     fontSize: 13.5,
                     color: Colors.white.withValues(alpha: 0.5),
@@ -370,7 +370,7 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'When enabled, all torrents from PlayTorrio and Stremio addons are resolved exclusively through your active Debrid provider without touching the local torrent engine.',
+                      'Routes all torrents through your debrid provider — never the local engine.',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.45),
                         fontSize: 12,

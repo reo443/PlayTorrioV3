@@ -56,9 +56,9 @@ enum AudiobookArtworkStyle {
 }
 
 enum AudiobookCardDensity {
-  compact('Compact (Dense Grid)', 0.88),
-  standard('Standard (Balanced)', 1.0),
-  spacious('Spacious (Large Covers)', 1.15);
+  compact('Compact', 0.88),
+  standard('Standard', 1.0),
+  spacious('Large', 1.15);
 
   final String label;
   final double scale;

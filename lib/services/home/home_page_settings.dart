@@ -27,8 +27,8 @@ enum SimilarSectionPosition {
 }
 
 enum HeroStyle {
-  immersive('Immersive Cinematic Carousel'),
-  compact('Compact Spotlight'),
+  immersive('Cinematic Carousel'),
+  compact('Compact'),
   minimalist('Minimalist Header');
 
   final String label;
@@ -46,17 +46,17 @@ enum AmbientLightPattern {
 }
 
 enum CardDensity {
-  compact('Compact (Dense Grid)'),
-  standard('Standard Balanced'),
-  cinematic('Cinematic (Large Posters)');
+  compact('Compact'),
+  standard('Standard'),
+  cinematic('Large');
 
   final String label;
   const CardDensity(this.label);
 }
 
 enum DetailsBackground {
-  backdrop('Cinematic Backdrop'),
-  dark('Dark (No Backdrop)'),
+  backdrop('Cinematic'),
+  dark('Dark'),
   black('Pure Black');
 
   final String label;

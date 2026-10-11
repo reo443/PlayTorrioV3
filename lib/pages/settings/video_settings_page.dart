@@ -118,7 +118,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                       _buildPresetCard(
                         preset: Anime4KPreset.off,
                         title: 'Disabled (Off)',
-                        subtitle: 'Standard video playback without GLSL neural filters. Lowest GPU overhead.',
+                        subtitle: 'Standard playback. Lowest GPU overhead.',
                         tag: 'Standard',
                         tagColor: Colors.white38,
                         icon: Icons.block_rounded,
@@ -130,7 +130,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                       _buildPresetCard(
                         preset: Anime4KPreset.modeAFast,
                         title: 'Mode A — Fast / Balanced',
-                        subtitle: 'Sharp line restoration & 2x CNN upscale. Best for 1080p anime and balanced GPU power.',
+                        subtitle: 'Sharp lines & 2x upscale. Balanced GPU load.',
                         tag: 'Recommended',
                         tagColor: const Color(0xFF10B981),
                         icon: Icons.speed_rounded,
@@ -142,7 +142,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                       _buildPresetCard(
                         preset: Anime4KPreset.modeAHQ,
                         title: 'Mode A — High Quality (Ultra)',
-                        subtitle: 'Maximum perceptual fidelity using Very Large CNNs. Recommended for discrete GPUs (RTX/Radeon).',
+                        subtitle: 'Best quality via Large CNNs. For discrete GPUs.',
                         tag: 'Ultra Quality',
                         tagColor: const Color(0xFF7C5CFF),
                         icon: Icons.diamond_rounded,
@@ -154,7 +154,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                       _buildPresetCard(
                         preset: Anime4KPreset.modeB,
                         title: 'Mode B — Soft / Denoise',
-                        subtitle: 'Smooth line reconstruction and artifact reduction. Best for blurry, compressed, or older anime.',
+                        subtitle: 'Soft denoise. Best for blurry or older anime.',
                         tag: 'Denoise',
                         tagColor: const Color(0xFF00E5FF),
                         icon: Icons.blur_linear_rounded,
@@ -166,7 +166,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                       _buildPresetCard(
                         preset: Anime4KPreset.modeC,
                         title: 'Mode C — Deblur & Scale',
-                        subtitle: 'Aggressive deblurring and scaling. Best for 480p and 720p low-resolution anime episodes.',
+                        subtitle: 'Strong deblur. Best for 480p/720p sources.',
                         tag: 'Deblur',
                         tagColor: const Color(0xFFF59E0B),
                         icon: Icons.high_quality_rounded,
@@ -205,19 +205,19 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                     _buildInfoRow(
                       icon: Icons.info_outline_rounded,
                       title: 'Playback Start Application',
-                      description: 'Shaders are configured before playback begins. Changing a preset applies to the next opened stream or video.',
+                      description: 'Shader changes apply to the next video you open.',
                     ),
                     const Divider(color: Colors.white10, height: 24),
                     _buildInfoRow(
                       icon: Icons.memory_rounded,
                       title: 'Hardware Decoder Acceleration',
-                      description: 'media_kit uses native auto-safe hardware decoding to feed GPU texture memory directly into the GLSL shader pass.',
+                      description: 'Hardware decoding feeds the GPU before the shader pass.',
                     ),
                     const Divider(color: Colors.white10, height: 24),
                     _buildInfoRow(
                       icon: Icons.devices_rounded,
                       title: 'Platform Recommendation',
-                      description: 'For desktop (Windows/macOS/Linux), Mode A HQ provides crystal-clear lines. For mobile devices, Mode A Fast offers smooth 60fps playback.',
+                      description: 'HQ for desktop GPUs; Fast for smooth mobile playback.',
                     ),
                   ],
                 ),
@@ -264,7 +264,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                       _buildHwdecCard(
                         mode: HardwareAccelerationMode.autoSafe,
                         title: 'Auto-Safe (Recommended)',
-                        subtitle: 'GPU hardware decoding with safe driver fallbacks. Best efficiency for most PCs and devices.',
+                        subtitle: 'GPU decoding with safe fallbacks. Best for most devices.',
                         badgeText: 'Default',
                         badgeColor: palette.primaryColor,
                         icon: Icons.speed_rounded,
@@ -275,7 +275,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                       _buildHwdecCard(
                         mode: HardwareAccelerationMode.software,
                         title: 'Software Decoding (Crash-Proof)',
-                        subtitle: 'Pure CPU decoding via FFmpeg libavcodec. Eliminates black screens and driver lockups on older GPUs or virtual machines.',
+                        subtitle: 'CPU decoding. Fixes black screens on old GPUs and VMs.',
                         badgeText: '100% Reliable',
                         badgeColor: const Color(0xFF10B981),
                         icon: Icons.memory_rounded,
@@ -286,7 +286,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                       _buildHwdecCard(
                         mode: HardwareAccelerationMode.forceHardware,
                         title: 'Direct Hardware',
-                        subtitle: 'Direct GPU decoding (Direct3D 11 / MediaCodec / VAAPI). Fastest on modern high-end graphics.',
+                        subtitle: 'Direct GPU decoding. Fastest on modern GPUs.',
                         badgeText: 'Max GPU',
                         badgeColor: Colors.amber,
                         icon: Icons.bolt_rounded,
@@ -364,7 +364,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'Monitors stream startup. If audio plays for 2.5s without video frames (or if GPU decoder errors occur), the player automatically falls back to software decoding in real time.',
+                                'Falls back to software decoding if video frames or GPU decoding fail at startup.',
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   color: Colors.white.withValues(alpha: 0.55),
@@ -490,7 +490,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'Uses Flutter SurfaceProducer to render frames directly to hardware surface without texture blitting. Significantly boosts 4K/60fps playback and reduces battery usage on Android. (Keep disabled if your device experiences display glitches).',
+                                'Boosts 4K/60fps playback and battery life on Android. Disable if you see glitches.',
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   color: Colors.white.withValues(alpha: 0.55),
@@ -589,7 +589,7 @@ class _VideoSettingsPageState extends State<VideoSettingsPage> {
                               ),
                               const SizedBox(height: 5),
                               const Text(
-                                'Swipe up/down on the left side of the player to change brightness, the right side to change volume, and long-press to fast-forward. Disable if you trigger these accidentally. (Tap to show controls always stays on.)',
+                                'Left side swipes adjust brightness, right side volume, long-press fast-forwards.',
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   color: Colors.white54,

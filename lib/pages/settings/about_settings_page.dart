@@ -108,7 +108,7 @@ class AboutSettingsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'PlayTorrio is an all-in-one entertainment client bringing together movies, TV series, anime, live IPTV, music, manga, and audiobooks into a unified, high-performance interface with custom Liquid Glass visuals.',
+                      'Movies, TV, anime, live IPTV, music, manga, and audiobooks — all in one app.',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.white.withValues(alpha: 0.5),
@@ -135,12 +135,12 @@ class AboutSettingsPage extends StatelessWidget {
 
               _buildTechTile(
                 title: 'High-Performance Video Engine',
-                subtitle: 'Powered by embedded media_kit / libmpv with hardware-accelerated decoding.',
+                subtitle: 'media_kit / libmpv engine with hardware decoding.',
               ),
               const SizedBox(height: 10),
               _buildTechTile(
                 title: 'Debrid & Multi-Source Scrapers',
-                subtitle: 'Direct high-speed cloud playback via Real-Debrid, TorBox, and Stremio addons.',
+                subtitle: 'High-speed cloud playback via debrid and addons.',
               ),
               const SizedBox(height: 10),
               _buildTechTile(

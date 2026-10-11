@@ -154,7 +154,7 @@ class _SimklSettingsPageState extends State<SimklSettingsPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Text(
-                  'Connect your Simkl account to synchronize Movies, TV Shows, and Anime watchlists, continue watching progress, and custom lists.',
+                  'Sync movies, shows, and anime watchlists and progress across devices.',
                   style: TextStyle(
                     fontSize: 13.5,
                     color: Colors.white.withValues(alpha: 0.5),

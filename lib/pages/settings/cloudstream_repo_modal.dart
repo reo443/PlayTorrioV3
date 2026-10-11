@@ -185,7 +185,7 @@ class _CloudStreamRepoModalState extends State<CloudStreamRepoModal> {
           ],
         ),
         content: Text(
-          'Are you sure you want to uninstall all ${installedList.length} installed plugins from this list? Their downloaded files will be removed.',
+          'Uninstall all ${installedList.length} plugins from this list? Their files will be removed.',
           style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13.5),
         ),
         actions: [

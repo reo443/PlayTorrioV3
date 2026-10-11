@@ -92,7 +92,7 @@ class _CustomBackgroundSettingsPageState extends State<CustomBackgroundSettingsP
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Text(
-                          'Upload your own photo or choose a curated wallpaper. Theme colors and moving ambient lights softly blend into the background for a unified look.',
+                          'Upload a photo or pick a wallpaper. Theme lights blend into it automatically.',
                           style: TextStyle(
                             fontSize: 13.5,
                             color: Colors.white.withValues(alpha: 0.5),
