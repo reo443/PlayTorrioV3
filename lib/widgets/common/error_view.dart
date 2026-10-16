@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Full-screen error view with retry button.
+import '../ui/app_error_state.dart';
+
+/// Full-screen failure panel for the catalogue surfaces.
+///
+/// A thin, movie-flavoured wrapper over [AppErrorState]: the shared panel owns
+/// the layout, the type scale, and the colours; this keeps the copy the
+/// catalogue screens have always shown.
 class ErrorView extends StatelessWidget {
   final String? error;
   final VoidCallback onRetry;
@@ -14,43 +20,10 @@ class ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(26),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.warning_amber_rounded,
-              size: 48,
-              color: Colors.orangeAccent,
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'Could not load movies',
-              style: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error ?? 'Unknown error',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.58),
-              ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try again'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF7C5CFF),
-              ),
-            ),
-          ],
-        ),
+      child: AppErrorState(
+        title: 'Could not load movies',
+        message: error ?? 'Unknown error',
+        onRetry: onRetry,
       ),
     );
   }
