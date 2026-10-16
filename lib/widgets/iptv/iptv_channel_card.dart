@@ -1,8 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import '../../services/theme/app_theme_service.dart';
 import '../../services/iptv/hardcoded_channels.dart';
 import '../../services/iptv/iptv_settings.dart';
+import '../../theme/app_semantic_colors.dart';
+import '../../theme/playtorrio_tokens.dart';
 
 class IptvChannelCard extends StatefulWidget {
   final HardcodedChannel channel;
@@ -29,9 +30,9 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
   @override
   Widget build(BuildContext context) {
     final ch = widget.channel;
-    final palette = AppThemeService.currentPalette.value;
-    final primaryColor = ch.gradient.isNotEmpty ? ch.gradient.first : palette.primaryColor;
-    final secondaryColor = ch.gradient.length > 1 ? ch.gradient.last : palette.accentColor;
+    final tokens = PlayTorrioTokens.of(context);
+    final primaryColor = ch.gradient.isNotEmpty ? ch.gradient.first : tokens.accent;
+    final secondaryColor = ch.gradient.length > 1 ? ch.gradient.last : tokens.accentSecondary;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -68,7 +69,7 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                           colors: [
                             primaryColor.withValues(alpha: 0.85),
                             secondaryColor.withValues(alpha: 0.70),
-                            const Color(0xFF0D1017),
+                            tokens.bgSecondary,
                           ],
                           stops: const [0.0, 0.55, 1.0],
                         ),
@@ -76,7 +77,7 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                           BoxShadow(
                             color: _hovered
                                 ? primaryColor.withValues(alpha: 0.45)
-                                : Colors.black.withValues(alpha: 0.35),
+                                : tokens.bgPrimary.withValues(alpha: 0.35),
                             blurRadius: _hovered ? 20 : 10,
                             offset: Offset(0, _hovered ? 8 : 4),
                           ),
@@ -84,7 +85,7 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                         border: Border.all(
                           color: _hovered
                               ? primaryColor.withValues(alpha: 0.8)
-                              : Colors.white.withValues(alpha: 0.12),
+                              : tokens.borderStrong,
                           width: _hovered ? 1.5 : 1.0,
                         ),
                       ),
@@ -102,7 +103,7 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                                 height: 100,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withValues(alpha: 0.1),
+                                  color: tokens.textPrimary.withValues(alpha: 0.1),
                                 ),
                               ),
                             ),
@@ -124,13 +125,13 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                                               height: 24,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2,
-                                                color: Colors.white.withValues(alpha: 0.3),
+                                                color: tokens.textTertiary,
                                               ),
                                             ),
                                           ),
-                                          errorWidget: (_, _, _) => _buildShortBadge(ch),
+                                          errorWidget: (_, _, _) => _buildShortBadge(context, ch),
                                         )
-                                      : _buildShortBadge(ch),
+                                      : _buildShortBadge(context, ch),
                                 ),
                               ),
                             ),
@@ -143,10 +144,10 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.65),
+                                    color: tokens.bgPrimary.withValues(alpha: 0.65),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
-                                      color: const Color(0xFFFF3B30).withValues(alpha: 0.6),
+                                      color: AppSemanticColors.error.withValues(alpha: 0.6),
                                       width: 0.8,
                                     ),
                                   ),
@@ -156,22 +157,22 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                                       Container(
                                         width: 6,
                                         height: 6,
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFFFF3B30),
+                                        decoration: BoxDecoration(
+                                          color: AppSemanticColors.error,
                                           shape: BoxShape.circle,
-                                          boxShadow: [
+                                          boxShadow: const [
                                             BoxShadow(
-                                              color: Color(0xFFFF3B30),
+                                              color: AppSemanticColors.error,
                                               blurRadius: 4,
                                             ),
                                           ],
                                         ),
                                       ),
                                       const SizedBox(width: 4),
-                                      const Text(
+                                      Text(
                                         'LIVE',
                                         style: TextStyle(
-                                          color: Colors.white,
+                                          color: tokens.textPrimary,
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.w900,
                                           letterSpacing: 0.6,
@@ -190,13 +191,13 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
+                                    color: tokens.textPrimary.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     ch.category,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
+                                    style: TextStyle(
+                                      color: tokens.textSecondary,
                                       fontSize: 9,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -213,7 +214,7 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
                                       colors: [
-                                        Colors.white.withValues(alpha: 0.12),
+                                        tokens.textPrimary.withValues(alpha: 0.12),
                                         Colors.transparent,
                                       ],
                                     ),
@@ -232,11 +233,11 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                     ch.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.2,
-                      color: Colors.white,
+                      color: tokens.textPrimary,
                     ),
                   ),
 
@@ -249,7 +250,7 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                           ch.category,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white.withValues(alpha: 0.52),
+                            color: tokens.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -259,7 +260,7 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                             width: 3.5,
                             height: 3.5,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.3),
+                              color: tokens.textTertiary,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -284,21 +285,23 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
     );
   }
 
-  Widget _buildShortBadge(HardcodedChannel ch) {
+  Widget _buildShortBadge(BuildContext context, HardcodedChannel ch) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: tokens.bgPrimary.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            border: Border.all(color: tokens.borderStrong),
           ),
           child: Text(
             ch.short,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: tokens.textPrimary,
               fontSize: 22,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.2,
