@@ -1,0 +1,752 @@
+=== MODIFIED FILE (git diff) ===
+diff --git a/lib/services/theme/app_theme_service.dart b/lib/services/theme/app_theme_service.dart
+index 28bf811..a43787b 100644
+--- a/lib/services/theme/app_theme_service.dart
++++ b/lib/services/theme/app_theme_service.dart
+@@ -1,6 +1,8 @@
+ import 'package:flutter/material.dart';
+ import 'package:shared_preferences/shared_preferences.dart';
+ 
++import '../../theme/playtorrio_tokens.dart';
++
+ class AppThemePalette {
+   final String id;
+   final String name;
+@@ -9,6 +11,8 @@ class AppThemePalette {
+   final Color scaffoldBackgroundColor;
+   final Color cardBackgroundColor;
+   final Color appBarBackgroundColor;
++  final Color backgroundSecondaryColor;
++  final Color surfaceElevatedColor;
+ 
+   const AppThemePalette({
+     required this.id,
+@@ -18,6 +22,8 @@ class AppThemePalette {
+     this.scaffoldBackgroundColor = const Color(0xFF080A0F),
+     this.cardBackgroundColor = const Color(0xFF12151E),
+     this.appBarBackgroundColor = const Color(0xFF0D1017),
++    this.backgroundSecondaryColor = const Color(0xFF0D1017),
++    this.surfaceElevatedColor = const Color(0xFF171A23),
+   });
+ }
+ 
+@@ -33,6 +39,8 @@ abstract final class AppThemeService {
+       scaffoldBackgroundColor: Color(0xFF080A0F),
+       cardBackgroundColor: Color(0xFF12151E),
+       appBarBackgroundColor: Color(0xFF0D1017),
++      backgroundSecondaryColor: Color(0xFF0C0F16),
++      surfaceElevatedColor: Color(0xFF171A23),
+     ),
+     AppThemePalette(
+       id: 'cyberpunk',
+@@ -42,6 +50,8 @@ abstract final class AppThemeService {
+       scaffoldBackgroundColor: Color(0xFF0C0812),
+       cardBackgroundColor: Color(0xFF160E1E),
+       appBarBackgroundColor: Color(0xFF100A17),
++      backgroundSecondaryColor: Color(0xFF100B18),
++      surfaceElevatedColor: Color(0xFF1C1226),
+     ),
+     AppThemePalette(
+       id: 'emerald',
+@@ -51,6 +61,8 @@ abstract final class AppThemeService {
+       scaffoldBackgroundColor: Color(0xFF060F0B),
+       cardBackgroundColor: Color(0xFF0E1A14),
+       appBarBackgroundColor: Color(0xFF09140F),
++      backgroundSecondaryColor: Color(0xFF0A140F),
++      surfaceElevatedColor: Color(0xFF14241B),
+     ),
+     AppThemePalette(
+       id: 'sunset',
+@@ -60,6 +72,8 @@ abstract final class AppThemeService {
+       scaffoldBackgroundColor: Color(0xFF0F080B),
+       cardBackgroundColor: Color(0xFF1A0E13),
+       appBarBackgroundColor: Color(0xFF130A0E),
++      backgroundSecondaryColor: Color(0xFF140A0E),
++      surfaceElevatedColor: Color(0xFF24141B),
+     ),
+     AppThemePalette(
+       id: 'sapphire',
+@@ -69,6 +83,8 @@ abstract final class AppThemeService {
+       scaffoldBackgroundColor: Color(0xFF060B14),
+       cardBackgroundColor: Color(0xFF0E1726),
+       appBarBackgroundColor: Color(0xFF09101C),
++      backgroundSecondaryColor: Color(0xFF0A1220),
++      surfaceElevatedColor: Color(0xFF141F31),
+     ),
+     AppThemePalette(
+       id: 'amber',
+@@ -78,6 +94,8 @@ abstract final class AppThemeService {
+       scaffoldBackgroundColor: Color(0xFF0F0C06),
+       cardBackgroundColor: Color(0xFF1A160E),
+       appBarBackgroundColor: Color(0xFF141009),
++      backgroundSecondaryColor: Color(0xFF140F09),
++      surfaceElevatedColor: Color(0xFF241E14),
+     ),
+     AppThemePalette(
+       id: 'vampire',
+@@ -87,6 +105,8 @@ abstract final class AppThemeService {
+       scaffoldBackgroundColor: Color(0xFF0E0607),
+       cardBackgroundColor: Color(0xFF1A0C0E),
+       appBarBackgroundColor: Color(0xFF14080A),
++      backgroundSecondaryColor: Color(0xFF130809),
++      surfaceElevatedColor: Color(0xFF241014),
+     ),
+     AppThemePalette(
+       id: 'barbie',
+@@ -96,6 +116,8 @@ abstract final class AppThemeService {
+       scaffoldBackgroundColor: Color(0xFF14050E),
+       cardBackgroundColor: Color(0xFF220A18),
+       appBarBackgroundColor: Color(0xFF1A0713),
++      backgroundSecondaryColor: Color(0xFF190611),
++      surfaceElevatedColor: Color(0xFF2C0E20),
+     ),
+   ];
+ 
+@@ -121,11 +143,25 @@ abstract final class AppThemeService {
+   }
+ 
+   static ThemeData createThemeData(AppThemePalette palette) {
++    final tokens = PlayTorrioTokens.fromPalette(palette);
+     return ThemeData(
+       brightness: Brightness.dark,
++      fontFamily: 'Poppins',
+       scaffoldBackgroundColor: palette.scaffoldBackgroundColor,
+       useMaterial3: true,
+-      colorSchemeSeed: palette.primaryColor,
++      colorScheme: ColorScheme.fromSeed(
++        seedColor: palette.primaryColor,
++        brightness: Brightness.dark,
++      ).copyWith(
++        primary: palette.primaryColor,
++        onPrimary: tokens.onAccent,
++        secondary: palette.accentColor,
++        onSecondary: tokens.onAccent,
++        surface: palette.cardBackgroundColor,
++        onSurface: tokens.onSurface,
++        surfaceTint: Colors.transparent,
++        error: tokens.error,
++      ),
+       appBarTheme: AppBarTheme(
+         backgroundColor: palette.appBarBackgroundColor,
+         surfaceTintColor: Colors.transparent,
+@@ -142,6 +178,7 @@ abstract final class AppThemeService {
+           TargetPlatform.iOS: FadeUpwardsPageTransitionsBuilder(),
+         },
+       ),
++      extensions: [tokens],
+     );
+   }
+ }
+
+=== NEW FILE: lib/theme/app_spacing.dart ===
+/// The single 4pt spacing ladder for padding, gaps, and margins.
+///
+/// Use these instead of literal numbers so spacing stays consistent across
+/// the app. `page` is the standard horizontal screen inset.
+abstract final class AppSpacing {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 20;
+  static const double xxl = 24;
+  static const double xxxl = 32;
+  static const double huge = 40;
+
+  /// Standard horizontal page inset.
+  static const double page = 16;
+}
+
+
+=== NEW FILE: lib/theme/app_radii.dart ===
+import 'package:flutter/widgets.dart';
+
+/// The single corner-radius scale for the app.
+///
+/// Numeric values feed custom painters/decoration; the `rounded*` getters are
+/// ready-made [BorderRadius] values for the common shapes.
+abstract final class AppRadii {
+  static const double badge = 8;
+  static const double input = 12;
+  static const double button = 12;
+  static const double card = 16;
+  static const double poster = 18;
+  static const double sheet = 24;
+  static const double chip = 999;
+
+  static final BorderRadius roundedBadge = BorderRadius.circular(badge);
+  static final BorderRadius roundedInput = BorderRadius.circular(input);
+  static final BorderRadius roundedButton = BorderRadius.circular(button);
+  static final BorderRadius roundedCard = BorderRadius.circular(card);
+  static final BorderRadius roundedPoster = BorderRadius.circular(poster);
+  static final BorderRadius roundedSheet = BorderRadius.circular(sheet);
+  static final BorderRadius roundedChip = BorderRadius.circular(chip);
+}
+
+
+=== NEW FILE: lib/theme/app_motion.dart ===
+import 'package:flutter/animation.dart';
+
+/// The single motion vocabulary: how long transitions take and how they ease.
+///
+/// Pair a duration with its matching curve (e.g. [standard] with
+/// [standardCurve]) so motion feels uniform across the app.
+abstract final class AppMotion {
+  static const Duration fast = Duration(milliseconds: 120);
+  static const Duration standard = Duration(milliseconds: 170);
+  static const Duration sheet = Duration(milliseconds: 260);
+  static const Duration themeSwitch = Duration(milliseconds: 300);
+
+  static const Curve fastCurve = Curves.easeOut;
+  static const Curve standardCurve = Curves.easeOutCubic;
+  static const Curve sheetCurve = Curves.easeOutCubic;
+  static const Curve themeSwitchCurve = Curves.easeInOut;
+}
+
+
+=== NEW FILE: lib/theme/app_elevation.dart ===
+import 'package:flutter/material.dart';
+
+/// The single elevation vocabulary for dark surfaces.
+///
+/// [shadowSm]/[shadowMd] are neutral depth shadows; [glow] tints a shadow with
+/// the active accent for focused/selected surfaces.
+abstract final class AppElevation {
+  static const BoxShadow shadowSm = BoxShadow(
+    color: Color(0x0F000000),
+    blurRadius: 8,
+    offset: Offset(0, 2),
+  );
+
+  static const BoxShadow shadowMd = BoxShadow(
+    color: Color(0x1A000000),
+    blurRadius: 16,
+    offset: Offset(0, 4),
+  );
+
+  static BoxShadow glow(Color accent) => BoxShadow(
+        color: accent.withValues(alpha: 0.28),
+        blurRadius: 22,
+        spreadRadius: 0,
+      );
+}
+
+
+=== NEW FILE: lib/theme/app_typography.dart ===
+import 'package:flutter/material.dart';
+
+/// The app type scale, all in Poppins.
+///
+/// Styles deliberately carry no [TextStyle.color]; apply color at the call
+/// site from [PlayTorrioTokens] so text follows the active theme.
+abstract final class AppTypography {
+  static const String _family = 'Poppins';
+
+  static const TextStyle display = TextStyle(
+    fontFamily: _family,
+    fontSize: 28,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.5,
+  );
+
+  static const TextStyle screenTitle = TextStyle(
+    fontFamily: _family,
+    fontSize: 22,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.3,
+  );
+
+  static const TextStyle sectionHeading = TextStyle(
+    fontFamily: _family,
+    fontSize: 17,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
+  );
+
+  static const TextStyle cardTitle = TextStyle(
+    fontFamily: _family,
+    fontSize: 15.5,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.25,
+    height: 1.15,
+  );
+
+  static const TextStyle body = TextStyle(
+    fontFamily: _family,
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+  );
+
+  static const TextStyle bodyStrong = TextStyle(
+    fontFamily: _family,
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+  );
+
+  static const TextStyle supporting = TextStyle(
+    fontFamily: _family,
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+  );
+
+  static const TextStyle label = TextStyle(
+    fontFamily: _family,
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+  );
+
+  static const TextStyle caption = TextStyle(
+    fontFamily: _family,
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+  );
+
+  static const TextStyle badge = TextStyle(
+    fontFamily: _family,
+    fontSize: 10,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 0.6,
+  );
+}
+
+
+=== NEW FILE: lib/theme/app_semantic_colors.dart ===
+import 'package:flutter/material.dart';
+
+/// The allowlist of fixed semantic colors.
+///
+/// These are the ONLY literal colors permitted outside the theme token layer
+/// (spec §13). They do not follow [AppThemePalette] because they carry meaning
+/// the user must read the same way on every palette: success/good, warning,
+/// error/destructive, rating gold, peer/seed health, download state, and
+/// stream quality. Everything else (surfaces, text, accents, borders) must come
+/// from [PlayTorrioTokens] so it recolors with the theme.
+abstract final class AppSemanticColors {
+  static const Color success = Color(0xFF30A46C);
+  static const Color warning = Color(0xFFF5A623);
+  static const Color error = Color(0xFFE5484D);
+  static const Color destructive = Color(0xFFE5484D);
+  static const Color rating = Color(0xFFFFB800);
+
+  static const Color healthGood = Color(0xFF30A46C);
+  static const Color healthMid = Color(0xFFF5A623);
+  static const Color healthBad = Color(0xFFE5484D);
+
+  static const Color downloadQueued = Color(0xFF9AA6B8);
+  static const Color downloadActive = Color(0xFF3B82F6);
+  static const Color downloadDone = Color(0xFF30A46C);
+  static const Color downloadFailed = Color(0xFFE5484D);
+
+  static const Color quality4k = Color(0xFF7C5CFF);
+  static const Color qualityHd = Color(0xFF3B82F6);
+  static const Color qualitySd = Color(0xFF9AA6B8);
+}
+
+
+=== NEW FILE: lib/theme/playtorrio_tokens.dart ===
+import 'package:flutter/material.dart';
+
+import '../services/theme/app_theme_service.dart';
+import 'app_semantic_colors.dart';
+
+/// The theme-driven design tokens exposed as a [ThemeExtension].
+///
+/// Every surface/text/accent value derives from the active [AppThemePalette],
+/// so reading them through [PlayTorrioTokens.of] recolors live when the user
+/// changes theme. Fixed semantic colors come from [AppSemanticColors].
+@immutable
+class PlayTorrioTokens extends ThemeExtension<PlayTorrioTokens> {
+  const PlayTorrioTokens({
+    required this.bgPrimary,
+    required this.bgSecondary,
+    required this.surface,
+    required this.surfaceElevated,
+    required this.surfaceSelected,
+    required this.borderSubtle,
+    required this.borderStrong,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textTertiary,
+    required this.accent,
+    required this.accentSecondary,
+    required this.focusRing,
+    required this.destructive,
+    required this.success,
+    required this.warning,
+    required this.error,
+    required this.onAccent,
+    required this.onSurface,
+  });
+
+  final Color bgPrimary;
+  final Color bgSecondary;
+  final Color surface;
+  final Color surfaceElevated;
+  final Color surfaceSelected;
+  final Color borderSubtle;
+  final Color borderStrong;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textTertiary;
+  final Color accent;
+  final Color accentSecondary;
+  final Color focusRing;
+  final Color destructive;
+  final Color success;
+  final Color warning;
+  final Color error;
+  final Color onAccent;
+  final Color onSurface;
+
+  factory PlayTorrioTokens.fromPalette(AppThemePalette palette) {
+    final onAccent = palette.primaryColor.computeLuminance() > 0.4
+        ? Colors.black
+        : Colors.white;
+    final onSurface = palette.cardBackgroundColor.computeLuminance() > 0.4
+        ? Colors.black
+        : Colors.white;
+    return PlayTorrioTokens(
+      bgPrimary: palette.scaffoldBackgroundColor,
+      bgSecondary: palette.backgroundSecondaryColor,
+      surface: palette.cardBackgroundColor,
+      surfaceElevated: palette.surfaceElevatedColor,
+      surfaceSelected: Color.alphaBlend(
+        palette.primaryColor.withValues(alpha: 0.20),
+        palette.cardBackgroundColor,
+      ),
+      borderSubtle: Colors.white.withValues(alpha: 0.06),
+      borderStrong: Colors.white.withValues(alpha: 0.12),
+      textPrimary: Colors.white.withValues(alpha: 0.95),
+      textSecondary: Colors.white.withValues(alpha: 0.62),
+      textTertiary: Colors.white.withValues(alpha: 0.42),
+      accent: palette.primaryColor,
+      accentSecondary: palette.accentColor,
+      focusRing: palette.primaryColor,
+      destructive: AppSemanticColors.destructive,
+      success: AppSemanticColors.success,
+      warning: AppSemanticColors.warning,
+      error: AppSemanticColors.error,
+      onAccent: onAccent,
+      onSurface: onSurface,
+    );
+  }
+
+  /// Reads the tokens from the ambient theme, falling back to the current
+  /// palette when used outside a themed subtree (e.g. tests, overlays).
+  static PlayTorrioTokens of(BuildContext context) {
+    return Theme.of(context).extension<PlayTorrioTokens>() ??
+        PlayTorrioTokens.fromPalette(AppThemeService.currentPalette.value);
+  }
+
+  @override
+  PlayTorrioTokens copyWith({
+    Color? bgPrimary,
+    Color? bgSecondary,
+    Color? surface,
+    Color? surfaceElevated,
+    Color? surfaceSelected,
+    Color? borderSubtle,
+    Color? borderStrong,
+    Color? textPrimary,
+    Color? textSecondary,
+    Color? textTertiary,
+    Color? accent,
+    Color? accentSecondary,
+    Color? focusRing,
+    Color? destructive,
+    Color? success,
+    Color? warning,
+    Color? error,
+    Color? onAccent,
+    Color? onSurface,
+  }) {
+    return PlayTorrioTokens(
+      bgPrimary: bgPrimary ?? this.bgPrimary,
+      bgSecondary: bgSecondary ?? this.bgSecondary,
+      surface: surface ?? this.surface,
+      surfaceElevated: surfaceElevated ?? this.surfaceElevated,
+      surfaceSelected: surfaceSelected ?? this.surfaceSelected,
+      borderSubtle: borderSubtle ?? this.borderSubtle,
+      borderStrong: borderStrong ?? this.borderStrong,
+      textPrimary: textPrimary ?? this.textPrimary,
+      textSecondary: textSecondary ?? this.textSecondary,
+      textTertiary: textTertiary ?? this.textTertiary,
+      accent: accent ?? this.accent,
+      accentSecondary: accentSecondary ?? this.accentSecondary,
+      focusRing: focusRing ?? this.focusRing,
+      destructive: destructive ?? this.destructive,
+      success: success ?? this.success,
+      warning: warning ?? this.warning,
+      error: error ?? this.error,
+      onAccent: onAccent ?? this.onAccent,
+      onSurface: onSurface ?? this.onSurface,
+    );
+  }
+
+  @override
+  PlayTorrioTokens lerp(covariant PlayTorrioTokens? other, double t) {
+    if (other == null) return this;
+    return PlayTorrioTokens(
+      bgPrimary: Color.lerp(bgPrimary, other.bgPrimary, t)!,
+      bgSecondary: Color.lerp(bgSecondary, other.bgSecondary, t)!,
+      surface: Color.lerp(surface, other.surface, t)!,
+      surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
+      surfaceSelected: Color.lerp(surfaceSelected, other.surfaceSelected, t)!,
+      borderSubtle: Color.lerp(borderSubtle, other.borderSubtle, t)!,
+      borderStrong: Color.lerp(borderStrong, other.borderStrong, t)!,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
+      textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
+      accent: Color.lerp(accent, other.accent, t)!,
+      accentSecondary:
+          Color.lerp(accentSecondary, other.accentSecondary, t)!,
+      focusRing: Color.lerp(focusRing, other.focusRing, t)!,
+      destructive: Color.lerp(destructive, other.destructive, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      warning: Color.lerp(warning, other.warning, t)!,
+      error: Color.lerp(error, other.error, t)!,
+      onAccent: Color.lerp(onAccent, other.onAccent, t)!,
+      onSurface: Color.lerp(onSurface, other.onSurface, t)!,
+    );
+  }
+}
+
+
+=== NEW FILE: test/theme/app_scales_test.dart ===
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:playtorrio/theme/app_spacing.dart';
+import 'package:playtorrio/theme/app_radii.dart';
+import 'package:playtorrio/theme/app_motion.dart';
+import 'package:playtorrio/theme/app_elevation.dart';
+
+void main() {
+  test('spacing scale is the agreed 4pt ladder', () {
+    expect([
+      AppSpacing.xs,
+      AppSpacing.sm,
+      AppSpacing.md,
+      AppSpacing.lg,
+      AppSpacing.xl,
+      AppSpacing.xxl,
+      AppSpacing.xxxl,
+      AppSpacing.huge,
+    ], [4, 8, 12, 16, 20, 24, 32, 40]);
+    expect(AppSpacing.page, 16);
+  });
+
+  test('radii scale matches the spec', () {
+    expect([
+      AppRadii.badge,
+      AppRadii.input,
+      AppRadii.button,
+      AppRadii.card,
+      AppRadii.poster,
+      AppRadii.sheet,
+    ], [8, 12, 12, 16, 18, 24]);
+    expect(AppRadii.chip, 999);
+    expect(AppRadii.roundedCard, BorderRadius.circular(16));
+  });
+
+  test('motion durations and curves match the spec', () {
+    expect(AppMotion.fast, const Duration(milliseconds: 120));
+    expect(AppMotion.standard, const Duration(milliseconds: 170));
+    expect(AppMotion.sheet, const Duration(milliseconds: 260));
+    expect(AppMotion.themeSwitch, const Duration(milliseconds: 300));
+    expect(AppMotion.sheetCurve, Curves.easeOutCubic);
+  });
+
+  test('elevation glow uses the accent color', () {
+    final g = AppElevation.glow(const Color(0xFF7C5CFF));
+    expect(g.color.r, closeTo(0x7C / 255, 0.01));
+    expect(AppElevation.shadowMd.blurRadius, 16);
+  });
+}
+
+
+=== NEW FILE: test/theme/app_typography_test.dart ===
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:playtorrio/theme/app_typography.dart';
+
+void main() {
+  test('type scale uses Poppins and fixes no color', () {
+    for (final s in [
+      AppTypography.display,
+      AppTypography.screenTitle,
+      AppTypography.sectionHeading,
+      AppTypography.cardTitle,
+      AppTypography.body,
+      AppTypography.bodyStrong,
+      AppTypography.supporting,
+      AppTypography.label,
+      AppTypography.caption,
+      AppTypography.badge,
+    ]) {
+      expect(s.fontFamily, 'Poppins');
+      expect(s.color, isNull);
+    }
+  });
+
+  test('sizes and weights follow the spec', () {
+    expect(AppTypography.display.fontSize, 28);
+    expect(AppTypography.display.fontWeight, FontWeight.w800);
+    expect(AppTypography.screenTitle.fontSize, 22);
+    expect(AppTypography.sectionHeading.fontSize, 17);
+    expect(AppTypography.cardTitle.fontSize, 15.5);
+    expect(AppTypography.body.fontSize, 14);
+    expect(AppTypography.supporting.fontSize, 13);
+    expect(AppTypography.caption.fontSize, 12);
+    expect(AppTypography.badge.fontSize, 10);
+    expect(AppTypography.badge.letterSpacing, 0.6);
+  });
+}
+
+
+=== NEW FILE: test/theme/app_semantic_colors_test.dart ===
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:playtorrio/theme/app_semantic_colors.dart';
+
+void main() {
+  test('semantic colors are fixed, distinct constants', () {
+    expect(AppSemanticColors.success, const Color(0xFF30A46C));
+    expect(AppSemanticColors.warning, const Color(0xFFF5A623));
+    expect(AppSemanticColors.error, const Color(0xFFE5484D));
+    expect(AppSemanticColors.destructive, AppSemanticColors.error);
+    expect(AppSemanticColors.rating, const Color(0xFFFFB800));
+    expect(AppSemanticColors.healthGood, AppSemanticColors.success);
+    expect(AppSemanticColors.healthBad, AppSemanticColors.error);
+    expect(AppSemanticColors.downloadFailed, AppSemanticColors.error);
+    expect(
+      {
+        AppSemanticColors.quality4k,
+        AppSemanticColors.qualityHd,
+        AppSemanticColors.qualitySd,
+      }.length,
+      3,
+    );
+  });
+}
+
+
+=== NEW FILE: test/theme/playtorrio_tokens_test.dart ===
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:playtorrio/services/theme/app_theme_service.dart';
+import 'package:playtorrio/theme/playtorrio_tokens.dart';
+import 'package:playtorrio/theme/app_semantic_colors.dart';
+
+void main() {
+  final amethyst = AppThemeService.palettes[0]; // primary 0xFF7C5CFF
+  final amber = AppThemeService.palettes.firstWhere((p) => p.id == 'amber');
+
+  test('derives surfaces/accents from the palette', () {
+    final t = PlayTorrioTokens.fromPalette(amethyst);
+    expect(t.bgPrimary, amethyst.scaffoldBackgroundColor);
+    expect(t.surface, amethyst.cardBackgroundColor);
+    expect(t.accent, amethyst.primaryColor);
+    expect(t.accentSecondary, amethyst.accentColor);
+    expect(t.borderSubtle.a, closeTo(0.06, 0.01));
+    expect(t.error, AppSemanticColors.error);
+    expect(t.success, AppSemanticColors.success);
+  });
+
+  test('onAccent picks a readable foreground on every palette', () {
+    for (final p in AppThemeService.palettes) {
+      final t = PlayTorrioTokens.fromPalette(p);
+      final luminance = t.accent.computeLuminance();
+      final expected = luminance > 0.4 ? Colors.black : Colors.white;
+      expect(t.onAccent, expected, reason: 'palette ${p.id}');
+    }
+    expect(PlayTorrioTokens.fromPalette(amber).onAccent, Colors.black);
+    expect(PlayTorrioTokens.fromPalette(amethyst).onAccent, Colors.white);
+  });
+
+  test('two palettes yield different tokens (no shared cache)', () {
+    expect(
+      PlayTorrioTokens.fromPalette(amethyst).surface,
+      isNot(PlayTorrioTokens.fromPalette(amber).surface),
+    );
+  });
+
+  test('lerp interpolates between two token sets', () {
+    final a = PlayTorrioTokens.fromPalette(amethyst);
+    final b = PlayTorrioTokens.fromPalette(amber);
+    final mid = a.lerp(b, 0.5);
+    expect(mid.accent, Color.lerp(a.accent, b.accent, 0.5));
+  });
+}
+
+
+=== NEW FILE: test/theme/app_theme_service_tokens_test.dart ===
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:playtorrio/services/theme/app_theme_service.dart';
+import 'package:playtorrio/theme/playtorrio_tokens.dart';
+
+void main() {
+  final amethyst = AppThemeService.palettes[0];
+  final amber = AppThemeService.palettes.firstWhere((p) => p.id == 'amber');
+
+  test('createThemeData registers the token extension', () {
+    final theme = AppThemeService.createThemeData(amethyst);
+    expect(theme.extension<PlayTorrioTokens>(), isNotNull);
+    expect(theme.extension<PlayTorrioTokens>()!.accent, amethyst.primaryColor);
+  });
+
+  test('colorScheme roles come from the palette, not a blind seed', () {
+    final theme = AppThemeService.createThemeData(amethyst);
+    expect(theme.colorScheme.primary, amethyst.primaryColor);
+    expect(theme.colorScheme.secondary, amethyst.accentColor);
+    expect(theme.colorScheme.surface, amethyst.cardBackgroundColor);
+    expect(
+      theme.colorScheme.onPrimary,
+      PlayTorrioTokens.fromPalette(amethyst).onAccent,
+    );
+  });
+
+  test('existing behavior is preserved', () {
+    final theme = AppThemeService.createThemeData(amethyst);
+    expect(theme.useMaterial3, isTrue);
+    expect(theme.scaffoldBackgroundColor, amethyst.scaffoldBackgroundColor);
+    expect(theme.appBarTheme.backgroundColor, amethyst.appBarBackgroundColor);
+    expect(
+      theme.pageTransitionsTheme.builders[TargetPlatform.android],
+      isA<FadeUpwardsPageTransitionsBuilder>(),
+    );
+  });
+
+  test('a palette with only required fields still builds tokens', () {
+    const bare = AppThemePalette(
+      id: 'x',
+      name: 'X',
+      primaryColor: Color(0xFF7C5CFF),
+      accentColor: Color(0xFF00E5FF),
+    );
+    final t = PlayTorrioTokens.fromPalette(bare);
+    expect(t.surfaceElevated, const Color(0xFF171A23));
+    expect(
+      AppThemeService.createThemeData(bare).extension<PlayTorrioTokens>(),
+      isNotNull,
+    );
+  });
+
+  testWidgets('tokens are reachable via Theme.of(context)', (tester) async {
+    late PlayTorrioTokens tokens;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppThemeService.createThemeData(amber),
+        home: Builder(
+          builder: (context) {
+            tokens = PlayTorrioTokens.of(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(tokens.accent, amber.primaryColor);
+  });
+}
+
