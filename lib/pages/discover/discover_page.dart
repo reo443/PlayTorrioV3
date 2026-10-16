@@ -669,13 +669,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
         color: Colors.white.withValues(alpha: 0.1),
       );
 
-  /// Compact icon-only Movies / TV segmented toggle.
+  /// Compact Movies / TV text chip toggle.
   Widget _typeToggle(AppThemePalette palette) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         _typeChip(
-          icon: Icons.movie_rounded,
           label: 'Movies',
           selected: _tmdbType == 'movie',
           palette: palette,
@@ -683,7 +682,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
         ),
         const SizedBox(width: 4),
         _typeChip(
-          icon: Icons.tv_rounded,
           label: 'TV',
           selected: _tmdbType == 'series',
           palette: palette,
@@ -694,7 +692,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Widget _typeChip({
-    required IconData icon,
     required String label,
     required bool selected,
     required AppThemePalette palette,
@@ -706,27 +703,27 @@ class _DiscoverPageState extends State<DiscoverPage> {
       label: label,
       child: Material(
         type: MaterialType.transparency,
-        child: Tooltip(
-          message: label,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: 40,
-              height: 34,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected
-                    ? palette.primaryColor
-                    : Colors.white.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                icon,
-                size: 19,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            height: 34,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected
+                  ? palette.primaryColor
+                  : Colors.white.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
                 color: selected
                     ? Colors.white
                     : Colors.white.withValues(alpha: 0.7),
+                fontSize: 12.5,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ),
