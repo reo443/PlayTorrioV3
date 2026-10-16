@@ -157,10 +157,10 @@ class _IptvChannelCardState extends State<IptvChannelCard> {
                                       Container(
                                         width: 6,
                                         height: 6,
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           color: AppSemanticColors.error,
                                           shape: BoxShape.circle,
-                                          boxShadow: const [
+                                          boxShadow: [
                                             BoxShadow(
                                               color: AppSemanticColors.error,
                                               blurRadius: 4,
