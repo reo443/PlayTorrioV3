@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 
 import '../../models/manga/manga.dart';
 import '../../pages/manga/manga_details_page.dart';
-import '../../services/theme/app_theme_service.dart';
 import '../../services/home/home_page_settings.dart';
 import '../../services/manga/manga_settings.dart';
+import '../../theme/playtorrio_tokens.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../common/poster_skeleton.dart';
 
@@ -93,7 +93,7 @@ class _MangaCardState extends State<MangaCard> {
   @override
   Widget build(BuildContext context) {
     final manga = widget.manga;
-    final palette = AppThemeService.currentPalette.value;
+    final tokens = PlayTorrioTokens.of(context);
     final showYear = MangaSettings.showMangaYear.value;
     final showBadge = MangaSettings.showContentTypeBadge.value;
     final ambientGlow = MangaSettings.ambientCardGlow.value;
@@ -160,12 +160,11 @@ class _MangaCardState extends State<MangaCard> {
                     posterUrl: manga.coverNormal.isNotEmpty ? manga.coverNormal : manga.coverSmall,
                     hovered: _hovered,
                     contentType: manga.type.isNotEmpty ? manga.type : 'MANGA',
-                    palette: palette,
                     showBadge: showBadge,
                     ambientGlow: ambientGlow,
                   ),
                 ),
-                
+
                 // ── Title & Info ─────────────────────────────────────────
                 const SizedBox(height: 10),
                 AnimatedDefaultTextStyle(
@@ -175,7 +174,9 @@ class _MangaCardState extends State<MangaCard> {
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.15,
                     height: 1.25,
-                    color: _hovered ? Colors.white : Colors.white.withOpacity(0.92),
+                    color: _hovered
+                        ? tokens.textPrimary
+                        : tokens.textPrimary.withValues(alpha: 0.92),
                   ),
                   child: Text(
                     manga.title,
@@ -192,7 +193,7 @@ class _MangaCardState extends State<MangaCard> {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withOpacity(0.55),
+                      color: tokens.textSecondary,
                       letterSpacing: -0.1,
                     ),
                   ),
@@ -210,7 +211,6 @@ class _PosterFrame extends StatelessWidget {
   final String? posterUrl;
   final bool hovered;
   final String contentType;
-  final AppThemePalette palette;
   final bool showBadge;
   final bool ambientGlow;
 
@@ -218,7 +218,6 @@ class _PosterFrame extends StatelessWidget {
     required this.posterUrl,
     required this.hovered,
     required this.contentType,
-    required this.palette,
     required this.showBadge,
     required this.ambientGlow,
   });
@@ -226,6 +225,7 @@ class _PosterFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasPoster = posterUrl != null && posterUrl!.isNotEmpty;
+    final tokens = PlayTorrioTokens.of(context);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 170),
@@ -234,13 +234,13 @@ class _PosterFrame extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(hovered ? 0.60 : 0.34),
+            color: tokens.bgPrimary.withValues(alpha: hovered ? 0.60 : 0.34),
             blurRadius: hovered ? 32 : 20,
             offset: Offset(0, hovered ? 18 : 10),
           ),
           if (hovered && ambientGlow)
             BoxShadow(
-              color: palette.primaryColor.withOpacity(0.30),
+              color: tokens.accent.withValues(alpha: 0.30),
               blurRadius: 34,
               spreadRadius: 1,
               offset: const Offset(0, 8),
@@ -253,8 +253,8 @@ class _PosterFrame extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             // Background fill
-            const ColoredBox(
-              color: Color(0xFF171A23),
+            ColoredBox(
+              color: tokens.surfaceElevated,
             ),
 
             // Poster image (cached)
@@ -277,9 +277,9 @@ class _PosterFrame extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.00),
-                      Colors.black.withOpacity(0.00),
-                      Colors.black.withOpacity(0.20),
+                      Colors.transparent,
+                      Colors.transparent,
+                      tokens.bgPrimary.withValues(alpha: 0.20),
                     ],
                   ),
                 ),
@@ -297,9 +297,9 @@ class _PosterFrame extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.white.withOpacity(0.11),
+                        tokens.textPrimary.withValues(alpha: 0.11),
                         Colors.transparent,
-                        Colors.black.withOpacity(0.40),
+                        tokens.bgPrimary.withValues(alpha: 0.40),
                       ],
                     ),
                   ),
@@ -318,22 +318,22 @@ class _PosterFrame extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: palette.primaryColor.withOpacity(0.88),
+                      color: tokens.accent.withValues(alpha: 0.88),
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.40),
+                          color: tokens.bgPrimary.withValues(alpha: 0.40),
                           blurRadius: 8,
                         ),
                       ],
                     ),
                     child: Text(
                       contentType.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.6,
-                        color: Colors.white,
+                        color: tokens.onAccent,
                       ),
                     ),
                   ),
@@ -349,8 +349,8 @@ class _PosterFrame extends StatelessWidget {
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: hovered
-                          ? palette.primaryColor.withOpacity(0.50)
-                          : Colors.white.withOpacity(0.08),
+                          ? tokens.accent.withValues(alpha: 0.50)
+                          : tokens.borderSubtle,
                       width: hovered ? 1.4 : 1,
                     ),
                   ),
@@ -374,18 +374,18 @@ class _PosterFrame extends StatelessWidget {
                     height: 39,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.95),
+                      color: tokens.textPrimary,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.40),
+                          color: tokens.bgPrimary.withValues(alpha: 0.40),
                           blurRadius: 16,
                           offset: const Offset(0, 7),
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.play_arrow_rounded,
-                      color: Color(0xFF11131B),
+                      color: tokens.surface,
                       size: 29,
                     ),
                   ),
@@ -393,24 +393,6 @@ class _PosterFrame extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class MissingPoster extends StatelessWidget {
-  const MissingPoster({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF232533),
-      child: Center(
-        child: Icon(
-          Icons.broken_image_rounded,
-          color: Colors.white.withOpacity(0.2),
-          size: 40,
         ),
       ),
     );
