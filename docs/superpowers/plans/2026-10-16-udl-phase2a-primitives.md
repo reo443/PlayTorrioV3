@@ -958,7 +958,7 @@ test('no inline color literals in lib/widgets/ui', () {
   final offenders = <String>[];
   for (final f in dir.listSync().whereType<File>().where((f) => f.path.endsWith('.dart'))) {
     final src = f.readAsStringSync();
-    for (final pattern in [RegExp(r'Color\(0x'), RegExp(r'Colors\.(?!transparent)')]) {
+    for (final pattern in [RegExp(r'Color\(0x'), RegExp(r'(?<![A-Za-z0-9_])Colors\.(?!transparent)')]) {
       if (pattern.hasMatch(src)) offenders.add('${f.path}: ${pattern.pattern}');
     }
   }

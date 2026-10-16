@@ -16,6 +16,11 @@ Widget host(
   double width = 360,
 }) {
   return MaterialApp(
+    // MaterialApp otherwise lerps a theme change over 200ms, so a component's
+    // resolved colours would depend on how far into the transition we pumped.
+    // Zero keeps `host` deterministic: the palette it is given is the palette
+    // the component sees.
+    themeAnimationDuration: Duration.zero,
     theme: AppThemeService.createThemeData(
       palette ?? AppThemeService.palettes.first,
     ),
