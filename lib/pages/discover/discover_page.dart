@@ -370,7 +370,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
     try {
       final page = (_items.length ~/ TmdbService.pageSize) + 1;
       final List<Movie> newItems;
-      if (_sortBy == TmdbService.kTrendingSort) {
+      // The trending list can't be filtered — when any filter is active we must
+      // go through /discover so the genre/score/etc. filters actually apply.
+      if (_filters.isEmpty && _sortBy == TmdbService.kTrendingSort) {
         final listId = _tmdbType == 'series'
             ? 'trending_tv_day'
             : 'trending_day';
@@ -616,7 +618,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       return Column(
         children: [
           SizedBox(height: topOffset),
-          _buildControlBar(palette),
+          _buildControlBar(),
           const SizedBox(height: 6),
           Expanded(child: grid),
         ],
@@ -626,144 +628,166 @@ class _DiscoverPageState extends State<DiscoverPage> {
     return grid;
   }
 
-  /// Unified control bar: Movies/TV toggle + Sort + Filters.
-  Widget _buildControlBar(AppThemePalette palette) {
+  // ── Control bar palette (premium dark streaming look) ──
+  static const Color _kBarSurface = Color(0xFF1B2231);
+  static const Color _kBarBlue = Color(0xFF2F80ED);
+  static const Color _kBarMuted = Color(0xFF9AA6B8);
+
+  /// Unified control bar: animated Movies/TV segmented control + Sort + Filters.
+  Widget _buildControlBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: palette.cardBackgroundColor.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        ),
-        child: Row(
-          children: [
-            const SizedBox(width: 4),
-            _typeToggle(palette),
-            const Spacer(),
-            _barSegment(
-              icon: Icons.sort_rounded,
-              tooltip: 'Sort: $_sortLabel',
-              palette: palette,
-              onTap: _openSortSheet,
-            ),
-            _barDivider(),
-            _barSegment(
-              icon: Icons.tune_rounded,
-              tooltip: 'Filters',
-              palette: palette,
-              badge: _filters.activeCount,
-              onTap: _openAdvancedFilters,
-            ),
-            const SizedBox(width: 2),
-          ],
-        ),
+      child: Row(
+        children: [
+          Expanded(child: _buildTypeSegmented()),
+          const SizedBox(width: 12),
+          _barDivider(),
+          const SizedBox(width: 12),
+          _iconButton(
+            icon: Icons.swap_vert_rounded,
+            tooltip: 'Sort: $_sortLabel',
+            onTap: _openSortSheet,
+          ),
+          const SizedBox(width: 10),
+          _iconButton(
+            icon: Icons.filter_alt_rounded,
+            tooltip: 'Filters',
+            badge: _filters.activeCount,
+            onTap: _openAdvancedFilters,
+          ),
+        ],
       ),
     );
   }
 
   Widget _barDivider() => Container(
         width: 1,
-        height: 26,
-        color: Colors.white.withValues(alpha: 0.1),
+        height: 28,
+        color: Colors.white.withValues(alpha: 0.08),
       );
 
-  /// Compact Movies / TV text chip toggle.
-  Widget _typeToggle(AppThemePalette palette) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _typeChip(
-          label: 'Movies',
-          selected: _tmdbType == 'movie',
-          palette: palette,
-          onTap: () => _setTmdbType('movie'),
-        ),
-        const SizedBox(width: 4),
-        _typeChip(
-          label: 'TV',
-          selected: _tmdbType == 'series',
-          palette: palette,
-          onTap: () => _setTmdbType('series'),
-        ),
-      ],
+  /// Rounded segmented Movies/TV control with a sliding highlight.
+  Widget _buildTypeSegmented() {
+    final isMovies = _tmdbType == 'movie';
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _kBarSurface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: Stack(
+        children: [
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: isMovies ? Alignment.centerLeft : Alignment.centerRight,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              heightFactor: 1,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: _kBarBlue,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _kBarBlue.withValues(alpha: 0.35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: _segmentLabel(
+                  'Movies',
+                  selected: isMovies,
+                  onTap: () => _setTmdbType('movie'),
+                ),
+              ),
+              Expanded(
+                child: _segmentLabel(
+                  'TV',
+                  selected: !isMovies,
+                  onTap: () => _setTmdbType('series'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _typeChip({
-    required String label,
+  Widget _segmentLabel(
+    String label, {
     required bool selected,
-    required AppThemePalette palette,
     required VoidCallback onTap,
   }) {
     return Semantics(
       button: true,
       selected: selected,
       label: label,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            height: 34,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected
-                  ? palette.primaryColor
-                  : Colors.white.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(20),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 200),
+            style: TextStyle(
+              color: selected ? Colors.white : _kBarMuted,
+              fontSize: 14,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              letterSpacing: 0.1,
             ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.7),
-                fontSize: 12.5,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
+            child: Text(label),
           ),
         ),
       ),
     );
   }
 
-  Widget _barSegment({
+  Widget _iconButton({
     required IconData icon,
     required String tooltip,
-    required AppThemePalette palette,
     required VoidCallback onTap,
     int badge = 0,
   }) {
     return Semantics(
       button: true,
       label: tooltip,
-      child: Material(
-        type: MaterialType.transparency,
-        child: Tooltip(
-          message: tooltip,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(14),
-            child: SizedBox(
-              width: 48,
-              height: 48,
+            borderRadius: BorderRadius.circular(12),
+            child: Ink(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _kBarSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   Icon(
                     icon,
-                    size: 19,
-                    color: Colors.white.withValues(alpha: 0.75),
+                    size: 20,
+                    color: Colors.white.withValues(alpha: 0.92),
                   ),
                   if (badge > 0)
                     Positioned(
-                      top: 7,
-                      right: 7,
+                      top: 4,
+                      right: 4,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 4,
@@ -771,7 +795,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         ),
                         constraints: const BoxConstraints(minWidth: 16),
                         decoration: BoxDecoration(
-                          color: palette.primaryColor,
+                          color: _kBarBlue,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         alignment: Alignment.center,

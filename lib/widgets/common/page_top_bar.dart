@@ -79,11 +79,11 @@ class PageTopBar extends StatelessWidget {
             else ...[
               Image.asset(
                 'assets/icon.png',
-                width: 22,
-                height: 22,
+                width: 28,
+                height: 28,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               if (!isNarrow)
                 Flexible(
                   child: RichText(
