@@ -267,4 +267,79 @@ void main() {
       expect(TmdbService.genresFromJson(<String, dynamic>{}), isEmpty);
     });
   });
+
+  group('TmdbService.buildDiscoverQuery', () {
+    test('defaults to popularity sort and a page', () {
+      final q = TmdbService.buildDiscoverQuery(type: 'movie');
+      expect(q['sort_by'], 'popularity.desc');
+      expect(q['page'], '1');
+      expect(q.containsKey('with_genres'), isFalse);
+    });
+
+    test('multi-value filters join with pipes (OR)', () {
+      final q = TmdbService.buildDiscoverQuery(
+        type: 'movie',
+        genreIds: [28, 12],
+        providerIds: [8, 337],
+      );
+      expect(q['with_genres'], '28|12');
+      expect(q['with_watch_providers'], '8|337');
+      expect(q['watch_region'], 'US');
+    });
+
+    test('year range maps to release-date bounds for movies', () {
+      final q = TmdbService.buildDiscoverQuery(
+        type: 'movie',
+        yearFrom: 1990,
+        yearTo: 1999,
+      );
+      expect(q['primary_release_date.gte'], '1990-01-01');
+      expect(q['primary_release_date.lte'], '1999-12-31');
+      expect(q.containsKey('first_air_date.gte'), isFalse);
+    });
+
+    test('year range maps to first-air-date bounds for series', () {
+      final q = TmdbService.buildDiscoverQuery(
+        type: 'series',
+        yearFrom: 2000,
+      );
+      expect(q['first_air_date.gte'], '2000-01-01');
+      expect(q.containsKey('primary_release_date.gte'), isFalse);
+    });
+
+    test('score filter adds a vote-count floor', () {
+      final q = TmdbService.buildDiscoverQuery(type: 'movie', minScore: 7);
+      expect(q['vote_average.gte'], '7.0');
+      expect(q['vote_count.gte'], '50');
+    });
+
+    test('runtime bounds and certification map through', () {
+      final q = TmdbService.buildDiscoverQuery(
+        type: 'movie',
+        minRuntime: 90,
+        maxRuntime: 120,
+        certification: 'PG-13',
+      );
+      expect(q['with_runtime.gte'], '90');
+      expect(q['with_runtime.lte'], '120');
+      expect(q['certification'], 'PG-13');
+      expect(q['certification_country'], 'US');
+    });
+
+    test('the trending pseudo-sort falls back to popularity', () {
+      final q = TmdbService.buildDiscoverQuery(
+        type: 'movie',
+        sortBy: TmdbService.kTrendingSort,
+      );
+      expect(q['sort_by'], 'popularity.desc');
+    });
+
+    test('a real sort value is passed through', () {
+      final q = TmdbService.buildDiscoverQuery(
+        type: 'movie',
+        sortBy: 'vote_average.desc',
+      );
+      expect(q['sort_by'], 'vote_average.desc');
+    });
+  });
 }

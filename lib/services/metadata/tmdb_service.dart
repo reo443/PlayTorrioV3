@@ -29,6 +29,7 @@ class TmdbService {
   /// `listId` → (endpoint path, default media type).
   static const Map<String, (String, String)> _staticLists = {
     'trending_day': ('/trending/movie/day', 'movie'),
+    'trending_tv_day': ('/trending/tv/day', 'series'),
     'trending_week': ('/trending/movie/week', 'movie'),
     'popular_movie': ('/movie/popular', 'movie'),
     'popular_series': ('/tv/popular', 'series'),
@@ -40,6 +41,7 @@ class TmdbService {
 
   static const Map<String, String> _listTitles = {
     'trending_day': 'Trending Today',
+    'trending_tv_day': 'Trending Today',
     'trending_week': 'Trending This Week',
     'popular_movie': 'Popular Movies',
     'popular_series': 'Popular Series',
@@ -50,6 +52,11 @@ class TmdbService {
   };
 
   static final Map<String, List<Movie>> _listCache = {};
+
+  // Cached filter-option lists (rarely change; avoid refetching per sheet open).
+  static final Map<String, List<({int id, String name})>> _idNameCache = {};
+  static final Map<String, List<({String code, String name})>> _codeNameCache = {};
+  static final Map<String, List<String>> _stringListCache = {};
 
   /// Curated home-page lists in display order (list id → content type).
   static const List<({String listId, String type})> homeLists = [
@@ -65,8 +72,13 @@ class TmdbService {
   /// Whether a TMDB API key is available (from `.env` / dart-define / env).
   static bool get isConfigured => EnvService.tmdbApiKey.trim().isNotEmpty;
 
-  /// Clears the in-memory list cache.
-  static void clearCache() => _listCache.clear();
+  /// Clears the in-memory caches (lists + filter options).
+  static void clearCache() {
+    _listCache.clear();
+    _idNameCache.clear();
+    _codeNameCache.clear();
+    _stringListCache.clear();
+  }
 
   /// Builds a TMDB image URL. Returns `''` when [path] is empty.
   static String imageUrl(String? path, {String size = 'w500'}) {
@@ -317,10 +329,16 @@ class TmdbService {
 
   /// Genre list for a media type (`movie`/`series`). Empty on failure.
   static Future<List<({int id, String name})>> fetchGenres(String type) async {
+    final cacheKey = 'genres|$type';
+    final cached = _idNameCache[cacheKey];
+    if (cached != null) return cached;
+
     final isTv = type == 'tv' || type == 'series';
     final data = await _get(isTv ? '/genre/tv/list' : '/genre/movie/list');
     if (data == null) return const [];
-    return genresFromJson(data);
+    final result = genresFromJson(data);
+    _idNameCache[cacheKey] = result;
+    return result;
   }
 
   /// Parses a `/genre/{type}/list` response into `(id, name)` records.
@@ -345,18 +363,23 @@ class TmdbService {
 
   // ── Discover (filtered browsing) ──────────────────────────────────────
 
-  /// Sort options for the given media type.
+  /// Pseudo sort value meaning "use the TMDB trending feed" rather than a
+  /// `/discover` `sort_by`. Handled by callers, never sent to the API.
+  static const String kTrendingSort = 'trending';
+
+  /// Sort options for the given media type. [kTrendingSort] is a pseudo value
+  /// resolved by callers to the trending list endpoint.
   static List<({String value, String label})> sortOptionsFor(String type) {
     final isTv = type == 'tv' || type == 'series';
     return [
-      (value: 'popularity.desc', label: 'Popularity'),
-      (value: 'vote_average.desc', label: 'Rating'),
-      if (isTv)
-        (value: 'first_air_date.desc', label: 'Newest')
-      else ...[
-        (value: 'primary_release_date.desc', label: 'Newest'),
-        (value: 'revenue.desc', label: 'Revenue'),
-      ],
+      (value: 'popularity.desc', label: 'Popular'),
+      (value: kTrendingSort, label: 'Trending'),
+      (value: 'vote_average.desc', label: 'Top Rated'),
+      (
+        value: isTv ? 'first_air_date.desc' : 'primary_release_date.desc',
+        label: 'Newest',
+      ),
+      (value: isTv ? 'name.asc' : 'original_title.asc', label: 'Alphabetical'),
     ];
   }
 
@@ -385,12 +408,15 @@ class TmdbService {
   }
 
   /// Filtered discovery of movies/series via `/discover`.
+  ///
+  /// Multi-value filters use TMDB's `|` (OR) semantics.
   static Future<List<Movie>> discover({
     required String type,
-    int? genreId,
-    int? year,
+    List<int>? genreIds,
+    int? yearFrom,
+    int? yearTo,
     String? sortBy,
-    int? providerId,
+    List<int>? providerIds,
     String? country,
     String? language,
     String? certification,
@@ -400,18 +426,127 @@ class TmdbService {
     int page = 1,
     String region = 'US',
   }) async {
-    final isTv = type == 'tv' || type == 'series';
+    final data = await _get(
+      _discoverPath(type),
+      query: buildDiscoverQuery(
+        type: type,
+        genreIds: genreIds,
+        yearFrom: yearFrom,
+        yearTo: yearTo,
+        sortBy: sortBy,
+        providerIds: providerIds,
+        country: country,
+        language: language,
+        certification: certification,
+        minScore: minScore,
+        minRuntime: minRuntime,
+        maxRuntime: maxRuntime,
+        page: page,
+        region: region,
+      ),
+    );
+    if (data == null) return const [];
+
+    final results = data['results'];
+    if (results is! List) return const [];
+
+    final isTv = _isTv(type);
+    final movies = <Movie>[];
+    for (final item in results) {
+      if (item is! Map<String, dynamic>) continue;
+      final movie = Movie.fromTmdb(item, isTv ? 'tv' : 'movie');
+      if (_isUsable(movie)) movies.add(movie);
+    }
+    return movies;
+  }
+
+  /// Total number of titles matching a [discover] query (`total_results`).
+  /// Returns `null` when the request fails or is unconfigured — callers must
+  /// not fabricate a count.
+  static Future<int?> discoverTotal({
+    required String type,
+    List<int>? genreIds,
+    int? yearFrom,
+    int? yearTo,
+    String? sortBy,
+    List<int>? providerIds,
+    String? country,
+    String? language,
+    String? certification,
+    double? minScore,
+    int? minRuntime,
+    int? maxRuntime,
+    String region = 'US',
+  }) async {
+    final data = await _get(
+      _discoverPath(type),
+      query: buildDiscoverQuery(
+        type: type,
+        genreIds: genreIds,
+        yearFrom: yearFrom,
+        yearTo: yearTo,
+        sortBy: sortBy,
+        providerIds: providerIds,
+        country: country,
+        language: language,
+        certification: certification,
+        minScore: minScore,
+        minRuntime: minRuntime,
+        maxRuntime: maxRuntime,
+        region: region,
+      ),
+    );
+    if (data == null) return null;
+    final total = data['total_results'];
+    if (total is int) return total;
+    return int.tryParse('$total');
+  }
+
+  static bool _isTv(String type) => type == 'tv' || type == 'series';
+
+  static String _discoverPath(String type) =>
+      _isTv(type) ? '/discover/tv' : '/discover/movie';
+
+  /// Builds the query map for a `/discover` request. Kept public/testable so
+  /// the filter → API mapping stays in one place.
+  @visibleForTesting
+  static Map<String, String> buildDiscoverQuery({
+    required String type,
+    List<int>? genreIds,
+    int? yearFrom,
+    int? yearTo,
+    String? sortBy,
+    List<int>? providerIds,
+    String? country,
+    String? language,
+    String? certification,
+    double? minScore,
+    int? minRuntime,
+    int? maxRuntime,
+    int page = 1,
+    String region = 'US',
+  }) {
+    final isTv = _isTv(type);
     final query = <String, String>{
       'page': '$page',
-      'sort_by': sortBy ?? 'popularity.desc',
+      'sort_by': (sortBy == null || sortBy == kTrendingSort)
+          ? 'popularity.desc'
+          : sortBy,
     };
 
-    if (genreId != null) query['with_genres'] = '$genreId';
-    if (year != null) {
-      query[isTv ? 'first_air_date_year' : 'primary_release_year'] = '$year';
+    if (genreIds != null && genreIds.isNotEmpty) {
+      query['with_genres'] = genreIds.join('|');
     }
-    if (providerId != null) {
-      query['with_watch_providers'] = '$providerId';
+    if (yearFrom != null) {
+      query[isTv ? 'first_air_date.gte' : 'primary_release_date.gte'] =
+          '$yearFrom-01-01';
+    }
+    if (yearTo != null) {
+      query[isTv ? 'first_air_date.lte' : 'primary_release_date.lte'] =
+          '$yearTo-12-31';
+    }
+    if (providerIds != null && providerIds.isNotEmpty) {
+      query['with_watch_providers'] = providerIds.join('|');
       query['watch_region'] = region;
     }
     if (country != null && country.isNotEmpty) {
@@ -431,22 +566,7 @@ class TmdbService {
     if (minRuntime != null) query['with_runtime.gte'] = '$minRuntime';
     if (maxRuntime != null) query['with_runtime.lte'] = '$maxRuntime';
 
-    final data = await _get(
-      isTv ? '/discover/tv' : '/discover/movie',
-      query: query,
-    );
-    if (data == null) return const [];
-
-    final results = data['results'];
-    if (results is! List) return const [];
-
-    final movies = <Movie>[];
-    for (final item in results) {
-      if (item is! Map<String, dynamic>) continue;
-      final movie = Movie.fromTmdb(item, isTv ? 'tv' : 'movie');
-      if (_isUsable(movie)) movies.add(movie);
-    }
-    return movies;
+    return query;
   }
 
   /// Watch providers (streaming services) available in [region].
@@ -454,17 +574,27 @@ class TmdbService {
     String type, {
     String region = 'US',
   }) async {
+    final cacheKey = 'providers|$type|$region';
+    final cached = _idNameCache[cacheKey];
+    if (cached != null) return cached;
+
     final isTv = type == 'tv' || type == 'series';
     final data = await _get(
       isTv ? '/watch/providers/tv' : '/watch/providers/movie',
       query: {'watch_region': region},
     );
     if (data == null) return const [];
-    return _idNameList(data['results'], 'provider_id', 'provider_name');
+    final result = _idNameList(data['results'], 'provider_id', 'provider_name');
+    _idNameCache[cacheKey] = result;
+    return result;
   }
 
   /// ISO-3166-1 countries from `/configuration/countries`.
   static Future<List<({String code, String name})>> fetchCountries() async {
+    const cacheKey = 'countries';
+    final cached = _codeNameCache[cacheKey];
+    if (cached != null) return cached;
+
     final decoded = await _getRaw('/configuration/countries');
     if (decoded is! List) return const [];
     final result = <({String code, String name})>[];
@@ -476,11 +606,16 @@ class TmdbService {
       result.add((code: code, name: name));
     }
     result.sort((a, b) => a.name.compareTo(b.name));
+    _codeNameCache[cacheKey] = result;
     return result;
   }
 
   /// ISO-639-1 languages from `/configuration/languages`.
   static Future<List<({String code, String name})>> fetchLanguages() async {
+    const cacheKey = 'languages';
+    final cached = _codeNameCache[cacheKey];
+    if (cached != null) return cached;
+
     final decoded = await _getRaw('/configuration/languages');
     if (decoded is! List) return const [];
     final result = <({String code, String name})>[];
@@ -492,6 +627,7 @@ class TmdbService {
       result.add((code: code, name: name));
     }
     result.sort((a, b) => a.name.compareTo(b.name));
+    _codeNameCache[cacheKey] = result;
     return result;
   }
 
@@ -500,12 +636,18 @@ class TmdbService {
     String type, {
     String region = 'US',
   }) async {
+    final cacheKey = 'certs|$type|$region';
+    final cached = _stringListCache[cacheKey];
+    if (cached != null) return cached;
+
     final isTv = type == 'tv' || type == 'series';
     final data = await _get(
       isTv ? '/certification/tv/list' : '/certification/movie/list',
     );
     if (data == null) return const [];
-    return certificationsFromJson(data, region);
+    final result = certificationsFromJson(data, region);
+    _stringListCache[cacheKey] = result;
+    return result;
   }
 
   /// Parses a `/certification/{type}/list` response for [region].

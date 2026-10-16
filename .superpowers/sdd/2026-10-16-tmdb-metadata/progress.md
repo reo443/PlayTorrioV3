@@ -31,3 +31,33 @@ Root cause of "apk does not use TMDB": root `.env` isn't read on Android (no CWD
 - Item 6 (theme): DONE for Discover + watch + play. `discover_page.dart` build wrapped in `ValueListenableBuilder<AppThemePalette>` -> `_buildLegacyScaffold(palette)` / `_buildDiscoverScaffold(palette)`; palette scaffold/card/primary/appBar colors replace hardcoded (incl. gating prompt + custom-extra dialog accents). `watch_screen.dart`: `_C.bg/surface/surfaceLight/accent` converted from consts to palette getters; +AppThemeService import; +`initState` palette listener + removeListener in dispose; 5 const call sites de-constified. `player_screen.dart`: +import; audio-HUD accent -> `AppThemeService.currentPalette.value.primaryColor`.
   - Open question flagged: player gesture HUDs (brightness/seek) still use a distinct cyan `0xFF00E5FF` by design - left as-is (functional color, not app chrome). Ask user if they want those themed too.
 - Verification: `flutter analyze` = 33 infos (baseline, 0 errors/warnings). Full `flutter test` = 253 pass / 15 fail (<= pre-existing 16-17 baseline; no new failures). Targeted: media_format 7 + tmdb 20 + env 2 = 29 pass.
+
+## Task (2026-10-16): Unified Sort + Filters control bar + advanced filter bottom sheet
+User spec: replace the horizontal row of individual filter chips on Browse (Discover) with one compact Sort|Filters control bar; tapping Filters opens a scrollable advanced filter bottom sheet. `flutter run` skipped (no display); analyze + tests used as verification.
+
+### Calls made (user said "skip build it" = build my way)
+- Scope = TMDB mode only; legacy addon-catalog mode untouched (it has no filtering).
+- Curated list row (Movies/TV + Popular/Trending/Top Rated/Now Playing/Upcoming) KEPT as the "content-category tabs"; only the filter-chip row was replaced.
+- Data layer: multi-genre + multi-provider use TMDB `|` (OR); year filter becomes a From/To range (`primary_release_date.gte/.lte`, `first_air_date.gte/.lte`).
+- Language stays SINGLE-select: TMDB `with_original_language` accepts one code only. UI labels it "Single select" rather than shipping a decorative multi-select.
+- Country is single-select with search (spec wording + TMDB single-value origin country).
+- Cast/director filters OMITTED: TMDB supports them (`with_cast`/`with_crew`) but only via person-id resolution (`/search/person`), and they are not in the acceptance criteria. Flagged.
+- Content type is handled by the existing Movies/TV toggle (kept), not duplicated in the sheet.
+- Live count: new `TmdbService.discoverTotal()` returns `total_results`; the sheet debounces 450ms and shows "Show N results", falling back to "Show results" when the total is unavailable (never fabricated).
+
+### Files
+- `lib/services/metadata/tmdb_service.dart`: `_staticLists` +`trending_tv_day`; option caches (`_idNameCache`/`_codeNameCache`/`_stringListCache`) + `clearCache` clears them; `sortOptionsFor` now = Popular/Trending/Top Rated/Newest/Alphabetical (`kTrendingSort` pseudo value); `discover()` reworked to `List<int> genreIds`/`providerIds`, `yearFrom`/`yearTo`; NEW `buildDiscoverQuery()` (@visibleForTesting) + `discoverTotal()`; fetchGenres/fetchWatchProviders/fetchCountries/fetchLanguages/fetchCertifications now cached.
+- `lib/models/discover/discover_filter_state.dart` (NEW): immutable `DiscoverFilterState` (genreIds, minScore, runtime min/max, yearFrom/To, providerIds, language, country, certification) + `activeCount` (counts each category once) + toggle/copyWith/==.
+- `lib/widgets/discover/filter_option_sheet.dart` (NEW): shared `FilterOptionSheet<T>` (moved from discover_page's private `_FilterSheet`); now also pads for keyboard insets.
+- `lib/widgets/discover/advanced_filter_sheet.dart` (NEW): the sheet — drag handle, header (title/subtitle/"N active"/close), Genre (multi + More), Minimum score slider 0–10, Runtime (mutually exclusive), Release year From/To (validates start<=end, disables apply when invalid), Streaming services (multi + More), Language (single + More/searchable), Country (searchable), Certification (collapsible). Fixed action bar: "Reset all" (outlined) + "Show N results" (purple). Pops the applied `DiscoverFilterState`.
+- `lib/pages/discover/discover_page.dart`: filter fields → single `DiscoverFilterState _filters`; sort kept separate as `_sortBy`; `_useDiscover`; `_buildControlBar`/`_barSegment`/`_sortLabel`/`_openSortSheet`/`_openAdvancedFilters`; `_loadTmdbItems` routes trending/list/discover; removed `_buildTmdbFilterRow`, `_filterChip`, per-filter sheets and `_FilterSheet`.
+- Tests: `test/discover_filter_state_test.dart` (9), `test/advanced_filter_sheet_test.dart` (4), `test/tmdb_service_test.dart` (+8 buildDiscoverQuery).
+
+### Verification
+- `flutter analyze` = 33 infos (baseline, 0 errors/warnings); no new issues from the changed files.
+- Targeted tests: 13 + 41 pass. Full `flutter test` = 275 pass / 14 fail (<= pre-existing 16-17 baseline; no new failures).
+
+### Flagged limitations
+- Multi-select language is not possible against TMDB (single `with_original_language`).
+- Cast/director filters not built (need person-search ID resolution; out of acceptance criteria).
+- No interactive visual smoke test (no display in this environment).
