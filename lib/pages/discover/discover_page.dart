@@ -56,7 +56,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   DiscoverFilterState _filters = DiscoverFilterState.empty;
 
   // Sort is kept separate from filtering.
-  String? _sortBy;
+  String? _sortBy = TmdbService.kTrendingSort;
 
   /// True when results must come from `/discover` (filters or an explicit sort).
   bool get _useDiscover => !_filters.isEmpty || _sortBy != null;
@@ -189,7 +189,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       _tmdbType = type;
       _tmdbListId = type == 'movie' ? 'popular_movie' : 'popular_series';
       _filters = DiscoverFilterState.empty;
-      _sortBy = null;
+      _sortBy = TmdbService.kTrendingSort;
     });
     _loadItems(refresh: true);
   }
@@ -794,14 +794,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-  /// Label for the current sort (defaults to "Popular").
+  /// Label for the current sort (defaults to "Trending").
   String get _sortLabel {
     if (_sortBy != null) {
       for (final s in TmdbService.sortOptionsFor(_tmdbType)) {
         if (s.value == _sortBy) return s.label;
       }
     }
-    return 'Popular';
+    return 'Trending';
   }
 
   Future<void> _openSortSheet() async {

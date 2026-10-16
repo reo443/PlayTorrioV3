@@ -535,7 +535,8 @@ class TmdbService {
     };
 
     if (genreIds != null && genreIds.isNotEmpty) {
-      query['with_genres'] = genreIds.join('|');
+      // Comma = AND: results must match *all* selected genres.
+      query['with_genres'] = genreIds.join(',');
     }
     if (yearFrom != null) {
       query[isTv ? 'first_air_date.gte' : 'primary_release_date.gte'] =
@@ -568,6 +569,21 @@ class TmdbService {
 
     return query;
   }
+
+  /// TMDB provider IDs for the curated set of top streaming services, in
+  /// display order.
+  static const List<int> curatedWatchProviderIds = [
+    8, // Netflix
+    9, // Amazon Prime Video
+    1899, // Max
+    337, // Disney+
+    188, // YouTube Premium
+    531, // Paramount+
+    15, // Hulu
+    386, // Peacock
+    350, // Apple TV+
+    283, // Crunchyroll
+  ];
 
   /// Watch providers (streaming services) available in [region].
   static Future<List<({int id, String name})>> fetchWatchProviders(

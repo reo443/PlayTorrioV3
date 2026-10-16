@@ -37,11 +37,6 @@ class AdvancedFilterSheet extends StatefulWidget {
 }
 
 class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
-  static const int _collapsedGenres = 9;
-
-  /// TMDB returns providers ordered by display priority (most popular first).
-  static const int _maxProviders = 20;
-
   late DiscoverFilterState _draft = widget.initial;
 
   late final TextEditingController _yearFromController;
@@ -66,7 +61,6 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   bool _countriesFailed = false;
   bool _languagesFailed = false;
 
-  bool _genresExpanded = false;
   bool _certsExpanded = false;
 
   // Live result count.
@@ -161,10 +155,16 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     try {
       final providers = await TmdbService.fetchWatchProviders(widget.mediaType);
       if (!mounted) return;
+      // Restrict to the curated set of top streaming services, in order.
+      final byId = {for (final p in providers) p.id: p};
+      final curated = [
+        for (final id in TmdbService.curatedWatchProviderIds)
+          if (byId[id] != null) byId[id]!,
+      ];
       setState(() {
-        _providers = providers;
+        _providers = curated;
         _providersLoading = false;
-        _providersFailed = providers.isEmpty;
+        _providersFailed = curated.isEmpty;
       });
     } catch (_) {
       if (!mounted) return;
@@ -384,7 +384,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                           fontSize: 11.5,
                         ),
                       ),
-                      child: _buildLanguageChips(accent),
+                      child: _buildLanguageSelector(accent),
                     ),
                     _divider(),
                     _section(
@@ -606,22 +606,12 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     if (_genresLoading) return _miniLoader();
     if (_genresFailed || _genres.isEmpty) return _unavailable();
 
-    final visible = _genresExpanded
-        ? _genres
-        : _genres.take(_collapsedGenres).toList();
-
     return _chipWrap([
-      for (final g in visible)
+      for (final g in _genres)
         _chip(
           g.name,
           selected: _draft.genreIds.contains(g.id),
           onTap: () => _updateDraft(_draft.toggleGenre(g.id)),
-        ),
-      if (_genres.length > _collapsedGenres)
-        _chip(
-          _genresExpanded ? 'Less' : 'More',
-          selected: false,
-          onTap: () => setState(() => _genresExpanded = !_genresExpanded),
         ),
     ]);
   }
@@ -766,11 +756,8 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     if (_providersLoading) return _miniLoader();
     if (_providersFailed || _providers.isEmpty) return _unavailable();
 
-    // TMDB returns providers ordered by display priority (most popular first).
-    final visible = _providers.take(_maxProviders).toList();
-
     return _chipWrap([
-      for (final p in visible)
+      for (final p in _providers)
         _chip(
           p.name,
           selected: _draft.providerIds.contains(p.id),
@@ -794,39 +781,48 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     (code: 'ar', label: 'Arabic'),
   ];
 
-  Widget _buildLanguageChips(Color accent) {
-    return _chipWrap([
-      for (final l in _commonLanguages)
-        _chip(
-          l.label,
-          selected: _draft.language == l.code,
-          onTap: () => _updateDraft(
-            _draft.language == l.code
-                ? _draft.copyWith(clearLanguage: true)
-                : _draft.copyWith(language: l.code),
-          ),
-        ),
-      _chip(
-        'More',
-        selected: false,
-        onTap: () async {
-          await _ensureLanguages();
-          if (!mounted) return;
-          if (_languagesFailed || _languages.isEmpty) return;
-          final changed = await _pickAndClearable<String>(
-            title: 'Language',
-            options: [
-              for (final l in _languages) (value: l.code, label: l.name),
-            ],
-            selected: _draft.language,
-            searchable: true,
-            onChanged: (v) => _updateDraft(_draft.copyWith(language: v)),
-            onCleared: () => _updateDraft(_draft.copyWith(clearLanguage: true)),
-          );
-          if (changed) setState(() {});
-        },
-      ),
-    ]);
+  Widget _buildLanguageSelector(Color accent) {
+    final code = _draft.language;
+    var label = 'Any language';
+    if (code != null) {
+      label = code;
+      for (final l in _languages) {
+        if (l.code == code) {
+          label = l.name;
+          break;
+        }
+      }
+      if (label == code) {
+        for (final l in _commonLanguages) {
+          if (l.code == code) {
+            label = l.label;
+            break;
+          }
+        }
+      }
+    }
+
+    return _selector(
+      label: label,
+      active: _draft.language != null,
+      accent: accent,
+      onTap: () async {
+        await _ensureLanguages();
+        if (!mounted) return;
+        if (_languagesFailed || _languages.isEmpty) return;
+        final changed = await _pickAndClearable<String>(
+          title: 'Language',
+          options: [
+            for (final l in _languages) (value: l.code, label: l.name),
+          ],
+          selected: _draft.language,
+          searchable: true,
+          onChanged: (v) => _updateDraft(_draft.copyWith(language: v)),
+          onCleared: () => _updateDraft(_draft.copyWith(clearLanguage: true)),
+        );
+        if (changed) setState(() {});
+      },
+    );
   }
 
   Widget _buildCountrySelector(Color accent) {

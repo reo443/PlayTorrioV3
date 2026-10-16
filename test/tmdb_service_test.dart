@@ -276,13 +276,13 @@ void main() {
       expect(q.containsKey('with_genres'), isFalse);
     });
 
-    test('multi-value filters join with pipes (OR)', () {
+    test('genres join with commas (AND), providers with pipes (OR)', () {
       final q = TmdbService.buildDiscoverQuery(
         type: 'movie',
         genreIds: [28, 12],
         providerIds: [8, 337],
       );
-      expect(q['with_genres'], '28|12');
+      expect(q['with_genres'], '28,12');
       expect(q['with_watch_providers'], '8|337');
       expect(q['watch_region'], 'US');
     });
