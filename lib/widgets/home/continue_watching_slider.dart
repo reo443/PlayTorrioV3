@@ -9,9 +9,10 @@ import '../../pages/details/details_page.dart';
 import '../../pages/anime/anime_details_page.dart';
 import '../../pages/anime_arabic/anime_arabic_details_page.dart';
 import '../../services/anime_arabic/anime_arabic_service.dart';
-import '../../utils/navigation/route_transitions.dart';
-import '../../services/theme/app_theme_service.dart';
 import '../../services/continue_watching/continue_watching_service.dart';
+import '../../theme/app_semantic_colors.dart';
+import '../../theme/playtorrio_tokens.dart';
+import '../../utils/navigation/route_transitions.dart';
 import '../common/slider_arrow.dart';
 
 class ContinueWatchingSlider extends StatefulWidget {
@@ -89,7 +90,7 @@ class _ContinueWatchingSliderState extends State<ContinueWatchingSlider> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = AppThemeService.currentPalette.value;
+    final tokens = PlayTorrioTokens.of(context);
     final isDesktop = _isDesktop();
 
     return ValueListenableBuilder<List<ContinueWatchingItem>>(
@@ -134,11 +135,11 @@ class _ContinueWatchingSliderState extends State<ContinueWatchingSlider> {
                       width: 4,
                       height: 18,
                       decoration: BoxDecoration(
-                        color: palette.primaryColor,
+                        color: tokens.accent,
                         borderRadius: BorderRadius.circular(2),
                         boxShadow: [
                           BoxShadow(
-                            color: palette.primaryColor.withValues(alpha: 0.5),
+                            color: tokens.accent.withValues(alpha: 0.5),
                             blurRadius: 8,
                           ),
                         ],
@@ -147,10 +148,10 @@ class _ContinueWatchingSliderState extends State<ContinueWatchingSlider> {
                     const SizedBox(width: 10),
                     Text(
                       widget.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: tokens.textPrimary,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -158,10 +159,10 @@ class _ContinueWatchingSliderState extends State<ContinueWatchingSlider> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: palette.primaryColor.withValues(alpha: 0.15),
+                        color: tokens.accent.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: palette.primaryColor.withValues(alpha: 0.3),
+                          color: tokens.accent.withValues(alpha: 0.3),
                           width: 0.8,
                         ),
                       ),
@@ -170,7 +171,7 @@ class _ContinueWatchingSliderState extends State<ContinueWatchingSlider> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: palette.primaryColor,
+                          color: tokens.accent,
                         ),
                       ),
                     ),
@@ -202,7 +203,6 @@ class _ContinueWatchingSliderState extends State<ContinueWatchingSlider> {
                           return _ContinueWatchingCard(
                             item: item,
                             width: cardWidth,
-                            palette: palette,
                             onTap: () => ContinueWatchingService.resumePlayback(context, item),
                             onRemove: () => ContinueWatchingService.removeItem(item),
                           );
@@ -253,14 +253,12 @@ class _ContinueWatchingSliderState extends State<ContinueWatchingSlider> {
 class _ContinueWatchingCard extends StatefulWidget {
   final ContinueWatchingItem item;
   final double width;
-  final AppThemePalette palette;
   final VoidCallback onTap;
   final VoidCallback onRemove;
 
   const _ContinueWatchingCard({
     required this.item,
     required this.width,
-    required this.palette,
     required this.onTap,
     required this.onRemove,
   });
@@ -344,6 +342,7 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
+    final tokens = PlayTorrioTokens.of(context);
     final imgHeight = widget.width * 0.58;
     final progress = item.progressPercent;
     final imageUrl = item.backdropUrl ?? item.posterUrl;
@@ -359,18 +358,18 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
           transform: _isHovered ? Matrix4.diagonal3Values(1.02, 1.02, 1.0) : Matrix4.identity(),
           transformAlignment: Alignment.center,
           decoration: BoxDecoration(
-            color: const Color(0xFF13151F).withValues(alpha: 0.75),
+            color: tokens.surface.withValues(alpha: 0.75),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: _isHovered
-                  ? widget.palette.primaryColor.withValues(alpha: 0.5)
-                  : Colors.white.withValues(alpha: 0.08),
+                  ? tokens.accent.withValues(alpha: 0.5)
+                  : tokens.borderSubtle,
               width: _isHovered ? 1.4 : 1.0,
             ),
             boxShadow: _isHovered
                 ? [
                     BoxShadow(
-                      color: widget.palette.primaryColor.withValues(alpha: 0.18),
+                      color: tokens.accent.withValues(alpha: 0.18),
                       blurRadius: 18,
                       offset: const Offset(0, 4),
                     ),
@@ -388,14 +387,14 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                     Container(
                       width: widget.width,
                       height: imgHeight,
-                      color: const Color(0xFF1E212E),
+                      color: tokens.surfaceElevated,
                       child: imageUrl != null && imageUrl.isNotEmpty
                           ? CachedNetworkImage(
                               imageUrl: imageUrl,
                               fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => _buildPlaceholder(),
+                              errorWidget: (_, __, ___) => _buildPlaceholder(context),
                             )
-                          : _buildPlaceholder(),
+                          : _buildPlaceholder(context),
                     ),
 
                     // Gradient overlay
@@ -407,7 +406,7 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withValues(alpha: 0.6),
+                              tokens.bgPrimary.withValues(alpha: 0.6),
                             ],
                           ),
                         ),
@@ -428,17 +427,17 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                               height: 44,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: widget.palette.primaryColor,
+                                color: tokens.accent,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: widget.palette.primaryColor.withValues(alpha: 0.5),
+                                    color: tokens.accent.withValues(alpha: 0.5),
                                     blurRadius: 14,
                                   ),
                                 ],
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.play_arrow_rounded,
-                                color: Colors.white,
+                                color: tokens.textPrimary,
                                 size: 28,
                               ),
                             ),
@@ -464,16 +463,16 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.black.withValues(alpha: 0.75),
+                                    color: tokens.bgPrimary.withValues(alpha: 0.75),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.25),
+                                      color: tokens.textPrimary.withValues(alpha: 0.25),
                                       width: 0.8,
                                     ),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.info_outline_rounded,
                                     size: 14,
-                                    color: Colors.white,
+                                    color: tokens.textPrimary,
                                   ),
                                 ),
                               ),
@@ -488,16 +487,16 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.black.withValues(alpha: 0.75),
+                                    color: tokens.bgPrimary.withValues(alpha: 0.75),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.25),
+                                      color: tokens.textPrimary.withValues(alpha: 0.25),
                                       width: 0.8,
                                     ),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.close_rounded,
                                     size: 14,
-                                    color: Colors.white,
+                                    color: tokens.textPrimary,
                                   ),
                                 ),
                               ),
@@ -513,10 +512,10 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.65),
+                          color: tokens.bgPrimary.withValues(alpha: 0.65),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.15),
+                            color: tokens.textPrimary.withValues(alpha: 0.15),
                             width: 0.6,
                           ),
                         ),
@@ -526,15 +525,17 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                             Icon(
                               item.isTorrent ? Icons.cloud_download_rounded : Icons.link_rounded,
                               size: 10,
-                              color: item.isTorrent ? const Color(0xFF00E5FF) : const Color(0xFF10B981),
+                              color: item.isTorrent
+                                  ? AppSemanticColors.downloadActive
+                                  : AppSemanticColors.success,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               item.addonName ?? (item.isTorrent ? 'Torrent' : 'Stream'),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white,
+                                color: tokens.textPrimary,
                               ),
                             ),
                           ],
@@ -549,17 +550,17 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.75),
+                          color: tokens.bgPrimary.withValues(alpha: 0.75),
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Text(
                           item.remainingMinutes > 0
                               ? '${item.remainingMinutes}m left'
                               : '${(progress * 100).toInt()}%',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: tokens.textPrimary,
                           ),
                         ),
                       ),
@@ -572,16 +573,16 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                       bottom: 0,
                       child: Container(
                         height: 3.5,
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: tokens.textPrimary.withValues(alpha: 0.15),
                         alignment: Alignment.centerLeft,
                         child: FractionallySizedBox(
                           widthFactor: progress,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: widget.palette.primaryColor,
+                              color: tokens.accent,
                               boxShadow: [
                                 BoxShadow(
-                                  color: widget.palette.primaryColor.withValues(alpha: 0.6),
+                                  color: tokens.accent.withValues(alpha: 0.6),
                                   blurRadius: 4,
                                 ),
                               ],
@@ -604,10 +605,10 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                         item.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: tokens.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -620,7 +621,7 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.55),
+                          color: tokens.textSecondary,
                         ),
                       ),
                     ],
@@ -634,11 +635,12 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     return Container(
-      color: const Color(0xFF1A1D27),
-      child: const Center(
-        child: Icon(Icons.movie_rounded, color: Colors.white24, size: 36),
+      color: tokens.surfaceElevated,
+      child: Center(
+        child: Icon(Icons.movie_rounded, color: tokens.textTertiary, size: 36),
       ),
     );
   }
