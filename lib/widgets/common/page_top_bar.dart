@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/app_radii.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/playtorrio_tokens.dart';
+
 /// The single consistent top bar used across all pages: glass gradient,
 /// logo + "PlayTorrio <Section>" title, search, and an optional filter
 /// button with an active-count badge.
@@ -20,7 +25,7 @@ class PageTopBar extends StatelessWidget {
   final Widget? searchField;
 
   /// Filter button — hidden when null. Shows a count badge and turns
-  /// purple when [filterCount] > 0.
+  /// accent-coloured when [filterCount] > 0.
   final VoidCallback? onFilterTap;
   final int filterCount;
 
@@ -44,22 +49,28 @@ class PageTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).colorScheme.brightness == Brightness.dark
-        ? const Color(0xFF7C5CFF)
-        : const Color(0xFF7C5CFF);
+    final tokens = PlayTorrioTokens.of(context);
     final isNarrow = MediaQuery.sizeOf(context).width < 430;
 
     return RepaintBoundary(
       child: Container(
-        padding: EdgeInsets.only(top: topPadding + 2, bottom: 6, left: 12, right: 6),
+        padding: EdgeInsets.only(
+          top: topPadding + 2,
+          bottom: 6,
+          left: AppSpacing.md,
+          right: 6,
+        ),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xF5080A0F), Color(0xE6080A0F)],
+            colors: [
+              tokens.bgPrimary.withValues(alpha: 0.96),
+              tokens.bgPrimary.withValues(alpha: 0.90),
+            ],
           ),
           border: Border(
-            bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+            bottom: BorderSide(color: tokens.borderSubtle),
           ),
         ),
         child: Row(
@@ -67,11 +78,15 @@ class PageTopBar extends StatelessWidget {
             if (showBack) ...[
               IconButton(
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.arrow_back_ios_rounded, size: 17, color: Colors.white),
+                icon: Icon(
+                  Icons.arrow_back_ios_rounded,
+                  size: 17,
+                  color: tokens.textPrimary,
+                ),
                 tooltip: 'Back',
                 onPressed: onBackTap ?? () => Navigator.of(context).maybePop(),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.xs),
             ],
 
             if (isSearching && searchField != null)
@@ -91,18 +106,18 @@ class PageTopBar extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     text: TextSpan(
                       text: 'PlayTorrio ',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -0.3,
-                        color: Colors.white,
+                        color: tokens.textPrimary,
                       ),
                       children: [
                         if (title != null)
                           TextSpan(
                             text: title!,
                             style: TextStyle(
-                              color: palette,
+                              color: tokens.accent,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
@@ -117,7 +132,7 @@ class PageTopBar extends StatelessWidget {
             ...trailing,
 
             if (onFilterTap != null) ...[
-              _buildFilterButton(context),
+              _buildFilterButton(context, tokens),
               const SizedBox(width: 6),
             ],
 
@@ -126,7 +141,7 @@ class PageTopBar extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 icon: Icon(
                   isSearching ? Icons.close_rounded : Icons.search_rounded,
-                  color: Colors.white.withValues(alpha: 0.75),
+                  color: tokens.textPrimary.withValues(alpha: 0.75),
                   size: 21,
                 ),
                 tooltip: isSearching ? 'Close search' : 'Search',
@@ -139,7 +154,7 @@ class PageTopBar extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterButton(BuildContext context) {
+  Widget _buildFilterButton(BuildContext context, PlayTorrioTokens tokens) {
     final isActive = filterCount > 0;
 
     return GestureDetector(
@@ -149,14 +164,10 @@ class PageTopBar extends StatelessWidget {
         height: 32,
         width: 32,
         decoration: BoxDecoration(
-          color: isActive
-              ? const Color(0xFF7C5CFF)
-              : Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10),
+          color: isActive ? tokens.accent : tokens.surfaceElevated,
+          borderRadius: AppRadii.roundedButton,
           border: Border.all(
-            color: isActive
-                ? const Color(0xFF7C5CFF)
-                : Colors.white.withValues(alpha: 0.1),
+            color: isActive ? tokens.accent : tokens.borderSubtle,
           ),
         ),
         child: Stack(
@@ -165,7 +176,7 @@ class PageTopBar extends StatelessWidget {
               child: Icon(
                 Icons.tune_rounded,
                 size: 16,
-                color: isActive ? Colors.white : Colors.white70,
+                color: isActive ? tokens.onAccent : tokens.textSecondary,
               ),
             ),
             if (isActive)
@@ -173,17 +184,19 @@ class PageTopBar extends StatelessWidget {
                 top: 2,
                 right: 2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 3.5, vertical: 0.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 3.5,
+                    vertical: 0.5,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(7),
+                    color: tokens.onAccent,
+                    borderRadius: AppRadii.roundedBadge,
                   ),
                   child: Text(
                     '$filterCount',
-                    style: const TextStyle(
+                    style: AppTypography.badge.copyWith(
                       fontSize: 8.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF7C5CFF),
+                      color: tokens.accent,
                     ),
                   ),
                 ),
