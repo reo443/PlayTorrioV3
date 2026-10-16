@@ -39,11 +39,11 @@ void main() {
 
   testWidgets('the calendar chip takes its icon from the palette accent', (tester) async {
     final last = AppThemeService.palettes.last;
-    // The chip plus the "See All" button need ~420px, so this is measured at a
-    // width where both fit. (At 360 the header's title column collapses and the
-    // title wraps character-by-character — a pre-existing fragility in
-    // SectionHeader, not something this migration changes. The flag currently
-    // has no callers.)
+    // Measured at 500px because flutter_test's fallback font is ~1em per glyph,
+    // so text is far wider than with Poppins (the chip measures 139px here vs
+    // ~99px real). The header Row gives the title no flex, so a very long title
+    // would still overflow — flagged, not changed here. (This flag has no
+    // callers today.)
     await tester.pumpWidget(
       host(
         MovieSliderSection(section: _section(), showCalendarButton: true),
