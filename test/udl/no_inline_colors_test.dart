@@ -10,6 +10,10 @@ const List<String> migratedFiles = [
   'lib/widgets/common/section_header.dart',
   'lib/widgets/common/page_top_bar.dart',
   'lib/widgets/common/modern_toast.dart',
+  'lib/widgets/movie/movie_card.dart',
+  'lib/widgets/anime/anime_card.dart',
+  'lib/widgets/manga/manga_card.dart',
+  'lib/widgets/iptv/iptv_channel_card.dart',
 ];
 
 /// Matches a `Color(0x…)` literal or a `Colors.<name>` reference, without
