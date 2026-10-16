@@ -152,6 +152,10 @@ class AppSearchField extends StatelessWidget {
                   tooltip: 'Clear',
                   onPressed: () {
                     activeController.clear();
+                    // Clearing the controller does not run onChanged (that
+                    // only fires for user edits), so a search driven by
+                    // onChanged would otherwise keep showing stale results.
+                    onChanged?.call('');
                     onClear?.call();
                   },
                 );

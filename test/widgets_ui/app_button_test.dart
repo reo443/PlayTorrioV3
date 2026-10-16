@@ -113,4 +113,21 @@ void main() {
     expect(find.bySemanticsLabel('Search'), findsOneWidget);
     handle.dispose();
   });
+
+  testWidgets('renders a trailing icon alongside a leading icon', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      host(
+        AppButton(
+          label: 'Play',
+          icon: Icons.play_arrow,
+          trailingIcon: Icons.chevron_right,
+          onPressed: () {},
+        ),
+      ),
+    );
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+  });
 }

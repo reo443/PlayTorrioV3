@@ -111,7 +111,7 @@ class AppButton extends StatelessWidget {
             style: AppTypography.label.copyWith(color: foreground),
           ),
         ),
-        if (trailingIcon != null && !loading && icon == null) ...[
+        if (trailingIcon != null) ...[
           const SizedBox(width: AppSpacing.sm),
           Icon(trailingIcon, size: 18, color: foreground),
         ],

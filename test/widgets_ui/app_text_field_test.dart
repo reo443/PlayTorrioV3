@@ -42,4 +42,25 @@ void main() {
     await tester.pump();
     expect(find.byIcon(Icons.close_rounded), findsOneWidget);
   });
+
+  testWidgets('clearing notifies onChanged with an empty value', (
+    tester,
+  ) async {
+    // A search driven by onChanged must reset when the clear button is used;
+    // clearing the controller alone does not call onChanged.
+    final values = <String>[];
+    await tester.pumpWidget(
+      host(
+        AppSearchField(
+          controller: TextEditingController(),
+          onChanged: values.add,
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), 'dune');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pump();
+    expect(values.last, '');
+  });
 }

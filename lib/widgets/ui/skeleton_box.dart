@@ -25,22 +25,26 @@ class SkeletonBox extends StatefulWidget {
 class _SkeletonBoxState extends State<SkeletonBox>
     with SingleTickerProviderStateMixin {
   AnimationController? _controller;
+  bool _reduced = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final reduced =
-        AppMotion.reduce(context, AppMotion.standard) == Duration.zero;
-    if (reduced) {
+    // MediaQuery can change while this box is mounted (the user turning
+    // reduced motion on, then off), and SingleTickerProviderStateMixin permits
+    // exactly one ticker for the State's whole life. So the controller is
+    // created at most once and then started/stopped - never disposed and
+    // rebuilt, which would trip that mixin's debug assertion.
+    _reduced = AppMotion.reduce(context, AppMotion.standard) == Duration.zero;
+    if (_reduced) {
       _controller?.stop();
-      _controller?.dispose();
-      _controller = null;
       return;
     }
-    _controller ??= AnimationController(
+    final controller = _controller ??= AnimationController(
       vsync: this,
       duration: AppMotion.standard,
-    )..repeat(reverse: true);
+    );
+    if (!controller.isAnimating) controller.repeat(reverse: true);
   }
 
   @override
@@ -67,7 +71,7 @@ class _SkeletonBoxState extends State<SkeletonBox>
     );
 
     final controller = _controller;
-    if (controller == null) return box;
+    if (_reduced || controller == null) return box;
 
     return FadeTransition(
       opacity: Tween<double>(begin: 0.35, end: 1).animate(controller),

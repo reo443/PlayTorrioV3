@@ -60,4 +60,25 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.byType(SkeletonBox), findsOneWidget);
   });
+
+  testWidgets('reduced motion toggled while mounted does not create a second ticker', (
+    tester,
+  ) async {
+    // MediaQuery can change while a skeleton is on screen (the user turning
+    // reduced motion on, then off). SingleTickerProviderStateMixin allows
+    // exactly one ticker for the State's lifetime, so the state must not
+    // dispose and rebuild its controller.
+    await tester.pumpWidget(host(const SkeletonBox(width: 100, height: 150)));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.pumpWidget(
+      host(const SkeletonBox(width: 100, height: 150), disableAnimations: true),
+    );
+    expect(tester.takeException(), isNull);
+    expect(tester.hasRunningAnimations, isFalse);
+
+    await tester.pumpWidget(host(const SkeletonBox(width: 100, height: 150)));
+    expect(tester.takeException(), isNull);
+    expect(tester.hasRunningAnimations, isTrue);
+  });
 }
