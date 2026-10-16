@@ -2,6 +2,11 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+import '../../theme/app_elevation.dart';
+import '../../theme/app_semantic_colors.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/playtorrio_tokens.dart';
+
 enum ToastType { info, success, error }
 
 /// Lightweight, modern floating toast that replaces ScaffoldMessenger
@@ -145,22 +150,15 @@ class _ToastOverlayState extends State<_ToastOverlay>
   }
 
   Widget _buildGlassPill(BuildContext context) {
-    final (icon, iconColor, iconBg) = switch (widget.type) {
+    final tokens = PlayTorrioTokens.of(context);
+
+    final (IconData icon, Color tone) = switch (widget.type) {
       ToastType.success => (
         Icons.check_circle_rounded,
-        const Color(0xFF10B981),
-        const Color(0xFF10B981),
+        AppSemanticColors.success,
       ),
-      ToastType.error => (
-        Icons.cancel_rounded,
-        const Color(0xFFF4436C),
-        const Color(0xFFF4436C),
-      ),
-      ToastType.info => (
-        Icons.subtitles_rounded,
-        const Color(0xFF9D85FF),
-        const Color(0xFF7C5CFF),
-      ),
+      ToastType.error => (Icons.cancel_rounded, AppSemanticColors.error),
+      ToastType.info => (Icons.subtitles_rounded, tokens.accent),
     };
 
     return ClipRRect(
@@ -170,16 +168,10 @@ class _ToastOverlayState extends State<_ToastOverlay>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: const Color(0xCC12151E),
+            color: tokens.surface.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.45),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            border: Border.all(color: tokens.borderStrong),
+            boxShadow: const [AppElevation.shadowMd],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -188,10 +180,10 @@ class _ToastOverlayState extends State<_ToastOverlay>
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: iconBg.withValues(alpha: 0.16),
+                  color: tone.withValues(alpha: 0.16),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: iconColor, size: 18),
+                child: Icon(icon, color: tone, size: 18),
               ),
               const SizedBox(width: 12),
               Flexible(
@@ -199,10 +191,8 @@ class _ToastOverlayState extends State<_ToastOverlay>
                   widget.message,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
+                  style: AppTypography.bodyStrong.copyWith(
+                    color: tokens.textPrimary,
                     height: 1.25,
                   ),
                 ),
