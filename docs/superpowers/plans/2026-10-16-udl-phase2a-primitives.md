@@ -436,7 +436,10 @@ testWidgets('is static when animations are disabled', (tester) async {
 testWidgets('animates when animations are enabled', (tester) async {
   await tester.pumpWidget(host(const SkeletonBox(width: 100, height: 150)));
   expect(tester.hasRunningAnimations, isTrue);
-  await tester.pumpAndSettle(const Duration(seconds: 3));
+  // A repeating animation never settles, so pump a fixed slice instead of
+  // pumpAndSettle (which would time out here).
+  await tester.pump(const Duration(milliseconds: 200));
+  expect(find.byType(SkeletonBox), findsOneWidget);
 });
 ```
 
