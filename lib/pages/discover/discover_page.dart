@@ -194,16 +194,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     _loadItems(refresh: true);
   }
 
-  void _selectTmdbList(String listId) {
-    if (_tmdbListId == listId && !_useDiscover) return;
-    setState(() {
-      _tmdbListId = listId;
-      _filters = DiscoverFilterState.empty;
-      _sortBy = null;
-    });
-    _loadItems(refresh: true);
-  }
-
   /// Applies a new filter set and reloads results from page 1.
   void _applyFilters(DiscoverFilterState next) {
     setState(() => _filters = next);
@@ -626,8 +616,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
       return Column(
         children: [
           SizedBox(height: topOffset),
-          _buildTmdbListRow(palette),
-          const SizedBox(height: 6),
           _buildControlBar(palette),
           const SizedBox(height: 6),
           Expanded(child: grid),
@@ -638,62 +626,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     return grid;
   }
 
-  /// Type toggle (Movies / TV) + curated TMDB list chips.
-  Widget _buildTmdbListRow(AppThemePalette palette) {
-    final lists = _tmdbType == 'movie'
-        ? const [
-            (listId: 'popular_movie', label: 'Popular'),
-            (listId: 'trending_day', label: 'Trending'),
-            (listId: 'top_rated_movie', label: 'Top Rated'),
-            (listId: 'now_playing', label: 'Now Playing'),
-            (listId: 'upcoming', label: 'Upcoming'),
-          ]
-        : const [
-            (listId: 'popular_series', label: 'Popular'),
-            (listId: 'top_rated_series', label: 'Top Rated'),
-          ];
-
-    final chips = <Widget>[
-      _pill(
-        label: 'Movies',
-        selected: _tmdbType == 'movie',
-        palette: palette,
-        onTap: () => _setTmdbType('movie'),
-      ),
-      _pill(
-        label: 'TV Shows',
-        selected: _tmdbType == 'series',
-        palette: palette,
-        onTap: () => _setTmdbType('series'),
-      ),
-      Container(
-        width: 1,
-        height: 22,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        color: Colors.white.withValues(alpha: 0.12),
-      ),
-      for (final l in lists)
-        _pill(
-          label: l.label,
-          selected: !_useDiscover && _tmdbListId == l.listId,
-          palette: palette,
-          onTap: () => _selectTmdbList(l.listId),
-        ),
-    ];
-
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: chips.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) => chips[index],
-      ),
-    );
-  }
-
-  /// Unified Sort + Filters control bar (replaces the old filter-chip row).
+  /// Unified control bar: Movies/TV toggle + Sort + Filters.
   Widget _buildControlBar(AppThemePalette palette) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -706,101 +639,95 @@ class _DiscoverPageState extends State<DiscoverPage> {
         ),
         child: Row(
           children: [
-            Expanded(
-              child: _barSegment(
-                icon: Icons.sort_rounded,
-                label: _sortLabel,
-                palette: palette,
-                onTap: _openSortSheet,
-              ),
+            const SizedBox(width: 4),
+            _typeToggle(palette),
+            const Spacer(),
+            _barSegment(
+              icon: Icons.sort_rounded,
+              tooltip: 'Sort: $_sortLabel',
+              palette: palette,
+              onTap: _openSortSheet,
             ),
-            Container(
-              width: 1,
-              height: 26,
-              color: Colors.white.withValues(alpha: 0.1),
+            _barDivider(),
+            _barSegment(
+              icon: Icons.tune_rounded,
+              tooltip: 'Filters',
+              palette: palette,
+              badge: _filters.activeCount,
+              onTap: _openAdvancedFilters,
             ),
-            Expanded(
-              child: _barSegment(
-                icon: Icons.tune_rounded,
-                label: 'Filters',
-                palette: palette,
-                badge: _filters.activeCount,
-                trailingChevron: true,
-                onTap: _openAdvancedFilters,
-              ),
-            ),
+            const SizedBox(width: 2),
           ],
         ),
       ),
     );
   }
 
-  Widget _barSegment({
+  Widget _barDivider() => Container(
+        width: 1,
+        height: 26,
+        color: Colors.white.withValues(alpha: 0.1),
+      );
+
+  /// Compact icon-only Movies / TV segmented toggle.
+  Widget _typeToggle(AppThemePalette palette) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _typeChip(
+          icon: Icons.movie_rounded,
+          label: 'Movies',
+          selected: _tmdbType == 'movie',
+          palette: palette,
+          onTap: () => _setTmdbType('movie'),
+        ),
+        const SizedBox(width: 4),
+        _typeChip(
+          icon: Icons.tv_rounded,
+          label: 'TV',
+          selected: _tmdbType == 'series',
+          palette: palette,
+          onTap: () => _setTmdbType('series'),
+        ),
+      ],
+    );
+  }
+
+  Widget _typeChip({
     required IconData icon,
     required String label,
+    required bool selected,
     required AppThemePalette palette,
     required VoidCallback onTap,
-    int badge = 0,
-    bool trailingChevron = false,
   }) {
     return Semantics(
       button: true,
+      selected: selected,
       label: label,
       child: Material(
         type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 17,
-                  color: Colors.white.withValues(alpha: 0.7),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                if (badge > 0) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: palette.primaryColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '$badge',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                Icon(
-                  trailingChevron
-                      ? Icons.chevron_right_rounded
-                      : Icons.arrow_drop_down_rounded,
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-              ],
+        child: Tooltip(
+          message: label,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              width: 40,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected
+                    ? palette.primaryColor
+                    : Colors.white.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                icon,
+                size: 19,
+                color: selected
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.7),
+              ),
             ),
           ),
         ),
@@ -808,27 +735,76 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-  /// Label for the current sort (falls back to the active curated list name).
+  Widget _barSegment({
+    required IconData icon,
+    required String tooltip,
+    required AppThemePalette palette,
+    required VoidCallback onTap,
+    int badge = 0,
+  }) {
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Tooltip(
+          message: tooltip,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(14),
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: 19,
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
+                  if (badge > 0)
+                    Positioned(
+                      top: 7,
+                      right: 7,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 1,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16),
+                        decoration: BoxDecoration(
+                          color: palette.primaryColor,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$badge',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Label for the current sort (defaults to "Popular").
   String get _sortLabel {
     if (_sortBy != null) {
       for (final s in TmdbService.sortOptionsFor(_tmdbType)) {
         if (s.value == _sortBy) return s.label;
       }
     }
-    switch (_tmdbListId) {
-      case 'trending_day':
-      case 'trending_tv_day':
-        return 'Trending';
-      case 'top_rated_movie':
-      case 'top_rated_series':
-        return 'Top Rated';
-      case 'now_playing':
-        return 'Now Playing';
-      case 'upcoming':
-        return 'Upcoming';
-      default:
-        return 'Popular';
-    }
+    return 'Popular';
   }
 
   Future<void> _openSortSheet() async {
@@ -880,42 +856,6 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
     if (result == null) return;
     _applyFilters(result);
-  }
-
-  Widget _pill({
-    required String label,
-    required bool selected,
-    required AppThemePalette palette,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? palette.primaryColor
-              : Colors.white.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected
-                ? palette.primaryColor
-                : Colors.white.withValues(alpha: 0.1),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected
-                ? Colors.white
-                : Colors.white.withValues(alpha: 0.7),
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildRequiredExtraGatingPrompt(double topOffset) {

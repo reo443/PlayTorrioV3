@@ -95,4 +95,39 @@ void main() {
     expect(find.text('1 active'), findsNothing);
     await tester.pump(const Duration(milliseconds: 600));
   });
+
+  testWidgets('release year uses text fields and validates the range', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        AdvancedFilterSheet(
+          mediaType: 'movie',
+          initial: DiscoverFilterState.empty,
+          countResults: (_) async => null,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    final yearFields = find.byType(TextField);
+    expect(yearFields, findsNWidgets(2));
+
+    await tester.enterText(yearFields.at(0), '2001');
+    await tester.pump();
+    await tester.enterText(yearFields.at(1), '1999');
+    await tester.pump();
+
+    expect(find.text('Start year is after end year'), findsOneWidget);
+
+    await tester.enterText(yearFields.at(1), '2010');
+    await tester.pump();
+
+    expect(find.text('Start year is after end year'), findsNothing);
+
+    // A year range counts as a single active category.
+    expect(find.text('1 active'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
 }

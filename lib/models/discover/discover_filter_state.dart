@@ -92,6 +92,8 @@ class DiscoverFilterState {
     String? certification,
     bool clearRuntime = false,
     bool clearYears = false,
+    bool clearYearFrom = false,
+    bool clearYearTo = false,
     bool clearLanguage = false,
     bool clearCountry = false,
     bool clearCertification = false,
@@ -101,8 +103,10 @@ class DiscoverFilterState {
       minScore: minScore ?? this.minScore,
       minRuntime: clearRuntime ? null : (minRuntime ?? this.minRuntime),
       maxRuntime: clearRuntime ? null : (maxRuntime ?? this.maxRuntime),
-      yearFrom: clearYears ? null : (yearFrom ?? this.yearFrom),
-      yearTo: clearYears ? null : (yearTo ?? this.yearTo),
+      yearFrom: (clearYears || clearYearFrom)
+          ? null
+          : (yearFrom ?? this.yearFrom),
+      yearTo: (clearYears || clearYearTo) ? null : (yearTo ?? this.yearTo),
       providerIds: providerIds ?? this.providerIds,
       language: clearLanguage ? null : (language ?? this.language),
       country: clearCountry ? null : (country ?? this.country),

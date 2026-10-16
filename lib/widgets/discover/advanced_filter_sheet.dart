@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/discover/discover_filter_state.dart';
 import '../../services/metadata/tmdb_service.dart';
@@ -37,9 +38,14 @@ class AdvancedFilterSheet extends StatefulWidget {
 
 class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   static const int _collapsedGenres = 9;
-  static const int _collapsedProviders = 12;
+
+  /// TMDB returns providers ordered by display priority (most popular first).
+  static const int _maxProviders = 20;
 
   late DiscoverFilterState _draft = widget.initial;
+
+  late final TextEditingController _yearFromController;
+  late final TextEditingController _yearToController;
 
   // Option lists (loaded from TMDB).
   List<({int id, String name})> _genres = const [];
@@ -61,7 +67,6 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   bool _languagesFailed = false;
 
   bool _genresExpanded = false;
-  bool _providersExpanded = false;
   bool _certsExpanded = false;
 
   // Live result count.
@@ -69,14 +74,17 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   bool _counting = false;
   Timer? _countDebounce;
 
-  bool get _yearRangeValid =>
-      _draft.yearFrom == null ||
-      _draft.yearTo == null ||
-      _draft.yearFrom! <= _draft.yearTo!;
+  static int get _maxYear => DateTime.now().year + 10;
 
   @override
   void initState() {
     super.initState();
+    _yearFromController = TextEditingController(
+      text: widget.initial.yearFrom?.toString() ?? '',
+    );
+    _yearToController = TextEditingController(
+      text: widget.initial.yearTo?.toString() ?? '',
+    );
     _loadCoreOptions();
     _scheduleCount();
   }
@@ -84,7 +92,53 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   @override
   void dispose() {
     _countDebounce?.cancel();
+    _yearFromController.dispose();
+    _yearToController.dispose();
     super.dispose();
+  }
+
+  /// Parses a 4-digit year within `1900.._maxYear`, else null.
+  int? _parseYear(String text) {
+    final trimmed = text.trim();
+    if (trimmed.length != 4) return null;
+    final year = int.tryParse(trimmed);
+    if (year == null || year < 1900 || year > _maxYear) return null;
+    return year;
+  }
+
+  bool _yearFieldInvalid(TextEditingController controller) {
+    final text = controller.text.trim();
+    return text.isNotEmpty && _parseYear(text) == null;
+  }
+
+  /// Whether both year inputs are valid and ordered.
+  bool get _yearsOk {
+    if (_yearFieldInvalid(_yearFromController)) return false;
+    if (_yearFieldInvalid(_yearToController)) return false;
+    final from = _parseYear(_yearFromController.text);
+    final to = _parseYear(_yearToController.text);
+    if (from != null && to != null && from > to) return false;
+    return true;
+  }
+
+  void _onYearChanged({required bool isFrom}) {
+    final controller = isFrom ? _yearFromController : _yearToController;
+    final raw = controller.text.trim();
+    setState(() {
+      if (raw.isEmpty) {
+        _draft = isFrom
+            ? _draft.copyWith(clearYearFrom: true)
+            : _draft.copyWith(clearYearTo: true);
+      } else {
+        final year = _parseYear(raw);
+        if (year != null) {
+          _draft = isFrom
+              ? _draft.copyWith(yearFrom: year)
+              : _draft.copyWith(yearTo: year);
+        }
+      }
+    });
+    if (raw.isEmpty || _parseYear(raw) != null) _scheduleCount();
   }
 
   Future<void> _loadCoreOptions() async {
@@ -185,6 +239,13 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
 
   void _scheduleCount() {
     _countDebounce?.cancel();
+    if (!_yearsOk) {
+      setState(() {
+        _counting = false;
+        _count = null;
+      });
+      return;
+    }
     setState(() => _counting = true);
     _countDebounce = Timer(const Duration(milliseconds: 450), _refreshCount);
   }
@@ -205,6 +266,8 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   }
 
   void _resetAll() {
+    _yearFromController.clear();
+    _yearToController.clear();
     _updateDraft(DiscoverFilterState.empty);
   }
 
@@ -302,15 +365,6 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                     _section(
                       icon: Icons.calendar_today_rounded,
                       label: 'Release year',
-                      trailing: _yearRangeValid
-                          ? null
-                          : Text(
-                              'Start year is after end year',
-                              style: TextStyle(
-                                color: Colors.redAccent.withValues(alpha: 0.9),
-                                fontSize: 11.5,
-                              ),
-                            ),
                       child: _buildYearRange(accent),
                     ),
                     _divider(),
@@ -626,56 +680,85 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   }
 
   Widget _buildYearRange(Color accent) {
-    final fromLabel = _draft.yearFrom == null ? 'From' : '${_draft.yearFrom}';
-    final toLabel = _draft.yearTo == null ? 'To' : '${_draft.yearTo}';
-    return Row(
+    final from = _parseYear(_yearFromController.text);
+    final to = _parseYear(_yearToController.text);
+    final rangeError = (from != null && to != null && from > to)
+        ? 'Start year is after end year'
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _selector(
-            label: fromLabel,
-            active: _draft.yearFrom != null,
-            accent: accent,
-            onTap: () async {
-              final changed = await _pickAndClearable<int>(
-                title: 'From year',
-                options: [
-                  for (final y in TmdbService.yearOptions)
-                    (value: y, label: '$y'),
-                ],
-                selected: _draft.yearFrom,
-                searchable: true,
-                onChanged: (v) => _updateDraft(_draft.copyWith(yearFrom: v)),
-                onCleared: () =>
-                    _updateDraft(_draft.copyWith(clearYears: true)),
-              );
-              if (changed) setState(() {});
-            },
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _yearField(
+                controller: _yearFromController,
+                hint: 'From',
+                accent: accent,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _yearField(
+                controller: _yearToController,
+                hint: 'To',
+                accent: accent,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _selector(
-            label: toLabel,
-            active: _draft.yearTo != null,
-            accent: accent,
-            onTap: () async {
-              final changed = await _pickAndClearable<int>(
-                title: 'To year',
-                options: [
-                  for (final y in TmdbService.yearOptions)
-                    (value: y, label: '$y'),
-                ],
-                selected: _draft.yearTo,
-                searchable: true,
-                onChanged: (v) => _updateDraft(_draft.copyWith(yearTo: v)),
-                onCleared: () =>
-                    _updateDraft(_draft.copyWith(clearYears: true)),
-              );
-              if (changed) setState(() {});
-            },
+        if (rangeError != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            rangeError,
+            style: TextStyle(
+              color: Colors.redAccent.withValues(alpha: 0.9),
+              fontSize: 11.5,
+            ),
           ),
-        ),
+        ],
       ],
+    );
+  }
+
+  Widget _yearField({
+    required TextEditingController controller,
+    required String hint,
+    required Color accent,
+  }) {
+    final invalid = _yearFieldInvalid(controller);
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(4),
+      ],
+      style: const TextStyle(color: Colors.white, fontSize: 14),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.05),
+        isDense: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: invalid
+                ? Colors.redAccent.withValues(alpha: 0.7)
+                : Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: accent),
+        ),
+      ),
+      onChanged: (_) =>
+          _onYearChanged(isFrom: controller == _yearFromController),
     );
   }
 
@@ -683,9 +766,8 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     if (_providersLoading) return _miniLoader();
     if (_providersFailed || _providers.isEmpty) return _unavailable();
 
-    final visible = _providersExpanded
-        ? _providers
-        : _providers.take(_collapsedProviders).toList();
+    // TMDB returns providers ordered by display priority (most popular first).
+    final visible = _providers.take(_maxProviders).toList();
 
     return _chipWrap([
       for (final p in visible)
@@ -693,12 +775,6 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
           p.name,
           selected: _draft.providerIds.contains(p.id),
           onTap: () => _updateDraft(_draft.toggleProvider(p.id)),
-        ),
-      if (_providers.length > _collapsedProviders)
-        _chip(
-          _providersExpanded ? 'Less' : 'More',
-          selected: false,
-          onTap: () => setState(() => _providersExpanded = !_providersExpanded),
         ),
     ]);
   }
@@ -906,7 +982,10 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   // ── Action bar ───────────────────────────────────────────────────────────
 
   Widget _buildActionBar(Color accent) {
-    final canApply = _yearRangeValid;
+    final canApply = _yearsOk;
+    final hasInput = !_draft.isEmpty ||
+        _yearFromController.text.trim().isNotEmpty ||
+        _yearToController.text.trim().isNotEmpty;
     return Container(
       decoration: BoxDecoration(
         border: Border(
@@ -920,7 +999,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
           child: Row(
             children: [
               OutlinedButton(
-                onPressed: _draft.isEmpty && !_counting ? null : _resetAll,
+                onPressed: hasInput ? _resetAll : null,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white70,
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
@@ -949,11 +1028,27 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: Text(
-                    _count != null
-                        ? 'Show ${_count!} result${_count == 1 ? '' : 's'}'
-                        : 'Show results',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_counting && _count == null) ...[
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        _count != null
+                            ? 'Show ${_count!} result${_count == 1 ? '' : 's'}'
+                            : 'Show results',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ],
                   ),
                 ),
               ),
