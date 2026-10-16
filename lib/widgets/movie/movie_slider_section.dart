@@ -1,13 +1,13 @@
-import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/movie/movie_section.dart';
 import '../../pages/calendar/tv_calendar_page.dart';
 import '../../pages/catalog/catalog_page.dart';
-import '../../services/theme/app_theme_service.dart';
 import '../../services/home/home_page_settings.dart';
+import '../../theme/playtorrio_tokens.dart';
 import '../../utils/navigation/route_transitions.dart';
+import '../common/slider_arrow.dart';
 import '../home/support_dev_cards.dart';
 import './movie_card.dart';
 import '../common/section_header.dart';
@@ -97,6 +97,7 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
   Widget build(BuildContext context) {
     final sizing = MovieCardSizing.fromWidth(MediaQuery.sizeOf(context).width, useGridColumns: false);
     final isDesktop = _isDesktop();
+    final tokens = PlayTorrioTokens.of(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 26),
@@ -120,10 +121,10 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: tokens.textPrimary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12),
+                            color: tokens.borderStrong,
                           ),
                         ),
                         child: Row(
@@ -132,13 +133,13 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
                             Icon(
                               Icons.calendar_month_rounded,
                               size: 14,
-                              color: AppThemeService.currentPalette.value.primaryColor,
+                              color: tokens.accent,
                             ),
                             const SizedBox(width: 5),
-                            const Text(
+                            Text(
                               'Calendar',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: tokens.textPrimary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -214,7 +215,7 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
                       top: 0,
                       bottom: 0,
                       child: Center(
-                        child: _SliderArrow(
+                        child: SliderArrow(
                           icon: Icons.arrow_back_ios_new_rounded,
                           onTap: () => _scroll(-1),
                         ),
@@ -229,7 +230,7 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
                       top: 0,
                       bottom: 0,
                       child: Center(
-                        child: _SliderArrow(
+                        child: SliderArrow(
                           icon: Icons.arrow_forward_ios_rounded,
                           onTap: () => _scroll(1),
                         ),
@@ -245,85 +246,3 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
     );
   }
 }
-
-class _SliderArrow extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _SliderArrow({
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  State<_SliderArrow> createState() => _SliderArrowState();
-}
-
-class _SliderArrowState extends State<_SliderArrow> with SingleTickerProviderStateMixin {
-  bool _isHovered = false;
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    // Dynamic scale based on interaction state
-    final scale = _isPressed ? 0.90 : (_isHovered ? 1.08 : 1.0);
-    
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() {
-        _isHovered = false;
-        _isPressed = false;
-      }),
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          widget.onTap();
-        },
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedScale(
-          scale: scale,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOutBack,
-          child: ClipOval(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _isHovered
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : const Color(0xFF080A0F).withValues(alpha: 0.5),
-                  border: Border.all(
-                    color: _isHovered
-                        ? Colors.white.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.1),
-                    width: 1.5,
-                  ),
-                  boxShadow: _isHovered
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          )
-                        ]
-                      : [],
-                ),
-                child: Icon(
-                  widget.icon,
-                  color: Colors.white.withValues(alpha: _isHovered ? 1.0 : 0.7),
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
