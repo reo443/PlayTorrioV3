@@ -84,9 +84,9 @@ class TmdbService {
     return 'Browse';
   }
 
-  /// Performs a TMDB GET and returns the decoded object, or `null` on any
+  /// Performs a TMDB GET and returns the decoded body, or `null` on any
   /// failure. Includes `api_key` + `language=en-US` on every request.
-  static Future<Map<String, dynamic>?> _get(
+  static Future<dynamic> _getRaw(
     String path, {
     Map<String, String>? query,
   }) async {
@@ -105,11 +105,20 @@ class TmdbService {
           .timeout(const Duration(seconds: 10));
       if (res.statusCode != 200) return null;
 
-      final decoded = jsonDecode(res.body);
-      return decoded is Map<String, dynamic> ? decoded : null;
+      return jsonDecode(res.body);
     } catch (_) {
       return null;
     }
+  }
+
+  /// Performs a TMDB GET and returns the decoded object, or `null` on any
+  /// failure (including when the endpoint returns a JSON array).
+  static Future<Map<String, dynamic>?> _get(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    final decoded = await _getRaw(path, query: query);
+    return decoded is Map<String, dynamic> ? decoded : null;
   }
 
   /// Fetches a catalog list by [listId] (see [_staticLists] and `genre_*`).
@@ -328,6 +337,210 @@ class TmdbService {
       final rawId = g['id'];
       final id = rawId is int ? rawId : int.tryParse('$rawId');
       final name = g['name']?.toString();
+      if (id == null || name == null || name.isEmpty) continue;
+      result.add((id: id, name: name));
+    }
+    return result;
+  }
+
+  // ── Discover (filtered browsing) ──────────────────────────────────────
+
+  /// Sort options for the given media type.
+  static List<({String value, String label})> sortOptionsFor(String type) {
+    final isTv = type == 'tv' || type == 'series';
+    return [
+      (value: 'popularity.desc', label: 'Popularity'),
+      (value: 'vote_average.desc', label: 'Rating'),
+      if (isTv)
+        (value: 'first_air_date.desc', label: 'Newest')
+      else ...[
+        (value: 'primary_release_date.desc', label: 'Newest'),
+        (value: 'revenue.desc', label: 'Revenue'),
+      ],
+    ];
+  }
+
+  /// Minimum-rating filter buckets; `minScore == null` means "Any".
+  static const List<({double? minScore, String label})> scoreOptions = [
+    (minScore: null, label: 'Any'),
+    (minScore: 5, label: '5.0+'),
+    (minScore: 6, label: '6.0+'),
+    (minScore: 7, label: '7.0+'),
+    (minScore: 8, label: '8.0+'),
+    (minScore: 9, label: '9.0+'),
+  ];
+
+  /// Runtime filter buckets.
+  static const List<({int? min, int? max, String label})> runtimeOptions = [
+    (min: null, max: null, label: 'Any'),
+    (min: null, max: 90, label: 'Under 90m'),
+    (min: 90, max: 120, label: '90-120m'),
+    (min: 120, max: null, label: 'Over 120m'),
+  ];
+
+  /// Release years from the current year back to 1950.
+  static List<int> get yearOptions {
+    final now = DateTime.now().year;
+    return [for (var y = now; y >= 1950; y--) y];
+  }
+
+  /// Filtered discovery of movies/series via `/discover`.
+  static Future<List<Movie>> discover({
+    required String type,
+    int? genreId,
+    int? year,
+    String? sortBy,
+    int? providerId,
+    String? country,
+    String? language,
+    String? certification,
+    double? minScore,
+    int? minRuntime,
+    int? maxRuntime,
+    int page = 1,
+    String region = 'US',
+  }) async {
+    final isTv = type == 'tv' || type == 'series';
+    final query = <String, String>{
+      'page': '$page',
+      'sort_by': sortBy ?? 'popularity.desc',
+    };
+
+    if (genreId != null) query['with_genres'] = '$genreId';
+    if (year != null) {
+      query[isTv ? 'first_air_date_year' : 'primary_release_year'] = '$year';
+    }
+    if (providerId != null) {
+      query['with_watch_providers'] = '$providerId';
+      query['watch_region'] = region;
+    }
+    if (country != null && country.isNotEmpty) {
+      query['with_origin_country'] = country;
+    }
+    if (language != null && language.isNotEmpty) {
+      query['with_original_language'] = language;
+    }
+    if (certification != null && certification.isNotEmpty) {
+      query['certification'] = certification;
+      query['certification_country'] = region;
+    }
+    if (minScore != null && minScore > 0) {
+      query['vote_average.gte'] = minScore.toString();
+      query['vote_count.gte'] = '50';
+    }
+    if (minRuntime != null) query['with_runtime.gte'] = '$minRuntime';
+    if (maxRuntime != null) query['with_runtime.lte'] = '$maxRuntime';
+
+    final data = await _get(
+      isTv ? '/discover/tv' : '/discover/movie',
+      query: query,
+    );
+    if (data == null) return const [];
+
+    final results = data['results'];
+    if (results is! List) return const [];
+
+    final movies = <Movie>[];
+    for (final item in results) {
+      if (item is! Map<String, dynamic>) continue;
+      final movie = Movie.fromTmdb(item, isTv ? 'tv' : 'movie');
+      if (_isUsable(movie)) movies.add(movie);
+    }
+    return movies;
+  }
+
+  /// Watch providers (streaming services) available in [region].
+  static Future<List<({int id, String name})>> fetchWatchProviders(
+    String type, {
+    String region = 'US',
+  }) async {
+    final isTv = type == 'tv' || type == 'series';
+    final data = await _get(
+      isTv ? '/watch/providers/tv' : '/watch/providers/movie',
+      query: {'watch_region': region},
+    );
+    if (data == null) return const [];
+    return _idNameList(data['results'], 'provider_id', 'provider_name');
+  }
+
+  /// ISO-3166-1 countries from `/configuration/countries`.
+  static Future<List<({String code, String name})>> fetchCountries() async {
+    final decoded = await _getRaw('/configuration/countries');
+    if (decoded is! List) return const [];
+    final result = <({String code, String name})>[];
+    for (final c in decoded) {
+      if (c is! Map) continue;
+      final code = c['iso_3166_1']?.toString();
+      final name = c['english_name']?.toString();
+      if (code == null || code.isEmpty || name == null || name.isEmpty) continue;
+      result.add((code: code, name: name));
+    }
+    result.sort((a, b) => a.name.compareTo(b.name));
+    return result;
+  }
+
+  /// ISO-639-1 languages from `/configuration/languages`.
+  static Future<List<({String code, String name})>> fetchLanguages() async {
+    final decoded = await _getRaw('/configuration/languages');
+    if (decoded is! List) return const [];
+    final result = <({String code, String name})>[];
+    for (final l in decoded) {
+      if (l is! Map) continue;
+      final code = l['iso_639_1']?.toString();
+      final name = (l['english_name'] ?? l['name'])?.toString();
+      if (code == null || code.isEmpty || name == null || name.isEmpty) continue;
+      result.add((code: code, name: name));
+    }
+    result.sort((a, b) => a.name.compareTo(b.name));
+    return result;
+  }
+
+  /// Age certifications for [region] (e.g. US → G, PG, PG-13, R).
+  static Future<List<String>> fetchCertifications(
+    String type, {
+    String region = 'US',
+  }) async {
+    final isTv = type == 'tv' || type == 'series';
+    final data = await _get(
+      isTv ? '/certification/tv/list' : '/certification/movie/list',
+    );
+    if (data == null) return const [];
+    return certificationsFromJson(data, region);
+  }
+
+  /// Parses a `/certification/{type}/list` response for [region].
+  @visibleForTesting
+  static List<String> certificationsFromJson(
+    Map<String, dynamic> data,
+    String region,
+  ) {
+    final certifications = data['certifications'];
+    if (certifications is! Map) return const [];
+    final forRegion =
+        certifications[region] ?? certifications[region.toUpperCase()];
+    if (forRegion is! List) return const [];
+
+    final result = <String>[];
+    for (final c in forRegion) {
+      if (c is! Map) continue;
+      final value = c['certification']?.toString();
+      if (value != null && value.isNotEmpty) result.add(value);
+    }
+    return result;
+  }
+
+  static List<({int id, String name})> _idNameList(
+    dynamic list,
+    String idKey,
+    String nameKey,
+  ) {
+    if (list is! List) return const [];
+    final result = <({int id, String name})>[];
+    for (final item in list) {
+      if (item is! Map) continue;
+      final rawId = item[idKey];
+      final id = rawId is int ? rawId : int.tryParse('$rawId');
+      final name = item[nameKey]?.toString();
       if (id == null || name == null || name.isEmpty) continue;
       result.add((id: id, name: name));
     }

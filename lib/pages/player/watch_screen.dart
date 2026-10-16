@@ -21,21 +21,23 @@ import '../../services/home/home_page_settings.dart';
 import '../../services/stream/stream_service.dart';
 import '../../services/stream/stream_bitrate_resolver.dart';
 import '../../services/theme/glass_settings.dart';
+import '../../services/theme/app_theme_service.dart';
 import '../../services/scraper/builtin_providers_settings_service.dart';
 import '../../widgets/common/performance_liquid_lens.dart';
 import '../../widgets/common/flag_icon.dart';
 import '../settings/settings_page.dart';
 import '../details/details_page.dart';
 import '../../utils/navigation/route_transitions.dart';
+import '../../utils/format/media_format.dart';
 
 // ---------------------------------------------------------------------------
 // Design tokens
 // ---------------------------------------------------------------------------
 class _C {
-  static const bg = Color(0xFF0A0C10);
-  static const surface = Color(0xFF13151C);
-  static const surfaceLight = Color(0xFF1A1D26);
-  static const accent = Color(0xFF7C5CFF);
+  static Color get bg => AppThemeService.currentPalette.value.scaffoldBackgroundColor;
+  static Color get surface => AppThemeService.currentPalette.value.cardBackgroundColor;
+  static Color get surfaceLight => AppThemeService.currentPalette.value.cardBackgroundColor;
+  static Color get accent => AppThemeService.currentPalette.value.primaryColor;
   static const textPrimary = Color(0xFFF5F5F7);
   static const textSecondary = Color(0xFFAAAAAF);
   static const textTertiary = Color(0xFF66666B);
@@ -154,11 +156,17 @@ class _WatchScreenState extends State<WatchScreen>
         );
 
     _animController.forward();
+    AppThemeService.currentPalette.addListener(_onThemeChanged);
     _loadStreams();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    AppThemeService.currentPalette.removeListener(_onThemeChanged);
     _streamSub?.cancel();
     _streamSub = null;
     StreamService.stopAllScrapers();
@@ -506,7 +514,7 @@ class _WatchScreenState extends State<WatchScreen>
           CachedNetworkImage(
             imageUrl: url,
             fit: BoxFit.cover,
-            errorWidget: (_, __, ___) => const ColoredBox(color: _C.bg),
+            errorWidget: (_, __, ___) => ColoredBox(color: _C.bg),
           ),
           // Left-to-right dimming: dark on left (text side), lighter on right
           DecoratedBox(
@@ -708,7 +716,7 @@ class _WatchScreenState extends State<WatchScreen>
               _isCollection
                   ? 'PART ${ep.episode ?? 1}'
                   : 'S${ep.season ?? '?' }E${ep.episode ?? '?' }',
-              style: const TextStyle(
+              style: TextStyle(
                 color: _C.accent,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -837,7 +845,7 @@ class _WatchScreenState extends State<WatchScreen>
     if (meta.runtime != null && meta.runtime!.isNotEmpty) {
       items.add(
         Text(
-          meta.runtime!,
+          formatRuntime(meta.runtime)!,
           style: const TextStyle(color: _C.textSecondary, fontSize: 14),
         ),
       );
@@ -858,7 +866,7 @@ class _WatchScreenState extends State<WatchScreen>
               const Icon(Icons.star_rounded, color: _C.gold, size: 14),
               const SizedBox(width: 3),
               Text(
-                meta.imdbRating!,
+                formatRating(meta.imdbRating)!,
                 style: const TextStyle(
                   color: _C.gold,
                   fontSize: 12,
@@ -970,7 +978,7 @@ class _WatchScreenState extends State<WatchScreen>
                   setState(() => _synopsisExpanded = !_synopsisExpanded),
               child: Text(
                 _synopsisExpanded ? 'Show less' : 'Read more',
-                style: const TextStyle(
+                style: TextStyle(
                   color: _C.accent,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -3171,7 +3179,7 @@ class _AddonSourceIcon extends StatelessWidget {
             fit: BoxFit.contain,
             placeholder: (context, url) => Container(
               color: Colors.white.withValues(alpha: 0.04),
-              child: const Center(
+              child: Center(
                 child: SizedBox(
                   width: 14,
                   height: 14,
@@ -3204,7 +3212,7 @@ class _AddonSourceIcon extends StatelessWidget {
       child: Center(
         child: Text(
           firstLetter,
-          style: const TextStyle(
+          style: TextStyle(
             color: _C.accent,
             fontSize: 17,
             fontWeight: FontWeight.w900,

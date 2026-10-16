@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/movie/movie.dart';
+import '../../models/movie/cast_member.dart';
 import '../../models/movie/video.dart';
 import '../../models/movie/movie_detail.dart';
 import '../../models/my_list/my_list_item.dart';
@@ -13,6 +14,7 @@ import '../../services/metadata/metadata_service.dart';
 import '../../services/my_list/my_list_service.dart';
 import '../../services/cloudstream/cloudstream_manager.dart';
 import '../../utils/navigation/route_transitions.dart';
+import '../../utils/format/media_format.dart';
 import '../discover/discover_page.dart';
 import '../player/watch_screen.dart';
 // ---------------------------------------------------------------------------
@@ -649,8 +651,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                           SizedBox(height: heroHeight - overlap),
                           isDesktop ? _buildDesktopLayout(meta, posterUrl) : _buildMobileLayout(meta, posterUrl),
                           const SizedBox(height: _Space.xl),
-                          if (meta.cast.isNotEmpty) ...[
-                            _buildCastRow(meta.cast),
+                          if (meta.cast.isNotEmpty || meta.castMembers.isNotEmpty) ...[
+                            _buildCastRow(meta),
                             const SizedBox(height: _Space.xl),
                           ],
                           if (meta.videos.isNotEmpty) ...[
@@ -1036,7 +1038,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
             style: const TextStyle(color: Colors.white70, fontSize: 14)));
       }
     } else if (meta.runtime != null && meta.runtime!.isNotEmpty) {
-      items.add(Text(meta.runtime!, style: const TextStyle(color: Colors.white70, fontSize: 14)));
+      items.add(Text(formatRuntime(meta.runtime)!, style: const TextStyle(color: Colors.white70, fontSize: 14)));
     }
 
     if (meta.imdbRating != null && meta.imdbRating!.isNotEmpty) {
@@ -1053,7 +1055,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
             children: [
               const Icon(Icons.star_rounded, color: _Palette.gold, size: 14),
               const SizedBox(width: 4),
-              Text(meta.imdbRating!, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(formatRating(meta.imdbRating)!, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -1241,7 +1243,10 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildCastRow(List<String> cast) {
+  Widget _buildCastRow(MovieDetail meta) {
+    final members = meta.castMembers.isNotEmpty
+        ? meta.castMembers
+        : meta.cast.map((n) => CastMember(name: n)).toList();
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringCast = true),
       onExit: (_) => setState(() => _isHoveringCast = false),
@@ -1250,7 +1255,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         children: [
           _buildSectionHeader('Cast'),
           SizedBox(
-            height: 132,
+            height: 150,
             child: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -1259,14 +1264,26 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                   controller: _castScrollController,
                   scrollDirection: Axis.horizontal,
                   physics: const ClampingScrollPhysics(),
-                  itemCount: cast.length,
+                  itemCount: members.length,
                   separatorBuilder: (_, __) => const SizedBox(width: _Space.lg),
                   itemBuilder: (context, index) {
-                    final name = cast[index];
+                    final member = members[index];
+                    final name = member.name;
+                    final imageUrl = member.imageUrl;
                     final initials = name.isNotEmpty
                         ? name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join('').toUpperCase()
                         : '?';
                     final pair = _Palette.avatarPairs[name.hashCode.abs() % _Palette.avatarPairs.length];
+
+                    Widget initialsCircle() => DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: pair),
+                          ),
+                          child: Center(
+                            child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                          ),
+                        );
 
                     return SizedBox(
                       width: 84,
@@ -1293,11 +1310,16 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                     height: 76,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: pair),
                                       border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
                                     ),
-                                    alignment: Alignment.center,
-                                    child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: imageUrl == null
+                                        ? initialsCircle()
+                                        : CachedNetworkImage(
+                                            imageUrl: imageUrl,
+                                            fit: BoxFit.cover,
+                                            errorWidget: (_, __, ___) => initialsCircle(),
+                                          ),
                                   ),
                                 ),
                               );
@@ -1307,10 +1329,18 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                           Text(
                             name,
                             textAlign: TextAlign.center,
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.2),
                           ),
+                          if (member.character != null && member.character!.isNotEmpty)
+                            Text(
+                              member.character!,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10.5, height: 1.2),
+                            ),
                         ],
                       ),
                     );

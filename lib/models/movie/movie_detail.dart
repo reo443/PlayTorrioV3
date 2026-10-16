@@ -1,4 +1,5 @@
 import '../../services/metadata/tmdb_service.dart';
+import 'cast_member.dart';
 import 'link.dart';
 import 'video.dart';
 
@@ -14,6 +15,9 @@ class MovieDetail {
   final String? imdbRating;
   final List<String> genres;
   final List<String> cast;
+
+  /// Cast credits with optional profile images (populated for TMDB details).
+  final List<CastMember> castMembers;
   final List<String> director;
   final String? runtime;
   final List<Link> links;
@@ -35,6 +39,7 @@ class MovieDetail {
     this.imdbRating,
     this.genres = const [],
     this.cast = const [],
+    this.castMembers = const [],
     this.director = const [],
     this.runtime,
     this.links = const [],
@@ -62,6 +67,7 @@ class MovieDetail {
     String? imdbRating,
     List<String>? genres,
     List<String>? cast,
+    List<CastMember>? castMembers,
     List<String>? director,
     String? runtime,
     List<Link>? links,
@@ -81,6 +87,7 @@ class MovieDetail {
       imdbRating: imdbRating ?? this.imdbRating,
       genres: genres ?? this.genres,
       cast: cast ?? this.cast,
+      castMembers: castMembers ?? this.castMembers,
       director: director ?? this.director,
       runtime: runtime ?? this.runtime,
       links: links ?? this.links,
@@ -138,6 +145,7 @@ class MovieDetail {
         (json['release_date'] ?? json['first_air_date'] ?? '').toString();
 
     final castList = <String>[];
+    final castMemberList = <CastMember>[];
     final directorList = <String>[];
     final credits = json['credits'];
     if (credits is Map) {
@@ -146,7 +154,14 @@ class MovieDetail {
         for (final c in cast.take(15)) {
           if (c is Map) {
             final n = c['name']?.toString();
-            if (n != null && n.isNotEmpty) castList.add(n);
+            if (n != null && n.isNotEmpty) {
+              castList.add(n);
+              castMemberList.add(CastMember(
+                name: n,
+                character: c['character']?.toString(),
+                profilePath: c['profile_path']?.toString(),
+              ));
+            }
           }
         }
       }
@@ -210,6 +225,7 @@ class MovieDetail {
       imdbRating: (rating is num && rating > 0) ? rating.toString() : null,
       genres: genreNames,
       cast: castList,
+      castMembers: castMemberList,
       director: directorList,
       runtime: (runtime is num && runtime > 0) ? runtime.toString() : null,
       tmdbId: numericId.isEmpty ? null : numericId,

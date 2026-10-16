@@ -93,7 +93,7 @@ void main() {
         'external_ids': {'imdb_id': 'tt123'},
         'credits': {
           'cast': [
-            {'name': 'Actor One'},
+            {'name': 'Actor One', 'character': 'Hero', 'profile_path': '/a1.jpg'},
             {'name': 'Actor Two'},
           ],
           'crew': [
@@ -108,6 +108,11 @@ void main() {
       expect(detail.name, 'Test Movie');
       expect(detail.description, 'A plot');
       expect(detail.cast, ['Actor One', 'Actor Two']);
+      expect(detail.castMembers.length, 2);
+      expect(detail.castMembers.first.name, 'Actor One');
+      expect(detail.castMembers.first.character, 'Hero');
+      expect(detail.castMembers.first.imageUrl, 'https://image.tmdb.org/t/p/w185/a1.jpg');
+      expect(detail.castMembers[1].imageUrl, isNull);
       expect(detail.director, ['Dir Person']);
       expect(detail.genres, ['Action', 'Adventure']);
       expect(detail.poster, 'https://image.tmdb.org/t/p/w500/p.jpg');

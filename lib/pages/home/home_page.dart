@@ -35,6 +35,7 @@ import '../../services/p2p/p2p_settings_service.dart';
 import '../../widgets/p2p/p2p_warning_dialog.dart';
 import 'package:flutter/services.dart';
 import '../../services/window/window_service.dart';
+import '../../utils/format/media_format.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -958,7 +959,7 @@ class _HeroSlide extends StatelessWidget {
     final posterUrl = movie.poster;
     final imageUrl = backdropUrl ?? posterUrl;
     final year = detail?.year ?? movie.year;
-    final rating = detail?.imdbRating;
+    final rating = formatRating(detail?.imdbRating);
     final description = detail?.description;
     final genres = detail?.genres ?? const <String>[];
     final logo = detail?.logo;
@@ -1243,7 +1244,7 @@ class _HeroSlide extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          detail!.runtime!,
+                          formatRuntime(detail!.runtime)!,
                           style: TextStyle(
                             fontSize: 14.5,
                             color: Colors.white.withValues(alpha: 0.55),
