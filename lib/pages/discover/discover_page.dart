@@ -618,7 +618,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       return Column(
         children: [
           SizedBox(height: topOffset),
-          _buildControlBar(),
+          _buildControlBar(palette),
           const SizedBox(height: 6),
           Expanded(child: grid),
         ],
@@ -630,28 +630,29 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   // ── Control bar palette (premium dark streaming look) ──
   static const Color _kBarSurface = Color(0xFF1B2231);
-  static const Color _kBarBlue = Color(0xFF2F80ED);
   static const Color _kBarMuted = Color(0xFF9AA6B8);
 
   /// Unified control bar: animated Movies/TV segmented control + Sort + Filters.
-  Widget _buildControlBar() {
+  Widget _buildControlBar(AppThemePalette palette) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(child: _buildTypeSegmented()),
+          Expanded(child: _buildTypeSegmented(palette)),
           const SizedBox(width: 12),
           _barDivider(),
           const SizedBox(width: 12),
           _iconButton(
             icon: Icons.swap_vert_rounded,
             tooltip: 'Sort: $_sortLabel',
+            accent: palette.primaryColor,
             onTap: _openSortSheet,
           ),
           const SizedBox(width: 10),
           _iconButton(
             icon: Icons.filter_alt_rounded,
             tooltip: 'Filters',
+            accent: palette.primaryColor,
             badge: _filters.activeCount,
             onTap: _openAdvancedFilters,
           ),
@@ -667,7 +668,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       );
 
   /// Rounded segmented Movies/TV control with a sliding highlight.
-  Widget _buildTypeSegmented() {
+  Widget _buildTypeSegmented(AppThemePalette palette) {
     final isMovies = _tmdbType == 'movie';
     return Container(
       height: 44,
@@ -688,11 +689,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
               heightFactor: 1,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: _kBarBlue,
+                  color: palette.primaryColor,
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: [
                     BoxShadow(
-                      color: _kBarBlue.withValues(alpha: 0.35),
+                      color: palette.primaryColor.withValues(alpha: 0.35),
                       blurRadius: 14,
                       offset: const Offset(0, 3),
                     ),
@@ -755,6 +756,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   Widget _iconButton({
     required IconData icon,
     required String tooltip,
+    required Color accent,
     required VoidCallback onTap,
     int badge = 0,
   }) {
@@ -795,7 +797,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         ),
                         constraints: const BoxConstraints(minWidth: 16),
                         decoration: BoxDecoration(
-                          color: _kBarBlue,
+                          color: accent,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         alignment: Alignment.center,
