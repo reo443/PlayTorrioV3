@@ -51,6 +51,12 @@ class _MangaPageState extends State<MangaPage> {
   List<Manga> _recentSection = [];
   List<Manga> _followedSection = [];
 
+  /// True once the editorial sections have loaded (or were restored from
+  /// the static cache). While false on a fresh session, the page shows a
+  /// single clean loader instead of partial content that flashes and
+  /// reflows as sections arrive.
+  bool _sectionsReady = false;
+
   bool _isLoading = false;
   bool _isLoadingMore = false;
   int _currentPage = 1;
@@ -135,21 +141,26 @@ class _MangaPageState extends State<MangaPage> {
       _mangaList.clear();
     });
 
-    final results = await Future.wait([
-      _mangaService.browseManga(page: _currentPage),
-      _mangaService.getReadingHistory(),
-    ]);
+    try {
+      final results = await Future.wait([
+        _mangaService.browseManga(page: _currentPage),
+        _mangaService.getReadingHistory(),
+      ]);
 
-    if (mounted) {
-      setState(() {
-        _mangaList = results[0] as List<Manga>;
-        _readingHistory = results[1] as List<Map<String, dynamic>>;
-        _isLoading = false;
+      if (mounted) {
+        setState(() {
+          _mangaList = results[0] as List<Manga>;
+          _readingHistory = results[1] as List<Map<String, dynamic>>;
+          _isLoading = false;
 
-        _cachedMangaList = _mangaList;
-        _cachedReadingHistory = _readingHistory;
-        _cachedCurrentPage = _currentPage;
-      });
+          _cachedMangaList = _mangaList;
+          _cachedReadingHistory = _readingHistory;
+          _cachedCurrentPage = _currentPage;
+        });
+      }
+    } catch (_) {
+      // Error isolation: a failed fetch must not leave an eternal spinner.
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -182,6 +193,7 @@ class _MangaPageState extends State<MangaPage> {
         _latestSection = _cachedLatestSection!;
         _recentSection = _cachedRecentSection!;
         _followedSection = _cachedFollowedSection!;
+        _sectionsReady = true;
       });
       return;
     }
@@ -212,6 +224,7 @@ class _MangaPageState extends State<MangaPage> {
         _latestSection = results[1];
         _recentSection = results[2];
         _followedSection = results[3];
+        _sectionsReady = true;
 
         _cachedPopularSection = _popularSection;
         _cachedLatestSection = _latestSection;
@@ -219,7 +232,9 @@ class _MangaPageState extends State<MangaPage> {
         _cachedFollowedSection = _followedSection;
       });
     } catch (_) {
-      // Sections are editorial — a failure just means they don't render.
+      // Sections are editorial — a failure just means they don't render,
+      // but the page must still leave the loading state.
+      if (mounted) setState(() => _sectionsReady = true);
     }
   }
 
@@ -323,8 +338,18 @@ class _MangaPageState extends State<MangaPage> {
           child: SizedBox(height: 76.0 + topInset), // Spacer for top app bar
         ),
 
-        // ── Continue Reading ──
-        if (showContinue && _readingHistory.isNotEmpty) ...[
+        // ── Fresh-session first load: single clean loader until the
+        // editorial sections are ready, so nothing flashes or reflows. ──
+        if (!_sectionsReady)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          )
+        else ...[
+          // ── Continue Reading ──
+          if (showContinue && _readingHistory.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(
@@ -487,6 +512,7 @@ class _MangaPageState extends State<MangaPage> {
             height: 110.0 + bottomInset,
           ), // Bottom padding for dock
         ),
+        ],
       ],
     );
   }

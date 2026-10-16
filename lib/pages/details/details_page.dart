@@ -8,6 +8,7 @@ import '../../models/movie/movie_detail.dart';
 import '../../models/my_list/my_list_item.dart';
 import '../../services/home/home_page_settings.dart';
 import '../../services/metadata/bestsimilar_scraper.dart';
+import '../../services/metadata/tmdb_service.dart';
 import '../../services/metadata/metadata_service.dart';
 import '../../services/my_list/my_list_service.dart';
 import '../../services/cloudstream/cloudstream_manager.dart';
@@ -73,12 +74,29 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
   bool _isSynopsisExpanded = false;
 
-  // Similar content from BestSimilar
-  List<BSItem> _similarItems = [];
+  // Similar / recommendation content (TMDB when configured, else BestSimilar)
+  List<Movie> _similarItems = [];
   bool _isFetchingSimilar = false;
+
+  // TMDB series season numbers (from details) and fetched episodes per season.
+  List<int> _tmdbSeasons = const [];
 
   String? _resolvedType;
   String? _resolvedBaseUrl;
+
+  bool get _isTmdb =>
+      widget.movie.addonBaseUrl == TmdbService.kSentinel ||
+      widget.movie.id.startsWith('${TmdbService.kSentinel}:');
+
+  String? get _tmdbNumericId =>
+      widget.movie.id.startsWith('${TmdbService.kSentinel}:')
+          ? widget.movie.id.substring(TmdbService.kSentinel.length + 1)
+          : null;
+
+  String get _tmdbMediaType {
+    final t = _resolvedType ?? widget.movie.type;
+    return (t == 'series' || t == 'tv' || t == 'anime') ? 'tv' : 'movie';
+  }
 
   bool get _isCollection {
     final t = _resolvedType ?? _detail?.type ?? widget.movie.type;
@@ -300,6 +318,41 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
       }
     }
 
+    // TMDB-sourced items: details, seasons and recommendations come straight
+    // from TMDB. `_detail.id` is the IMDb id, so stream scraping is unchanged.
+    final tmdbNumericId = _tmdbNumericId;
+    if (_isTmdb && tmdbNumericId != null) {
+      final detail = await TmdbService.fetchDetails(_tmdbMediaType, tmdbNumericId);
+      if (!mounted) return;
+
+      setState(() {
+        _detail = detail;
+        _resolvedType = detail?.type ?? widget.movie.type;
+        _isLoading = false;
+
+        _tmdbSeasons = detail?.seasons ?? const [];
+        if (_tmdbSeasons.isNotEmpty) {
+          _selectedSeason = _tmdbSeasons.first;
+        }
+      });
+      _animController.forward();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _updateSeasonScrollButtons();
+          _updateCastScrollButtons();
+          _updateRelatedScrollButtons();
+        }
+      });
+
+      if (_tmdbSeasons.isNotEmpty && _selectedSeason != null) {
+        _loadTmdbSeason(_selectedSeason!);
+      }
+
+      _fetchSimilarContent();
+      return;
+    }
+
     if (effectiveId.startsWith('bestsimilar_') || effectiveBaseUrl.contains('bestsimilar')) {
       final yearNum = widget.movie.year != null ? int.tryParse(widget.movie.year!.replaceAll(RegExp(r'[^0-9]'), '')) : null;
       final resolved = await MetadataService.findMovieByTitle(
@@ -384,6 +437,24 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     setState(() => _isFetchingSimilar = true);
 
     try {
+      // TMDB recommendations for TMDB-sourced items.
+      final tmdbNumericId = _tmdbNumericId;
+      if (_isTmdb && tmdbNumericId != null) {
+        final movies = await TmdbService.fetchRecommendations(
+          _tmdbMediaType,
+          tmdbNumericId,
+        );
+        if (!mounted) return;
+        setState(() {
+          _similarItems = movies;
+          _isFetchingSimilar = false;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _updateSimilarScrollButtons();
+        });
+        return;
+      }
+
       final title = _detail?.name ?? widget.movie.name;
       final yearStr = _detail?.year ?? widget.movie.year;
       final year = yearStr != null ? int.tryParse(yearStr.replaceAll(RegExp(r'[^0-9]'), '')) : null;
@@ -407,7 +478,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
       if (mounted) {
         setState(() {
-          _similarItems = details?.similar ?? [];
+          _similarItems = (details?.similar ?? []).map(_bsItemToMovie).toList();
           _isFetchingSimilar = false;
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -420,11 +491,39 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     }
   }
 
-  Future<void> _openSimilarItem(BSItem item) async {
+  /// Adapts a legacy BestSimilar item to the neutral [Movie] shape used by the
+  /// related-content rail.
+  Movie _bsItemToMovie(BSItem b) => Movie(
+        id: 'bestsimilar_${b.id}-${b.slug}',
+        name: b.title,
+        poster: b.tmdbPosterUrl ?? (b.thumbUrl.isNotEmpty ? b.thumbUrl : null),
+        year: b.year?.toString(),
+        type: b.isTv ? 'series' : 'movie',
+        addonBaseUrl: 'bestsimilar',
+        imdbRating: b.rating?.toString(),
+        genres: b.genre != null && b.genre!.isNotEmpty
+            ? b.genre!.split(',').map((g) => g.trim()).toList()
+            : const [],
+      );
+
+  Future<void> _openSimilarItem(Movie item) async {
+    // TMDB recommendations navigate straight to their TMDB details page.
+    if (item.addonBaseUrl == TmdbService.kSentinel) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => DetailsPage(movie: item)),
+      );
+      return;
+    }
+
+    final yearNum = item.year != null
+        ? int.tryParse(item.year!.replaceAll(RegExp(r'[^0-9]'), ''))
+        : null;
     final resolved = await MetadataService.findMovieByTitle(
-      title: item.title,
-      type: item.isTv ? 'series' : (_resolvedType ?? widget.movie.type),
-      year: item.year,
+      title: item.name,
+      type: item.type == 'series' ? 'series' : (_resolvedType ?? widget.movie.type),
+      year: yearNum,
       preferredBaseUrl: _resolvedBaseUrl ?? widget.movie.addonBaseUrl,
     );
 
@@ -436,7 +535,26 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     }
   }
 
+  /// Fetches episodes for a TMDB series season.
+  Future<void> _loadTmdbSeason(int season) async {
+    final tmdbNumericId = _tmdbNumericId;
+    if (tmdbNumericId == null) return;
+
+    final episodes = await TmdbService.fetchSeasonEpisodes(tmdbNumericId, season);
+    if (!mounted) return;
+
+    setState(() {
+      _currentSeasonEpisodes = episodes;
+    });
+  }
+
   void _updateEpisodesForSeason() {
+    if (_isTmdb) {
+      if (_selectedSeason == null) return;
+      setState(() => _currentSeasonEpisodes = []);
+      _loadTmdbSeason(_selectedSeason!);
+      return;
+    }
     if (_detail == null || _selectedSeason == null) return;
     setState(() {
       _currentSeasonEpisodes = _detail!.videos.where((v) => v.season == _selectedSeason).toList();
@@ -1219,7 +1337,9 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildSeasonSelector(MovieDetail meta) {
-    final seasons = meta.videos.map((v) => v.season).where((s) => s != null).toSet().toList();
+    final seasons = _isTmdb && _tmdbSeasons.isNotEmpty
+        ? List<int>.from(_tmdbSeasons)
+        : meta.videos.map((v) => v.season).where((s) => s != null).toSet().toList().cast<int>();
     seasons.sort();
 
     return MouseRegion(
@@ -1614,9 +1734,9 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                     borderRadius: BorderRadius.circular(10),
                                     child: AspectRatio(
                                       aspectRatio: 2 / 3,
-                                      child: item.thumbUrl.isNotEmpty
+                                      child: (item.poster ?? '').isNotEmpty
                                           ? CachedNetworkImage(
-                                              imageUrl: item.thumbUrl,
+                                              imageUrl: item.poster!,
                                               fit: BoxFit.cover,
                                               errorWidget: (_, __, ___) => Container(
                                                 color: _Palette.surface,
@@ -1633,30 +1753,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                             ),
                                     ),
                                   ),
-                                  // Similarity badge
-                                  if (item.similarityPercent != null)
-                                    Positioned(
-                                      top: 6,
-                                      right: 6,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.75),
-                                          borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(color: _Palette.accent.withOpacity(0.6)),
-                                        ),
-                                        child: Text(
-                                          '${item.similarityPercent}%',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                   // Rating badge
-                                  if (item.rating != null)
+                                  if (double.tryParse(item.imdbRating ?? '') != null)
                                     Positioned(
                                       bottom: 6,
                                       left: 6,
@@ -1672,7 +1770,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                             const Icon(Icons.star_rounded, color: _Palette.gold, size: 13),
                                             const SizedBox(width: 3),
                                             Text(
-                                              item.rating!.toStringAsFixed(1),
+                                              double.parse(item.imdbRating!).toStringAsFixed(1),
                                               style: const TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 11,
@@ -1688,7 +1786,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                               const SizedBox(height: 8),
                               // Title
                               Text(
-                                item.title,
+                                item.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -1702,7 +1800,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                               Text(
                                 [
                                   if (item.year != null) '${item.year}',
-                                  if (item.genre != null) item.genre!.split(',').first.trim(),
+                                  if (item.genres.isNotEmpty) item.genres.first,
                                 ].join(' · '),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

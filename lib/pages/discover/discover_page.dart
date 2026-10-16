@@ -6,6 +6,7 @@ import '../../models/movie/movie.dart';
 import '../../models/movie/movie_section.dart';
 import '../../services/addon/addon_manager.dart';
 import '../../services/metadata/metadata_service.dart';
+import '../../services/metadata/tmdb_service.dart';
 import '../../services/theme/dock_settings.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/error_view.dart';
@@ -43,6 +44,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
   // Full Discover state
   String _selectedType = 'movie';
 
+  // TMDB browsing state (used when TmdbService.isConfigured)
+  String _tmdbListId = 'popular_movie';
+  List<({int id, String name})> _tmdbGenres = const [];
+
   ({InstalledAddon addon, AddonCatalog catalog})? _selectedCatalogEntry;
   final Map<String, String> _selectedExtras = {};
 
@@ -53,6 +58,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
   final ScrollController _scrollController = ScrollController();
 
+  bool get _isTmdbMode => !_isLegacyMode && TmdbService.isConfigured;
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +67,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     if (_isLegacyMode) {
       _fetchLegacyData();
+    } else if (_isTmdbMode) {
+      _initTmdbDiscover();
     } else {
       _initDiscoverCatalogs();
     }
@@ -145,6 +154,27 @@ class _DiscoverPageState extends State<DiscoverPage> {
     });
 
     _checkAndLoadCatalog();
+  }
+
+  // ── TMDB Discover Mode ──
+  Future<void> _initTmdbDiscover() async {
+    setState(() {
+      _tmdbListId = 'popular_movie';
+    });
+
+    final genres = await TmdbService.fetchGenres('movie');
+    if (!mounted) return;
+    setState(() {
+      _tmdbGenres = genres;
+    });
+
+    _loadItems(refresh: true);
+  }
+
+  void _selectTmdbList(String listId) {
+    if (_tmdbListId == listId) return;
+    setState(() => _tmdbListId = listId);
+    _loadItems(refresh: true);
   }
 
   // ── Results ──────────────────────────────────────────────────────────
@@ -234,6 +264,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Future<void> _loadItems({bool refresh = false}) async {
+    if (_isTmdbMode) {
+      await _loadTmdbItems(refresh: refresh);
+      return;
+    }
+
     if (_selectedCatalogEntry == null) return;
     final entry = _selectedCatalogEntry!;
 
@@ -279,6 +314,48 @@ class _DiscoverPageState extends State<DiscoverPage> {
       });
 
       // Auto load more if screen not filled yet
+      _ensureScreenFilled();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Loads a page of items for the currently selected TMDB list.
+  Future<void> _loadTmdbItems({bool refresh = false}) async {
+    if (refresh) {
+      setState(() {
+        _items.clear();
+        _hasMore = true;
+        _error = null;
+      });
+    }
+
+    if (!_hasMore) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final newItems = await TmdbService.fetchList(
+        _tmdbListId,
+        page: (_items.length ~/ TmdbService.pageSize) + 1,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        // Trending lists shift between pages — dedupe by id.
+        final seen = _items.map((m) => m.id).toSet();
+        for (final m in newItems) {
+          if (seen.add(m.id)) _items.add(m);
+        }
+        if (newItems.length < TmdbService.pageSize) _hasMore = false;
+        _isLoading = false;
+      });
+
       _ensureScreenFilled();
     } catch (e) {
       if (!mounted) return;
@@ -361,7 +438,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Widget _buildDiscoverContent(double topOffset, MovieCardSizing sizing, double bottomInset) {
-    if (_selectedCatalogEntry == null) {
+    if (_selectedCatalogEntry == null && !_isTmdbMode) {
       return Center(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
@@ -436,11 +513,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
         .clamp(2, 10);
     final double cardAspectRatio = sizing.cardWidth / sizing.totalHeight;
 
-    return GridView.builder(
+    final grid = GridView.builder(
       controller: _scrollController,
       padding: EdgeInsets.fromLTRB(
         sizing.sidePadding,
-        topOffset + 14,
+        _isTmdbMode ? 14 : topOffset + 14,
         sizing.sidePadding,
         110 + bottomInset,
       ),
@@ -460,6 +537,69 @@ class _DiscoverPageState extends State<DiscoverPage> {
         }
         return MovieCard(movie: visibleItems[index]);
       },
+    );
+
+    if (_isTmdbMode) {
+      return Column(
+        children: [
+          SizedBox(height: topOffset),
+          _buildTmdbGenreRow(),
+          const SizedBox(height: 6),
+          Expanded(child: grid),
+        ],
+      );
+    }
+
+    return grid;
+  }
+
+  /// Horizontal selector of curated TMDB lists + genres.
+  Widget _buildTmdbGenreRow() {
+    final chips = <({String listId, String label})>[
+      (listId: 'popular_movie', label: 'Popular'),
+      (listId: 'trending_day', label: 'Trending'),
+      (listId: 'top_rated_movie', label: 'Top Rated'),
+      for (final g in _tmdbGenres) (listId: 'genre_movie_${g.id}', label: g.name),
+    ];
+
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: chips.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final chip = chips[index];
+          final selected = chip.listId == _tmdbListId;
+          return GestureDetector(
+            onTap: () => _selectTmdbList(chip.listId),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected
+                    ? const Color(0xFF7C5CFF)
+                    : Colors.white.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: selected
+                      ? const Color(0xFF7C5CFF)
+                      : Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Text(
+                chip.label,
+                style: TextStyle(
+                  color: selected ? Colors.white : Colors.white.withValues(alpha: 0.7),
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

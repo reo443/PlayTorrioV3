@@ -10,6 +10,7 @@ import '../../models/movie/movie_section.dart';
 import '../../models/my_list/my_list_item.dart';
 import '../continue_watching/continue_watching_service.dart';
 import '../metadata/bestsimilar_scraper.dart';
+import '../metadata/tmdb_service.dart';
 import '../my_list/my_list_service.dart';
 import '../simkl/simkl_list_source.dart';
 import '../simkl/simkl_service.dart';
@@ -349,15 +350,31 @@ abstract final class HomePageSettings {
     changeNotifier.value++;
   }
 
-  /// Shared helper to build a BestSimilar recommendation MovieSection
+  /// Shared helper to build a recommendation MovieSection.
+  ///
+  /// Prefers TMDB recommendations (from [sourceId]) when configured, falling
+  /// back to the BestSimilar scraper otherwise.
   static Future<MovieSection?> _buildBestSimilarSection({
     required String sourceTitle,
     required int? year,
     required String type,
     required String sectionTitle,
     required String catalogId,
+    String? sourceId,
   }) async {
     final isTv = (type == 'series' || type == 'tv');
+
+    if (TmdbService.isConfigured) {
+      final tmdbSection = await _buildTmdbRecommendationSection(
+        sourceTitle: sourceTitle,
+        type: type,
+        sectionTitle: sectionTitle,
+        catalogId: catalogId,
+        sourceId: sourceId,
+      );
+      if (tmdbSection != null) return tmdbSection;
+    }
+
     try {
       final hit = await BestSimilarScraper.findBest(
         title: sourceTitle,
@@ -423,7 +440,64 @@ abstract final class HomePageSettings {
     }
   }
 
-  /// Fetches a dynamic "Because you have [Title] on your list" section using BestSimilar
+  /// Builds a "Because you..." recommendation section from TMDB.
+  ///
+  /// Resolves [sourceId] (a `tmdb:<n>` sentinel, an IMDb `tt...` id, or null)
+  /// to a TMDB id and fetches its recommendations. Returns null when the id
+  /// cannot be resolved or no recommendations are available, so the caller can
+  /// fall back to BestSimilar.
+  static Future<MovieSection?> _buildTmdbRecommendationSection({
+    required String sourceTitle,
+    required String type,
+    required String sectionTitle,
+    required String catalogId,
+    String? sourceId,
+  }) async {
+    try {
+      var tmdbId = '';
+      var tmdbType = (type == 'series' || type == 'tv' || type == 'anime') ? 'tv' : 'movie';
+
+      final id = sourceId?.trim() ?? '';
+      const sentinelPrefix = '${TmdbService.kSentinel}:';
+      if (id.startsWith(sentinelPrefix)) {
+        tmdbId = id.substring(sentinelPrefix.length);
+      } else if (id.startsWith('tt')) {
+        final resolved = await TmdbService.resolveByImdb(id);
+        if (resolved != null) {
+          tmdbId = resolved.tmdbId;
+          tmdbType = resolved.type;
+        }
+      }
+
+      if (tmdbId.isEmpty) return null;
+
+      final movies = await TmdbService.fetchRecommendations(tmdbType, tmdbId);
+      if (movies.isEmpty) return null;
+
+      final contentType = tmdbType == 'tv' ? 'series' : 'movie';
+      return MovieSection(
+        title: sectionTitle,
+        subtitle: 'Recommendations based on $sourceTitle',
+        contentType: contentType,
+        addonBaseUrl: TmdbService.kSentinel,
+        catalog: AddonCatalog(
+          type: contentType,
+          id: catalogId,
+          name: 'Similar to $sourceTitle',
+          genres: const [],
+          supportsSearch: false,
+          supportsSkip: false,
+        ),
+        movies: movies.take(24).toList(),
+      );
+    } catch (e) {
+      debugPrint('[HomePageSettings] TMDB recommendations failed for "$sourceTitle": $e');
+      return null;
+    }
+  }
+
+  /// Fetches a dynamic "Because you have [Title] on your list" section
+  /// (TMDB recommendations when configured, BestSimilar otherwise).
   static Future<MovieSection?> fetchBestSimilarSection({bool forceRefresh = false}) async {
     if (!enableSimilar.value) return null;
 
@@ -438,12 +512,16 @@ abstract final class HomePageSettings {
     final candidates = List<MyListItem>.from(myList.reversed);
 
     for (final sourceItem in candidates) {
+      final sourceId = sourceItem.tmdbId != null
+          ? '${TmdbService.kSentinel}:${sourceItem.tmdbId}'
+          : sourceItem.imdbId;
       final section = await _buildBestSimilarSection(
         sourceTitle: sourceItem.title,
         year: sourceItem.year,
         type: sourceItem.type,
         sectionTitle: 'Because you have "${sourceItem.title}" on your list',
         catalogId: 'bestsimilar_list',
+        sourceId: sourceId,
       );
 
       if (section != null) {
@@ -456,7 +534,8 @@ abstract final class HomePageSettings {
     return null;
   }
 
-  /// Fetches a dynamic "Because you're watching [Title]" section from Continue Watching using BestSimilar
+  /// Fetches a dynamic "Because you're watching [Title]" section from
+  /// Continue Watching (TMDB recommendations when configured, BestSimilar otherwise).
   static Future<MovieSection?> fetchContinueWatchingSimilarSection({
     bool forceRefresh = false,
     String? excludeTitle,
@@ -500,6 +579,7 @@ abstract final class HomePageSettings {
         type: item.type,
         sectionTitle: 'Because you\'re watching "${item.title}"',
         catalogId: 'bestsimilar_watching',
+        sourceId: item.id,
       );
 
       if (section != null) {

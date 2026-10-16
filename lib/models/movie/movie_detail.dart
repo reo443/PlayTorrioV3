@@ -1,3 +1,4 @@
+import '../../services/metadata/tmdb_service.dart';
 import 'link.dart';
 import 'video.dart';
 
@@ -19,6 +20,9 @@ class MovieDetail {
   final List<Video> videos;
   final String? tmdbId;
 
+  /// Season numbers available for a series (populated for TMDB series).
+  final List<int> seasons;
+
   MovieDetail({
     required this.id,
     required this.type,
@@ -36,6 +40,7 @@ class MovieDetail {
     this.links = const [],
     this.videos = const [],
     this.tmdbId,
+    this.seasons = const [],
   });
 
   /// Whether this detail represents a collection or franchise item.
@@ -62,6 +67,7 @@ class MovieDetail {
     List<Link>? links,
     List<Video>? videos,
     String? tmdbId,
+    List<int>? seasons,
   }) {
     return MovieDetail(
       id: id ?? this.id,
@@ -80,6 +86,7 @@ class MovieDetail {
       links: links ?? this.links,
       videos: videos ?? this.videos,
       tmdbId: tmdbId ?? this.tmdbId,
+      seasons: seasons ?? this.seasons,
     );
   }
 
@@ -107,6 +114,106 @@ class MovieDetail {
               .toList() ??
           [],
       tmdbId: json['moviedb_id']?.toString(),
+    );
+  }
+
+  /// Builds a [MovieDetail] from a TMDB details response.
+  ///
+  /// [type] is TMDB's `movie`/`tv` (or the app's `series`). The [id] becomes the
+  /// IMDb id (`external_ids.imdb_id`) when present — because stream scrapers
+  /// resolve by IMDb — otherwise `tmdb:<numeric id>`.
+  factory MovieDetail.fromTmdb(Map<String, dynamic> json, String type) {
+    final isTv = type == 'tv' || type == 'series';
+    final numericId = json['id']?.toString() ?? '';
+
+    final externalIds = json['external_ids'];
+    final imdbId = (externalIds is Map)
+        ? externalIds['imdb_id']?.toString()
+        : json['imdb_id']?.toString();
+    final effectiveId = (imdbId != null && imdbId.isNotEmpty)
+        ? imdbId
+        : (numericId.isNotEmpty ? '${TmdbService.kSentinel}:$numericId' : '');
+
+    final dateStr =
+        (json['release_date'] ?? json['first_air_date'] ?? '').toString();
+
+    final castList = <String>[];
+    final directorList = <String>[];
+    final credits = json['credits'];
+    if (credits is Map) {
+      final cast = credits['cast'];
+      if (cast is List) {
+        for (final c in cast.take(15)) {
+          if (c is Map) {
+            final n = c['name']?.toString();
+            if (n != null && n.isNotEmpty) castList.add(n);
+          }
+        }
+      }
+      final crew = credits['crew'];
+      if (crew is List) {
+        for (final c in crew) {
+          if (c is Map && c['job']?.toString() == 'Director') {
+            final n = c['name']?.toString();
+            if (n != null && n.isNotEmpty) directorList.add(n);
+          }
+        }
+      }
+    }
+    if (directorList.isEmpty) {
+      final createdBy = json['created_by'];
+      if (createdBy is List) {
+        for (final c in createdBy) {
+          if (c is Map) {
+            final n = c['name']?.toString();
+            if (n != null && n.isNotEmpty) directorList.add(n);
+          }
+        }
+      }
+    }
+
+    final genreNames = <String>[];
+    final genreList = json['genres'];
+    if (genreList is List) {
+      for (final g in genreList) {
+        if (g is Map) {
+          final n = g['name']?.toString();
+          if (n != null && n.isNotEmpty) genreNames.add(n);
+        }
+      }
+    }
+
+    final rating = json['vote_average'];
+    final runtime = isTv ? null : json['runtime'];
+
+    final seasonNumbers = <int>[];
+    final seasonList = json['seasons'];
+    if (seasonList is List) {
+      for (final s in seasonList) {
+        if (s is! Map) continue;
+        final raw = s['season_number'];
+        final n = raw is int ? raw : int.tryParse('$raw');
+        if (n != null) seasonNumbers.add(n);
+      }
+      seasonNumbers.sort();
+    }
+
+    return MovieDetail(
+      id: effectiveId,
+      type: isTv ? 'series' : 'movie',
+      name: (json['title'] ?? json['name'] ?? 'Unknown').toString(),
+      poster: TmdbService.imageUrl(json['poster_path']?.toString()),
+      background:
+          TmdbService.imageUrl(json['backdrop_path']?.toString(), size: 'original'),
+      description: json['overview']?.toString(),
+      year: dateStr.length >= 4 ? dateStr.substring(0, 4) : null,
+      imdbRating: (rating is num && rating > 0) ? rating.toString() : null,
+      genres: genreNames,
+      cast: castList,
+      director: directorList,
+      runtime: (runtime is num && runtime > 0) ? runtime.toString() : null,
+      tmdbId: numericId.isEmpty ? null : numericId,
+      seasons: seasonNumbers,
     );
   }
 }

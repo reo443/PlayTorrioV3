@@ -152,6 +152,18 @@ class AboutSettingsPage extends StatelessWidget {
                 title: 'Trakt & Cloud Synchronization',
                 subtitle: 'Cross-platform watchlist, episode tracking, and playback scrobbling.',
               ),
+
+              const SizedBox(height: 24),
+
+              // TMDB attribution (required by TMDB terms of use).
+              Text(
+                'This product uses the TMDB API but is not endorsed or certified by TMDB.',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: Colors.white.withValues(alpha: 0.35),
+                  height: 1.4,
+                ),
+              ),
             ],
           ),
         ),

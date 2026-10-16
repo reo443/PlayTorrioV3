@@ -1,3 +1,5 @@
+import '../../services/metadata/tmdb_service.dart';
+
 class Movie {
   final String id;
   final String name;
@@ -62,6 +64,47 @@ class Movie {
         json['runtime'] ?? json['duration'] ?? json['runtimeMinutes'],
       ),
       genres: _parseGenres(json['genres'] ?? json['genre']),
+    );
+  }
+
+  /// Builds a [Movie] from a TMDB API item (trending/popular/discover/search).
+  ///
+  /// [mediaType] is typically TMDB's `media_type` (`movie`/`tv`); `series` is
+  /// accepted as an alias for `tv`. Items are tagged with [TmdbService.kSentinel].
+  factory Movie.fromTmdb(Map<String, dynamic> json, String mediaType) {
+    final rawType = mediaType.isNotEmpty
+        ? mediaType
+        : (json['media_type']?.toString() ?? 'movie');
+    final isTv = rawType == 'tv' || rawType == 'series';
+
+    final numericId = json['id']?.toString() ?? '';
+    final dateStr =
+        (json['release_date'] ?? json['first_air_date'] ?? '').toString();
+
+    double? popularity;
+    if (json['popularity'] is num) {
+      popularity = (json['popularity'] as num).toDouble();
+    } else {
+      popularity = double.tryParse(json['popularity']?.toString() ?? '');
+    }
+
+    final rating = json['vote_average'];
+    final ratingStr = (rating is num && rating > 0) ? rating.toString() : null;
+
+    return Movie(
+      id: numericId.isEmpty ? '' : '${TmdbService.kSentinel}:$numericId',
+      name: (json['title'] ??
+              json['name'] ??
+              json['original_title'] ??
+              json['original_name'] ??
+              'Unknown')
+          .toString(),
+      poster: TmdbService.imageUrl(json['poster_path']?.toString()),
+      year: dateStr.length >= 4 ? dateStr.substring(0, 4) : null,
+      type: isTv ? 'series' : 'movie',
+      addonBaseUrl: TmdbService.kSentinel,
+      imdbRating: ratingStr,
+      popularity: popularity,
     );
   }
 

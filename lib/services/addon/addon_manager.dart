@@ -7,6 +7,7 @@ import '../../models/movie/movie.dart';
 import '../../models/movie/movie_section.dart';
 import '../../utils/search/relevance_scorer.dart';
 import '../metadata/metadata_service.dart';
+import '../metadata/tmdb_service.dart';
 import '../p2p/p2p_settings_service.dart';
 
 /// Manages installed Stremio metadata addons.
@@ -345,11 +346,46 @@ class AddonManager {
 
     return allSections;
   }
+  /// Fetches a single TMDB-backed home section. Returns `null` on failure or
+  /// when the list is empty, so the section is skipped without breaking others.
+  Future<MovieSection?> _fetchTmdbSection(String listId, String type) async {
+    try {
+      final movies = await TmdbService.fetchList(listId);
+      if (movies.isEmpty) return null;
+
+      final title = TmdbService.catalogTitle(listId);
+      return MovieSection(
+        title: title,
+        subtitle: '',
+        contentType: type,
+        addonBaseUrl: TmdbService.kSentinel,
+        catalog: AddonCatalog(type: type, id: listId, name: title),
+        movies: movies,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Streams the curated modern home page sections — Popular, Trending
   /// (newest releases of the current year) and Top Rated, for movies and
   /// series — sourced from Cinemeta. All six requests run concurrently and
   /// sections are yielded in a fixed order so the home layout stays stable.
   Stream<MovieSection> streamHomeSections() async* {
+    // TMDB is the primary metadata/catalog source. Sections stream in a fixed
+    // order; each list is fetched concurrently so the slowest request does not
+    // block the others from being prepared.
+    if (TmdbService.isConfigured) {
+      final futures = TmdbService.homeLists
+          .map((list) => _fetchTmdbSection(list.listId, list.type))
+          .toList();
+      for (final future in futures) {
+        final section = await future;
+        if (section != null) yield section;
+      }
+      return;
+    }
+
     const String cinemetaBase = 'https://v3-cinemeta.strem.io';
     final year = DateTime.now().year.toString();
 

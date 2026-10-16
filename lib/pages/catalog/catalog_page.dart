@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/movie/movie.dart';
 import '../../models/movie/movie_section.dart';
 import '../../services/metadata/metadata_service.dart';
+import '../../services/metadata/tmdb_service.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/movie/movie_card.dart';
@@ -105,18 +106,32 @@ class _CatalogPageState extends State<CatalogPage> {
     setState(() => _isLoading = true);
 
     try {
-      final newItems = await MetadataService.fetchCatalog(
-        baseUrl: widget.section.addonBaseUrl,
-        type: widget.section.contentType,
-        catalogId: widget.section.catalog.id,
-        extraParams: _selectedExtras.isNotEmpty ? _selectedExtras : null,
-        skip: _items.length,
-      );
+      final isTmdb = widget.section.addonBaseUrl == TmdbService.kSentinel;
+
+      final newItems = isTmdb
+          ? await TmdbService.fetchList(
+              widget.section.catalog.id,
+              page: (_items.length ~/ TmdbService.pageSize) + 1,
+            )
+          : await MetadataService.fetchCatalog(
+              baseUrl: widget.section.addonBaseUrl,
+              type: widget.section.contentType,
+              catalogId: widget.section.catalog.id,
+              extraParams: _selectedExtras.isNotEmpty ? _selectedExtras : null,
+              skip: _items.length,
+            );
 
       if (!mounted) return;
 
       setState(() {
-        if (newItems.isEmpty) {
+        if (isTmdb) {
+          // Trending lists shift between pages — dedupe by id.
+          final seen = _items.map((m) => m.id).toSet();
+          for (final m in newItems) {
+            if (seen.add(m.id)) _items.add(m);
+          }
+          if (newItems.length < TmdbService.pageSize) _hasMore = false;
+        } else if (newItems.isEmpty) {
           _hasMore = false;
         } else {
           _items.addAll(newItems);

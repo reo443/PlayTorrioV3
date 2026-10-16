@@ -10,6 +10,7 @@ import '../../models/movie/movie_section.dart';
 import '../../models/stream/stream_model.dart';
 import '../../services/addon/addon_manager.dart';
 import '../../services/cloudstream/cloudstream_manager.dart';
+import '../../services/metadata/tmdb_service.dart';
 import '../../widgets/movie/movie_card.dart';
 import '../../widgets/search/magnet_files_view.dart';
 import '../player/player_screen.dart';
@@ -251,18 +252,65 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     try {
-      // 1. Search Stremio Addons with dynamic streaming
-      final addonSearch = AddonManager.instance
-          .searchAll(
-            currentQuery,
-            onSectionResult: (section) {
-              addSection(section, isCloudStream: false);
-            },
-          )
-          .catchError((e) {
-            debugPrint('[SearchPage] Addon search error: $e');
-            return <MovieSection>[];
-          });
+      // 1. Metadata search — TMDB when configured, else Stremio addons.
+      final Future<List<MovieSection>> addonSearch = TmdbService.isConfigured
+          ? TmdbService.searchMulti(currentQuery).then((movies) {
+              if (!mounted || _lastQuery != currentQuery || movies.isEmpty) {
+                return <MovieSection>[];
+              }
+
+              final movieItems = movies.where((m) => m.type == 'movie').toList();
+              final seriesItems =
+                  movies.where((m) => m.type == 'series').toList();
+
+              if (movieItems.isNotEmpty) {
+                addSection(
+                  MovieSection(
+                    title: 'Movies',
+                    subtitle: 'TMDB',
+                    contentType: 'movie',
+                    addonBaseUrl: TmdbService.kSentinel,
+                    catalog: AddonCatalog(
+                      type: 'movie',
+                      id: 'tmdb_search_movie',
+                      name: 'Movies',
+                    ),
+                    movies: movieItems,
+                  ),
+                );
+              }
+              if (seriesItems.isNotEmpty) {
+                addSection(
+                  MovieSection(
+                    title: 'Series',
+                    subtitle: 'TMDB',
+                    contentType: 'series',
+                    addonBaseUrl: TmdbService.kSentinel,
+                    catalog: AddonCatalog(
+                      type: 'series',
+                      id: 'tmdb_search_series',
+                      name: 'Series',
+                    ),
+                    movies: seriesItems,
+                  ),
+                );
+              }
+              return <MovieSection>[];
+            }).catchError((e) {
+              debugPrint('[SearchPage] TMDB search error: $e');
+              return <MovieSection>[];
+            })
+          : AddonManager.instance
+              .searchAll(
+                currentQuery,
+                onSectionResult: (section) {
+                  addSection(section, isCloudStream: false);
+                },
+              )
+              .catchError((e) {
+                debugPrint('[SearchPage] Addon search error: $e');
+                return <MovieSection>[];
+              });
 
       // 2. Search CloudStream Extensions with dynamic streaming
       final csSearch =
