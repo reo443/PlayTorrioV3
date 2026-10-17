@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/playtorrio_tokens.dart';
+import '../ui/app_text_field.dart';
+
 /// A single-select option list designed for a bottom sheet.
 ///
 /// Emits the chosen value (or `null` for the "Any" row) via [onSelected].
@@ -28,9 +31,17 @@ class FilterOptionSheet<T> extends StatefulWidget {
 
 class _FilterOptionSheetState<T> extends State<FilterOptionSheet<T>> {
   String _query = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     final filtered = _query.isEmpty
         ? widget.options
         : widget.options
@@ -51,7 +62,7 @@ class _FilterOptionSheetState<T> extends State<FilterOptionSheet<T>> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: tokens.borderStrong,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -62,8 +73,8 @@ class _FilterOptionSheetState<T> extends State<FilterOptionSheet<T>> {
                   Expanded(
                     child: Text(
                       widget.title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: tokens.textPrimary,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
                       ),
@@ -83,29 +94,9 @@ class _FilterOptionSheetState<T> extends State<FilterOptionSheet<T>> {
             if (widget.searchable)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                child: TextField(
-                  autofocus: false,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Search...',
-                    hintStyle: const TextStyle(color: Colors.white38),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: Colors.white38,
-                      size: 20,
-                    ),
-                    isDense: true,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: widget.accent),
-                    ),
-                  ),
+                child: AppSearchField(
+                  controller: _searchController,
+                  hintText: 'Search...',
                   onChanged: (v) => setState(() => _query = v),
                 ),
               ),
@@ -116,10 +107,14 @@ class _FilterOptionSheetState<T> extends State<FilterOptionSheet<T>> {
                 itemCount: filtered.length + 1,
                 itemBuilder: (context, index) {
                   if (index == 0) {
-                    return _tile(label: 'Any', value: null);
+                    return _tile(tokens: tokens, label: 'Any', value: null);
                   }
                   final option = filtered[index - 1];
-                  return _tile(label: option.label, value: option.value);
+                  return _tile(
+                    tokens: tokens,
+                    label: option.label,
+                    value: option.value,
+                  );
                 },
               ),
             ),
@@ -129,14 +124,18 @@ class _FilterOptionSheetState<T> extends State<FilterOptionSheet<T>> {
     );
   }
 
-  Widget _tile({required String label, required T? value}) {
+  Widget _tile({
+    required PlayTorrioTokens tokens,
+    required String label,
+    required T? value,
+  }) {
     final selected = value == widget.selected;
     return ListTile(
       dense: true,
       title: Text(
         label,
         style: TextStyle(
-          color: selected ? widget.accent : Colors.white,
+          color: selected ? widget.accent : tokens.textPrimary,
           fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
         ),
       ),
