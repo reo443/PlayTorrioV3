@@ -164,7 +164,7 @@ void main() {
 
   testWidgets('a disabled switch renders without reporting', (tester) async {
     await tester.pumpWidget(
-      host(SettingsToggleSwitch(value: true, onChanged: null)),
+      host(const SettingsToggleSwitch(value: true, onChanged: null)),
     );
 
     await tester.tap(find.byType(SettingsToggleSwitch));
