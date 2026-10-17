@@ -5,7 +5,11 @@ import 'package:flutter/services.dart';
 
 import '../../models/discover/discover_filter_state.dart';
 import '../../services/metadata/tmdb_service.dart';
-import '../../services/theme/app_theme_service.dart';
+import '../../theme/app_radii.dart';
+import '../../theme/app_semantic_colors.dart';
+import '../../theme/playtorrio_tokens.dart';
+import '../ui/app_button.dart';
+import '../ui/app_chip.dart';
 import 'filter_option_sheet.dart';
 
 /// A vertically scrolling advanced-filter bottom sheet for the Browse screen.
@@ -281,19 +285,21 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     bool searchable = false,
     required VoidCallback onCleared,
   }) async {
-    final accent = AppThemeService.currentPalette.value.primaryColor;
+    final tokens = PlayTorrioTokens.of(context);
     final result = await showModalBottomSheet<({T? value})>(
       context: context,
-      backgroundColor: AppThemeService.currentPalette.value.cardBackgroundColor,
+      backgroundColor: tokens.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadii.sheet),
+        ),
       ),
       builder: (ctx) => FilterOptionSheet<T>(
         title: title,
         options: options,
         selected: selected,
-        accent: accent,
+        accent: tokens.accent,
         searchable: searchable,
         onSelected: (value) => Navigator.pop(ctx, (value: value)),
       ),
@@ -309,8 +315,8 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = AppThemeService.currentPalette.value;
-    final accent = palette.primaryColor;
+    final tokens = PlayTorrioTokens.of(context);
+    final accent = tokens.accent;
     final maxHeight = MediaQuery.sizeOf(context).height * 0.92;
 
     return Padding(
@@ -318,11 +324,11 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
       child: Container(
         constraints: BoxConstraints(maxHeight: maxHeight),
         decoration: BoxDecoration(
-          color: palette.cardBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          color: tokens.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadii.sheet),
           ),
+          border: Border(top: BorderSide(color: tokens.borderSubtle)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -380,7 +386,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                       trailing: Text(
                         'Single select',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.35),
+                          color: tokens.textTertiary,
                           fontSize: 11.5,
                         ),
                       ),
@@ -393,7 +399,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                       trailing: Text(
                         'Single select',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.35),
+                          color: tokens.textTertiary,
                           fontSize: 11.5,
                         ),
                       ),
@@ -415,6 +421,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   // ── Header ───────────────────────────────────────────────────────────────
 
   Widget _buildHeader(Color accent) {
+    final tokens = PlayTorrioTokens.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -423,7 +430,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
           width: 40,
           height: 4,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
+            color: tokens.borderStrong,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -438,10 +445,10 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                   children: [
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           'Filters',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: tokens.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
                           ),
@@ -476,7 +483,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                     Text(
                       "Find exactly what you're in the mood for",
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.55),
+                        color: tokens.textSecondary,
                         fontSize: 12.5,
                       ),
                     ),
@@ -486,7 +493,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
               IconButton(
                 onPressed: () => Navigator.pop(context),
                 tooltip: 'Close',
-                icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                icon: Icon(Icons.close_rounded, color: tokens.textSecondary),
               ),
             ],
           ),
@@ -503,6 +510,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     required Widget child,
     Widget? trailing,
   }) {
+    final tokens = PlayTorrioTokens.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Column(
@@ -510,13 +518,13 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.6)),
+              Icon(icon, size: 16, color: tokens.textSecondary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: tokens.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -535,49 +543,14 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   Widget _divider() => Divider(
     height: 1,
     thickness: 1,
-    color: Colors.white.withValues(alpha: 0.06),
+    color: PlayTorrioTokens.of(context).borderSubtle,
   );
 
   Widget _chip(
     String label, {
     required bool selected,
     required VoidCallback onTap,
-  }) {
-    final accent = AppThemeService.currentPalette.value.primaryColor;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 36),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected
-                ? accent.withValues(alpha: 0.2)
-                : Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected
-                  ? accent.withValues(alpha: 0.8)
-                  : Colors.white.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: selected
-                  ? Colors.white
-                  : Colors.white.withValues(alpha: 0.75),
-              fontSize: 13,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  }) => AppChip(label: label, selected: selected, onTap: onTap);
 
   Widget _chipWrap(List<Widget> chips) {
     return Wrap(spacing: 8, runSpacing: 8, children: chips);
@@ -586,7 +559,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   Widget _unavailable() => Text(
     'Unavailable right now',
     style: TextStyle(
-      color: Colors.white.withValues(alpha: 0.4),
+      color: PlayTorrioTokens.of(context).textTertiary,
       fontSize: 12.5,
     ),
   );
@@ -624,7 +597,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: accent,
               thumbColor: accent,
-              inactiveTrackColor: Colors.white.withValues(alpha: 0.12),
+              inactiveTrackColor: PlayTorrioTokens.of(context).borderStrong,
               overlayColor: accent.withValues(alpha: 0.15),
             ),
             child: Slider(
@@ -702,8 +675,8 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
           const SizedBox(height: 8),
           Text(
             rangeError,
-            style: TextStyle(
-              color: Colors.redAccent.withValues(alpha: 0.9),
+            style: const TextStyle(
+              color: AppSemanticColors.error,
               fontSize: 11.5,
             ),
           ),
@@ -717,6 +690,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     required String hint,
     required Color accent,
   }) {
+    final tokens = PlayTorrioTokens.of(context);
     final invalid = _yearFieldInvalid(controller);
     return TextField(
       controller: controller,
@@ -725,25 +699,25 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(4),
       ],
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: TextStyle(color: tokens.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+        hintStyle: TextStyle(color: tokens.textTertiary),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.05),
+        fillColor: tokens.textPrimary.withValues(alpha: 0.05),
         isDense: true,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadii.input),
           borderSide: BorderSide(
             color: invalid
-                ? Colors.redAccent.withValues(alpha: 0.7)
-                : Colors.white.withValues(alpha: 0.1),
+                ? AppSemanticColors.error.withValues(alpha: 0.7)
+                : tokens.borderSubtle,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadii.input),
           borderSide: BorderSide(color: accent),
         ),
       ),
@@ -857,6 +831,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
   }
 
   Widget _buildCertificationSection(Color accent) {
+    final tokens = PlayTorrioTokens.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Column(
@@ -870,14 +845,14 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                 Icon(
                   Icons.verified_outlined,
                   size: 16,
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: tokens.textSecondary,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Certification',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: tokens.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -896,7 +871,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                   _certsExpanded
                       ? Icons.expand_less_rounded
                       : Icons.expand_more_rounded,
-                  color: Colors.white54,
+                  color: tokens.textTertiary,
                 ),
               ],
             ),
@@ -932,6 +907,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
     required Color accent,
     required VoidCallback onTap,
   }) {
+    final tokens = PlayTorrioTokens.of(context);
     return Semantics(
       button: true,
       label: label,
@@ -941,12 +917,12 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
           height: 44,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
+            color: tokens.textPrimary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(AppRadii.input),
             border: Border.all(
               color: active
                   ? accent.withValues(alpha: 0.7)
-                  : Colors.white.withValues(alpha: 0.1),
+                  : tokens.borderSubtle,
             ),
           ),
           child: Row(
@@ -956,9 +932,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: active
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.7),
+                    color: active ? tokens.textPrimary : tokens.textSecondary,
                     fontSize: 13,
                     fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -966,7 +940,7 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
               ),
               Icon(
                 Icons.arrow_drop_down_rounded,
-                color: Colors.white.withValues(alpha: 0.6),
+                color: tokens.textSecondary,
               ),
             ],
           ),
@@ -979,13 +953,15 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
 
   Widget _buildActionBar(Color accent) {
     final canApply = _yearsOk;
-    final hasInput = !_draft.isEmpty ||
+    final hasInput =
+        !_draft.isEmpty ||
         _yearFromController.text.trim().isNotEmpty ||
         _yearToController.text.trim().isNotEmpty;
+    final count = _count;
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          top: BorderSide(color: PlayTorrioTokens.of(context).borderSubtle),
         ),
       ),
       child: SafeArea(
@@ -994,58 +970,23 @@ class _AdvancedFilterSheetState extends State<AdvancedFilterSheet> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: Row(
             children: [
-              OutlinedButton(
+              AppButton(
+                label: 'Reset all',
+                variant: AppButtonVariant.secondary,
                 onPressed: hasInput ? _resetAll : null,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white70,
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text('Reset all'),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: FilledButton(
+                child: AppButton(
+                  label: count != null
+                      ? 'Show $count result${count == 1 ? '' : 's'}'
+                      : 'Show results',
+                  variant: AppButtonVariant.primary,
+                  expand: true,
+                  loading: _counting && count == null,
                   onPressed: canApply
                       ? () => Navigator.pop(context, _draft)
                       : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: accent,
-                    disabledBackgroundColor: accent.withValues(alpha: 0.3),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (_counting && _count == null) ...[
-                        const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white70,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Text(
-                        _count != null
-                            ? 'Show ${_count!} result${_count == 1 ? '' : 's'}'
-                            : 'Show results',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ],
