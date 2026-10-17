@@ -1,36 +1,41 @@
 import 'package:flutter/material.dart';
 
-import '../../services/theme/app_theme_service.dart';
+import '../../theme/app_radii.dart';
+import '../../theme/app_settings_colors.dart';
+import '../../theme/playtorrio_tokens.dart';
 
 /// Typography tokens for settings screens (system font, spec sizes/weights).
+///
+/// The colours come from [AppSettingsColors] because these styles are `const`
+/// and a `const` style cannot read per-context tokens.
 abstract final class SettingsText {
   /// Section label: 12px, w700, uppercase, letter-spacing 0.09em.
   static const sectionLabel = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w700,
     letterSpacing: 0.9,
-    color: Color(0xFF7E7E8C),
+    color: AppSettingsColors.sectionLabel,
   );
 
   /// Setting title: 15px, w700.
   static const title = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w700,
-    color: Color(0xFFF2F2F5),
+    color: AppSettingsColors.title,
   );
 
   /// Setting description: 13px, w500.
   static const description = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w500,
-    color: Color(0xFF8C8C98),
+    color: AppSettingsColors.description,
   );
 
   /// Inactive / unselected option text.
   static const inactive = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
-    color: Color(0xFF9D9DAA),
+    color: AppSettingsColors.inactive,
   );
 }
 
@@ -63,6 +68,7 @@ class SettingsSegmentedControl<T> extends StatelessWidget {
     // 3+ options (or long labels) use a smaller font and may wrap 2 lines.
     final compact = values.length >= 3;
     final fontSize = compact ? 13.0 : 14.0;
+    final tokens = PlayTorrioTokens.of(context);
 
     return Semantics(
       container: true,
@@ -70,9 +76,9 @@ class SettingsSegmentedControl<T> extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: tokens.textPrimary.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+          border: Border.all(color: tokens.borderStrong),
         ),
         child: Row(
           children: [
@@ -118,13 +124,14 @@ class _SegmentedButton<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = AppThemeService.currentPalette.value.primaryColor;
+    final tokens = PlayTorrioTokens.of(context);
+    final accent = tokens.accent;
 
     return Semantics(
       selected: isSelected,
       button: true,
       child: Material(
-        color: Colors.transparent,
+        type: MaterialType.transparency,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
@@ -133,7 +140,7 @@ class _SegmentedButton<T> extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? accent : Colors.transparent,
+              color: isSelected ? accent : null,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -154,7 +161,9 @@ class _SegmentedButton<T> extends StatelessWidget {
                       fontSize: fontSize,
                       height: 1.3,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color: isSelected ? Colors.white : const Color(0xFF9D9DAA),
+                      color: isSelected
+                          ? tokens.onAccent
+                          : AppSettingsColors.inactive,
                     ),
                   ),
                 ),
@@ -185,7 +194,8 @@ class SettingsToggleSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = AppThemeService.currentPalette.value.primaryColor;
+    final tokens = PlayTorrioTokens.of(context);
+    final accent = tokens.accent;
     final enabled = onChanged != null;
 
     return Semantics(
@@ -194,10 +204,10 @@ class SettingsToggleSwitch extends StatelessWidget {
       label: semanticsLabel,
       enabled: enabled,
       child: Material(
-        color: Colors.transparent,
+        type: MaterialType.transparency,
         child: InkWell(
           onTap: onChanged == null ? null : () => onChanged!(value ? false : true),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: AppRadii.roundedChip,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 9),
             child: AnimatedContainer(
@@ -207,11 +217,11 @@ class SettingsToggleSwitch extends StatelessWidget {
               height: 26,
               decoration: BoxDecoration(
                 color: !enabled
-                    ? Colors.white.withValues(alpha: 0.08)
+                    ? tokens.textPrimary.withValues(alpha: 0.08)
                     : value
-                        ? accent
-                        : Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(999),
+                    ? accent
+                    : tokens.textPrimary.withValues(alpha: 0.15),
+                borderRadius: AppRadii.roundedChip,
               ),
               child: Align(
                 alignment: Alignment.centerLeft,
@@ -221,9 +231,12 @@ class SettingsToggleSwitch extends StatelessWidget {
                   width: 20,
                   height: 20,
                   margin: EdgeInsets.only(left: value ? 21 : 3),
-                  decoration: const BoxDecoration(
+                  // Stays light in both states, so it cannot follow the
+                  // accent's contrast colour the way an accent-filled surface
+                  // would.
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
+                    color: tokens.textPrimary,
                   ),
                 ),
               ),
