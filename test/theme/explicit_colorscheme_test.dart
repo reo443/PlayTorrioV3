@@ -102,4 +102,56 @@ void main() {
     expect(cs.onSurface, Colors.black);
     expect(cs.onSurface, isNot(tokens.textPrimary));
   });
+
+  test('onSecondary contrasts with secondary, which is not onPrimary', () {
+    // Amethyst is the case that exposes the bug: its primary needs white text
+    // but its accent is bright enough to need black.
+    final cs = _schemeOf(amethyst);
+
+    expect(cs.onSecondary, Colors.black);
+    expect(cs.onPrimary, Colors.white);
+    expect(cs.onSecondary, isNot(amethystTokens.onAccent));
+  });
+
+  test('each on-colour maximises contrast on its own surface', () {
+    double contrast(Color a, Color b) {
+      final l1 = a.computeLuminance();
+      final l2 = b.computeLuminance();
+      final hi = l1 > l2 ? l1 : l2;
+      final lo = l1 > l2 ? l2 : l1;
+      return (hi + 0.05) / (lo + 0.05);
+    }
+
+    for (final p in AppThemeService.palettes) {
+      final cs = _schemeOf(p);
+      final pairs = <String, (Color, Color)>{
+        'primary/onPrimary': (cs.primary, cs.onPrimary),
+        'secondary/onSecondary': (cs.secondary, cs.onSecondary),
+        'error/onError': (cs.error, cs.onError),
+        'surface/onSurface': (cs.surface, cs.onSurface),
+      };
+      pairs.forEach((name, pair) {
+        expect(
+          contrast(pair.$1, pair.$2),
+          greaterThanOrEqualTo(4.0),
+          reason: '${p.id} $name',
+        );
+      });
+    }
+  });
+
+  test('a light palette inverts the on-colours too', () {
+    const light = AppThemePalette(
+      id: 'light',
+      name: 'Light',
+      primaryColor: Color(0xFFF5D90A),
+      accentColor: Color(0xFF0B4C2A),
+      cardBackgroundColor: Color(0xFFF5F5F7),
+    );
+    final cs = _schemeOf(light);
+
+    // A bright primary takes dark text; a dark secondary takes light text.
+    expect(cs.onPrimary, Colors.black);
+    expect(cs.onSecondary, Colors.white);
+  });
 }
