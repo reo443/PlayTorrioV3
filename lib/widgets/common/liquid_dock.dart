@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_easy/liquid_glass_easy.dart';
 
 import '../../services/theme/glass_settings.dart';
+import '../../theme/app_glass_colors.dart';
 import 'performance_liquid_lens.dart';
 
 class DockItem {
@@ -137,7 +138,11 @@ class _LiquidDockState extends State<LiquidDock> {
             height: 44,
             child: IconButton(
               padding: EdgeInsets.zero,
-              icon: const Icon(Icons.chevron_left_rounded, color: Colors.white70, size: 20),
+              icon: const Icon(
+                Icons.chevron_left_rounded,
+                color: AppGlassColors.glyphMuted,
+                size: 20,
+              ),
               onPressed: () => _scrollBy(-180),
             ),
           ),
@@ -200,7 +205,7 @@ class _LiquidDockState extends State<LiquidDock> {
               padding: EdgeInsets.zero,
               icon: const Icon(
                 Icons.chevron_right_rounded,
-                color: Colors.white70,
+                color: AppGlassColors.glyphMuted,
                 size: 20,
               ),
               onPressed: () => _scrollBy(180),
@@ -234,7 +239,7 @@ class _LiquidDockState extends State<LiquidDock> {
             borderRadius: BorderRadius.all(Radius.circular(32)),
             boxShadow: [
               BoxShadow(
-                color: Color(0x66000000),
+                color: AppGlassColors.shadow,
                 blurRadius: 18,
                 offset: Offset(0, 8),
               ),
@@ -245,7 +250,7 @@ class _LiquidDockState extends State<LiquidDock> {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: const Color(0x24FFFFFF)),
+                border: Border.all(color: AppGlassColors.edge),
               ),
               child: dockContent,
             ),
@@ -279,11 +284,7 @@ class _DockItemWidgetState extends State<_DockItemWidget> {
 
   Widget _icon(double size) => Tooltip(
     message: widget.item.label,
-    child: Icon(
-      widget.item.icon,
-      size: size * 0.45,
-      color: const Color(0xF2FFFFFF),
-    ),
+    child: Icon(widget.item.icon, size: size * 0.45, color: AppGlassColors.glyph),
   );
 
   void _setHover(bool value) {
@@ -361,10 +362,10 @@ class _DockItemWidgetState extends State<_DockItemWidget> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: _hovered
-                    ? const [Color(0x38FFFFFF), Color(0x1FFFFFFF)]
-                    : const [Color(0x24FFFFFF), Color(0x12FFFFFF)],
+                    ? AppGlassColors.fallbackHover
+                    : AppGlassColors.fallbackRest,
               ),
-              border: Border.all(color: const Color(0x26FFFFFF)),
+              border: Border.all(color: AppGlassColors.fallbackBorder),
             ),
             child: _icon(widget.size),
           ),
