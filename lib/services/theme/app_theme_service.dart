@@ -149,19 +149,7 @@ abstract final class AppThemeService {
       fontFamily: 'Poppins',
       scaffoldBackgroundColor: palette.scaffoldBackgroundColor,
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: palette.primaryColor,
-        brightness: Brightness.dark,
-      ).copyWith(
-        primary: palette.primaryColor,
-        onPrimary: tokens.onAccent,
-        secondary: palette.accentColor,
-        onSecondary: tokens.onAccent,
-        surface: palette.cardBackgroundColor,
-        onSurface: tokens.onSurface,
-        surfaceTint: Colors.transparent,
-        error: tokens.error,
-      ),
+      colorScheme: _buildColorScheme(palette, tokens),
       appBarTheme: AppBarTheme(
         backgroundColor: palette.appBarBackgroundColor,
         surfaceTintColor: Colors.transparent,
@@ -179,6 +167,63 @@ abstract final class AppThemeService {
         },
       ),
       extensions: [tokens],
+    );
+  }
+
+  /// Chooses black or white for content sitting on [background].
+  ///
+  /// The same 0.2-luminance threshold `PlayTorrioTokens.fromPalette` uses for
+  /// `onAccent`/`onSurface`, repeated here rather than widening the reviewed
+  /// token class.
+  static Color _onColor(Color background) =>
+      background.computeLuminance() > 0.2 ? Colors.black : Colors.white;
+
+  /// The Material scheme for [palette], derived only from the palette and
+  /// [tokens].
+  ///
+  /// Built directly instead of from a seed: a seed tints every role it is not
+  /// explicitly given with tones the palette never defined, which is a second
+  /// colour source (design spec 6.8).
+  static ColorScheme _buildColorScheme(
+    AppThemePalette palette,
+    PlayTorrioTokens tokens,
+  ) {
+    // A 20% wash of a colour over the card surface, for container roles.
+    Color container(Color color) => Color.alphaBlend(
+      color.withValues(alpha: 0.20),
+      palette.cardBackgroundColor,
+    );
+
+    return ColorScheme(
+      brightness: Brightness.dark,
+      primary: palette.primaryColor,
+      onPrimary: tokens.onAccent,
+      primaryContainer: container(palette.primaryColor),
+      onPrimaryContainer: tokens.textPrimary,
+      secondary: palette.accentColor,
+      onSecondary: tokens.onAccent,
+      secondaryContainer: container(palette.accentColor),
+      onSecondaryContainer: tokens.textPrimary,
+      tertiary: palette.accentColor,
+      onTertiary: tokens.onAccent,
+      error: tokens.error,
+      onError: _onColor(tokens.error),
+      errorContainer: container(tokens.error),
+      onErrorContainer: tokens.textPrimary,
+      surface: palette.cardBackgroundColor,
+      onSurface: tokens.onSurface,
+      onSurfaceVariant: tokens.textSecondary,
+      surfaceContainerLowest: palette.scaffoldBackgroundColor,
+      surfaceContainerLow: palette.appBarBackgroundColor,
+      surfaceContainer: palette.cardBackgroundColor,
+      surfaceContainerHigh: palette.surfaceElevatedColor,
+      surfaceContainerHighest: palette.surfaceElevatedColor,
+      outline: tokens.borderStrong,
+      outlineVariant: tokens.borderSubtle,
+      inverseSurface: palette.surfaceElevatedColor,
+      onInverseSurface: tokens.textPrimary,
+      inversePrimary: palette.primaryColor,
+      surfaceTint: Colors.transparent,
     );
   }
 }
