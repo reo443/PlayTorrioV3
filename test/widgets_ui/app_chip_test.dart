@@ -54,4 +54,27 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('the accentSecondary tone follows the palette', (tester) async {
+    final barbie = AppThemeService.palettes.firstWhere((p) => p.id == 'barbie');
+
+    await tester.pumpWidget(
+      host(
+        const AppBadge(label: 'Debrid', tone: AppBadgeTone.accentSecondary),
+        palette: AppThemeService.palettes.first,
+      ),
+    );
+    final a = tester.widget<Text>(find.text('Debrid')).style?.color;
+
+    await tester.pumpWidget(
+      host(
+        const AppBadge(label: 'Debrid', tone: AppBadgeTone.accentSecondary),
+        palette: barbie,
+      ),
+    );
+    final b = tester.widget<Text>(find.text('Debrid')).style?.color;
+
+    expect(a, isNot(b));
+    expect(b, PlayTorrioTokens.fromPalette(barbie).accentSecondary);
+  });
 }

@@ -8,11 +8,14 @@ import '../../theme/playtorrio_tokens.dart';
 
 /// The fixed meanings a non-interactive [AppBadge] can carry.
 ///
-/// Everything except [neutral] and [accent] comes from the design's allowlist
-/// of semantic colours (spec 13): they must read the same way on every palette.
+/// Everything except [neutral], [accent] and [accentSecondary] comes from the
+/// design's allowlist of semantic colours (spec 13): they must read the same
+/// way on every palette. The three palette tones distinguish categories - e.g.
+/// a debrid source from the swarm - rather than carry meaning of their own.
 enum AppBadgeTone {
   neutral,
   accent,
+  accentSecondary,
   success,
   warning,
   error,
@@ -112,6 +115,7 @@ class AppBadge extends StatelessWidget {
   Color _toneColor(PlayTorrioTokens tokens) => switch (tone) {
     AppBadgeTone.neutral => tokens.textSecondary,
     AppBadgeTone.accent => tokens.accent,
+    AppBadgeTone.accentSecondary => tokens.accentSecondary,
     AppBadgeTone.success => AppSemanticColors.success,
     AppBadgeTone.warning => AppSemanticColors.warning,
     AppBadgeTone.error => AppSemanticColors.error,

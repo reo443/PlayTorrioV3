@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../models/stream/stream_model.dart';
 import '../../pages/player/player_screen.dart';
-import '../../services/theme/app_theme_service.dart';
 import '../../services/debrid/debrid_service.dart';
 import '../../services/stream/torrent_stream_service.dart';
+import '../../theme/app_elevation.dart';
+import '../../theme/app_glass_colors.dart';
+import '../../theme/playtorrio_tokens.dart';
+import '../ui/app_button.dart';
+import '../ui/app_chip.dart';
+import '../ui/app_empty_state.dart';
+import '../ui/app_error_state.dart';
+import '../ui/app_text_field.dart';
 
 class MagnetFileItem {
   final int id;
@@ -263,168 +270,118 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<AppThemePalette>(
-      valueListenable: AppThemeService.currentPalette,
-      builder: (context, palette, _) {
-        if (_isLoading) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: palette.primaryColor.withValues(alpha: 0.12),
-                      border: Border.all(
-                        color: palette.primaryColor.withValues(alpha: 0.3),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: palette.primaryColor.withValues(alpha: 0.25),
-                          blurRadius: 24,
-                          spreadRadius: 4,
-                        ),
-                      ],
+    final tokens = PlayTorrioTokens.of(context);
+
+    if (_isLoading) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: tokens.accent.withValues(alpha: 0.12),
+                  border: Border.all(
+                    color: tokens.accent.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: tokens.accent.withValues(alpha: 0.25),
+                      blurRadius: 24,
+                      spreadRadius: 4,
                     ),
-                    child: SizedBox(
-                      width: 38,
-                      height: 38,
-                      child: CircularProgressIndicator(
-                        color: palette.primaryColor,
-                        strokeWidth: 3,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    _isDebrid ? 'Using $_providerName for files...' : 'Connecting to swarm peers...',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Gathering file list & stream metadata',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        if (_errorMessage != null) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.redAccent.withValues(alpha: 0.12),
-                      border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
-                    ),
-                    child: const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 36),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Failed to Read Magnet',
-                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.6), height: 1.4),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    onPressed: _loadMagnetFiles,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: palette.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
-                    label: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        final filtered = _filteredFiles;
-        final videoCount = _files.where((f) => f.isVideo).length;
-
-        return ListView(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            MediaQuery.paddingOf(context).top + kToolbarHeight + 20,
-            16,
-            40 + MediaQuery.paddingOf(context).bottom,
-          ),
-          physics: const ClampingScrollPhysics(),
-          children: [
-            // Header Info Card
-            _buildTorrentHeaderCard(palette, videoCount),
-
-            const SizedBox(height: 18),
-
-            // Search & Filter Toolbar
-            _buildFilterToolbar(palette, videoCount),
-
-            const SizedBox(height: 14),
-
-            // Files List
-            if (filtered.isEmpty)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Text(
-                    'No files match filter',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 14),
+                  ],
+                ),
+                child: SizedBox(
+                  width: 38,
+                  height: 38,
+                  child: CircularProgressIndicator(
+                    color: tokens.accent,
+                    strokeWidth: 3,
                   ),
                 ),
-              )
-            else
-              ...filtered.map((file) => _buildFileTile(file, palette)),
-          ],
-        );
-      },
+              ),
+              const SizedBox(height: 24),
+              Text(
+                _isDebrid
+                    ? 'Using $_providerName for files...'
+                    : 'Connecting to swarm peers...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: tokens.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Gathering file list & stream metadata',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: tokens.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: AppErrorState(
+          title: 'Failed to Read Magnet',
+          message: _errorMessage,
+          onRetry: _loadMagnetFiles,
+        ),
+      );
+    }
+
+    final filtered = _filteredFiles;
+    final videoCount = _files.where((f) => f.isVideo).length;
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.paddingOf(context).top + kToolbarHeight + 20,
+        16,
+        40 + MediaQuery.paddingOf(context).bottom,
+      ),
+      physics: const ClampingScrollPhysics(),
+      children: [
+        // Header Info Card
+        _buildTorrentHeaderCard(tokens, videoCount),
+
+        const SizedBox(height: 18),
+
+        // Search & Filter Toolbar
+        _buildFilterToolbar(videoCount),
+
+        const SizedBox(height: 14),
+
+        // Files List
+        if (filtered.isEmpty)
+          const AppEmptyState(title: 'No files match the filter')
+        else
+          ...filtered.map((file) => _buildFileTile(file, tokens)),
+      ],
     );
   }
 
-  Widget _buildTorrentHeaderCard(AppThemePalette palette, int videoCount) {
+  Widget _buildTorrentHeaderCard(PlayTorrioTokens tokens, int videoCount) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF131722).withValues(alpha: 0.85),
+        color: tokens.surfaceElevated.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: palette.primaryColor.withValues(alpha: 0.3),
+          color: tokens.accent.withValues(alpha: 0.3),
           width: 1.2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        boxShadow: const [AppElevation.shadowMd],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,10 +391,10 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: palette.primaryColor.withValues(alpha: 0.2),
+                  color: tokens.accent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.link_rounded, color: palette.primaryColor, size: 22),
+                child: Icon(Icons.link_rounded, color: tokens.accent, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -446,10 +403,10 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
                   children: [
                     Text(
                       _torrentTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: tokens.textPrimary,
                         letterSpacing: -0.2,
                       ),
                       maxLines: 2,
@@ -461,7 +418,7 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
                         _infoHash!,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.4),
+                          color: tokens.textTertiary,
                           fontFamily: 'monospace',
                         ),
                         maxLines: 1,
@@ -479,29 +436,30 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
             runSpacing: 8,
             children: [
               // Provider Badge
-              _buildBadge(
+              AppBadge(
                 icon: _isDebrid ? Icons.cloud_done_rounded : Icons.hub_rounded,
                 label: _isDebrid ? '$_providerName Cloud' : 'P2P Swarm',
-                color: _isDebrid ? Colors.cyanAccent : palette.primaryColor,
+                tone: _isDebrid
+                    ? AppBadgeTone.accentSecondary
+                    : AppBadgeTone.accent,
               ),
               // Size Badge
-              _buildBadge(
+              AppBadge(
                 icon: Icons.storage_rounded,
                 label: MagnetFileItem.formatBytes(_totalSize),
-                color: Colors.white70,
               ),
               // Total Files Badge
-              _buildBadge(
+              AppBadge(
                 icon: Icons.folder_rounded,
-                label: '${_files.length} ${_files.length == 1 ? "file" : "files"}',
-                color: Colors.white70,
+                label:
+                    '${_files.length} ${_files.length == 1 ? "file" : "files"}',
               ),
               // Video Files Badge
               if (videoCount > 0)
-                _buildBadge(
+                AppBadge(
                   icon: Icons.movie_rounded,
                   label: '$videoCount ${videoCount == 1 ? "video" : "videos"}',
-                  color: palette.primaryColor,
+                  tone: AppBadgeTone.accent,
                 ),
             ],
           ),
@@ -510,107 +468,43 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
     );
   }
 
-  Widget _buildBadge({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterToolbar(AppThemePalette palette, int videoCount) {
+  Widget _buildFilterToolbar(int videoCount) {
     return Column(
       children: [
         // Search Filter Input
-        Container(
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          child: TextField(
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-            onChanged: (val) => setState(() => _searchFilter = val),
-            decoration: InputDecoration(
-              hintText: 'Filter files by name...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 13),
-              prefixIcon: Icon(Icons.filter_list_rounded, size: 16, color: Colors.white.withValues(alpha: 0.4)),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              isDense: true,
-            ),
-          ),
+        AppTextField(
+          hintText: 'Filter files by name...',
+          prefixIcon: Icons.filter_list_rounded,
+          onChanged: (val) => setState(() => _searchFilter = val),
         ),
         const SizedBox(height: 10),
         // Filter Chips
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
           children: [
-            _buildCategoryChip('all', 'All (${_files.length})', palette),
-            const SizedBox(width: 8),
-            _buildCategoryChip('video', 'Videos ($videoCount)', palette),
-            const SizedBox(width: 8),
-            _buildCategoryChip('other', 'Other (${_files.length - videoCount})', palette),
+            AppChip(
+              label: 'All (${_files.length})',
+              selected: _activeCategory == 'all',
+              onTap: () => setState(() => _activeCategory = 'all'),
+            ),
+            AppChip(
+              label: 'Videos ($videoCount)',
+              selected: _activeCategory == 'video',
+              onTap: () => setState(() => _activeCategory = 'video'),
+            ),
+            AppChip(
+              label: 'Other (${_files.length - videoCount})',
+              selected: _activeCategory == 'other',
+              onTap: () => setState(() => _activeCategory = 'other'),
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildCategoryChip(String category, String label, AppThemePalette palette) {
-    final isSelected = _activeCategory == category;
-    return GestureDetector(
-      onTap: () => setState(() => _activeCategory = category),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? palette.primaryColor.withValues(alpha: 0.25)
-              : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? palette.primaryColor
-                : Colors.white.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.white : Colors.white60,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFileTile(MagnetFileItem file, AppThemePalette palette) {
+  Widget _buildFileTile(MagnetFileItem file, PlayTorrioTokens tokens) {
     final ext = file.extension;
 
     return Container(
@@ -618,13 +512,13 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: file.isVideo
-            ? const Color(0xFF161B26).withValues(alpha: 0.75)
-            : const Color(0xFF10141C).withValues(alpha: 0.5),
+            ? tokens.surfaceElevated.withValues(alpha: 0.75)
+            : tokens.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: file.isVideo
-              ? palette.primaryColor.withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.05),
+              ? tokens.accent.withValues(alpha: 0.2)
+              : tokens.borderSubtle,
           width: 0.9,
         ),
       ),
@@ -636,8 +530,8 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
             height: 38,
             decoration: BoxDecoration(
               color: file.isVideo
-                  ? palette.primaryColor.withValues(alpha: 0.15)
-                  : Colors.white.withValues(alpha: 0.05),
+                  ? tokens.accent.withValues(alpha: 0.15)
+                  : AppGlassColors.wash,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -646,7 +540,7 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
                   : (ext == 'MP3' || ext == 'FLAC' || ext == 'M4A'
                       ? Icons.audiotrack_rounded
                       : Icons.insert_drive_file_rounded),
-              color: file.isVideo ? palette.primaryColor : Colors.white54,
+              color: file.isVideo ? tokens.accent : tokens.textTertiary,
               size: 20,
             ),
           ),
@@ -662,7 +556,7 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: file.isVideo ? FontWeight.w600 : FontWeight.normal,
-                    color: file.isVideo ? Colors.white : Colors.white70,
+                    color: file.isVideo ? tokens.textPrimary : tokens.textSecondary,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -674,15 +568,15 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: AppGlassColors.wash,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           ext,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white70,
+                            color: tokens.textSecondary,
                           ),
                         ),
                       ),
@@ -692,7 +586,7 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
                       MagnetFileItem.formatBytes(file.size),
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.45),
+                        color: tokens.textTertiary,
                       ),
                     ),
                   ],
@@ -705,29 +599,18 @@ class _MagnetFilesViewState extends State<MagnetFilesView> {
 
           // Action Button
           if (file.isVideo)
-            ElevatedButton.icon(
+            AppButton(
+              label: 'Play',
+              icon: Icons.play_arrow_rounded,
+              size: AppButtonSize.sm,
               onPressed: () => _playFile(file),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: palette.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.play_arrow_rounded, size: 18),
-              label: const Text(
-                'Play',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-              ),
             )
           else
             Text(
               'Non-video',
               style: TextStyle(
                 fontSize: 11,
-                color: Colors.white.withValues(alpha: 0.25),
+                color: tokens.textTertiary,
               ),
             ),
         ],
