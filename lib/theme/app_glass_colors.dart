@@ -24,6 +24,10 @@ abstract final class AppGlassColors {
   /// Muted glyph, e.g. the dock's scroll arrows.
   static const glyphMuted = Color(0xB3FFFFFF);
 
+  /// A faint neutral wash: translucent panels and de-emphasised chip fills,
+  /// where the surface is neither a border nor a hover state.
+  static const wash = Color(0x0DFFFFFF);
+
   /// Gradient stops of the non-glass fallback surface, at rest.
   static const fallbackRest = [Color(0x24FFFFFF), Color(0x12FFFFFF)];
 

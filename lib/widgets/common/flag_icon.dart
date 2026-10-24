@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../theme/playtorrio_tokens.dart';
+
 /// Renders a real country flag (from flagcdn.com) for a language name or
 /// ISO 639 code. Falls back to a muted globe icon for unknown languages.
 ///
@@ -203,9 +205,14 @@ class FlagIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final code = countryCodeFor(language);
+    final tokens = PlayTorrioTokens.of(context);
 
     if (code == null) {
-      return Icon(Icons.public_rounded, size: height, color: Colors.white54);
+      return Icon(
+        Icons.public_rounded,
+        size: height,
+        color: tokens.textTertiary,
+      );
     }
 
     return ClipRRect(
@@ -217,8 +224,11 @@ class FlagIcon extends StatelessWidget {
           imageUrl: 'https://flagcdn.com/w80/$code.png',
           fit: BoxFit.cover,
           fadeInDuration: const Duration(milliseconds: 150),
-          errorWidget: (_, __, ___) =>
-              Icon(Icons.public_rounded, size: height, color: Colors.white54),
+          errorWidget: (_, __, ___) => Icon(
+            Icons.public_rounded,
+            size: height,
+            color: tokens.textTertiary,
+          ),
         ),
       ),
     );

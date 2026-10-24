@@ -1,6 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
+import '../../theme/app_elevation.dart';
+import '../../theme/app_glass_colors.dart';
+import '../../theme/playtorrio_tokens.dart';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Custom Scroll Track
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,6 +88,7 @@ class _CustomScrollTrackState extends State<CustomScrollTrack> {
   Widget build(BuildContext context) {
     final thumbPosition = _thumbFraction * (widget.length - _thumbSize);
     final isVert = widget.axis == Axis.vertical;
+    final tokens = PlayTorrioTokens.of(context);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
@@ -101,9 +106,9 @@ class _CustomScrollTrackState extends State<CustomScrollTrack> {
                 horizontal: isVert ? 8 : 16
               ),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: AppGlassColors.wash,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1.5),
+                border: Border.all(color: tokens.borderStrong, width: 1.5),
               ),
               child: isVert ? _buildVerticalLayout(thumbPosition) : _buildHorizontalLayout(thumbPosition),
             ),
@@ -152,6 +157,8 @@ class _CustomScrollTrackState extends State<CustomScrollTrack> {
   }
 
   Widget _buildTrackDragArea(double thumbPosition, bool isVert) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onVerticalDragStart: isVert ? (_) => setState(() => _isDragging = true) : null,
@@ -172,7 +179,7 @@ class _CustomScrollTrackState extends State<CustomScrollTrack> {
           height: isVert ? widget.length : 6, // Visual track
           width: isVert ? 6 : widget.length,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: tokens.borderStrong,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Stack(
@@ -187,15 +194,9 @@ class _CustomScrollTrackState extends State<CustomScrollTrack> {
                   height: isVert ? _thumbSize : null,
                   width: isVert ? null : _thumbSize,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF7C5CFF),
+                    color: tokens.accent,
                     borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF7C5CFF).withValues(alpha: 0.6),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
+                    boxShadow: [AppElevation.glow(tokens.accent)],
                   ),
                 ),
               ),
@@ -222,6 +223,8 @@ class _HoverArrowState extends State<_HoverArrow> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovering = true),
       onExit: (_) => setState(() => _isHovering = false),
@@ -233,12 +236,14 @@ class _HoverArrowState extends State<_HoverArrow> {
           height: 38,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: _isHovering ? Colors.white.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
+            color: _isHovering
+                ? AppGlassColors.fallbackHover.first
+                : AppGlassColors.wash,
+            border: Border.all(color: tokens.borderStrong, width: 1),
           ),
           child: Icon(
             widget.icon,
-            color: _isHovering ? const Color(0xFF7C5CFF) : Colors.white70,
+            color: _isHovering ? tokens.accent : AppGlassColors.glyphMuted,
             size: 22,
           ),
         ),

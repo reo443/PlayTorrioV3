@@ -21,6 +21,8 @@ const List<String> migratedFiles = [
   'lib/widgets/discover/advanced_filter_sheet.dart',
   'lib/widgets/settings/settings_controls.dart',
   'lib/widgets/common/liquid_dock.dart',
+  'lib/widgets/common/custom_scroll_track.dart',
+  'lib/widgets/common/flag_icon.dart',
 ];
 
 /// Matches a `Color(0x…)` literal or a `Colors.<name>` reference, without
