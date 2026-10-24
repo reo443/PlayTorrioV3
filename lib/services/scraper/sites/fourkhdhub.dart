@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
@@ -283,56 +284,39 @@ class FourKHDHubScraper extends StreamScraper {
   }
 
   // ── resolveRedirectUrl ──
-  // Mirrors: src/source/hd-hub-helper.ts
-  // export const resolveRedirectUrl = async (ctx: Context, fetcher: Fetcher, redirectUrl: URL): Promise<URL> => {
-  //   const redirectHtml = await fetcher.text(ctx, redirectUrl);
-  //   const redirectDataMatch = redirectHtml.match(/'o','(.*?)'/) as string[];
-  //   const redirectData = JSON.parse(atob(rot13Cipher(atob(atob(redirectDataMatch[1] as string))))) as { o: string };
-  //   return new URL(atob(redirectData['o']));
-  // };
+  //
+  // The chain currently is:
+  //   greenmotors.club  -> obfuscated payload (see decodeRedirectPayload)
+  //   hubcloud drive    -> <a id="download"> pointing at gamerxyt
+  //   gamerxyt          -> <a class="btn btn-success"> presigned file URL
+  //
+  // Older links still land directly on the drive/gamerxyt page, so both shapes
+  // are handled.
   Future<String?> _resolveRedirectUrl(String redirectUrl) async {
     try {
       final html = await _fetchText(redirectUrl);
-      
-      // Look for the "Generate Direct Download Link" button or script var url
-      var nextUrl = '';
-      final downloadMatch = RegExp(r'<a id="download" href="(.*?)"').firstMatch(html);
-      if (downloadMatch != null) {
-        nextUrl = downloadMatch.group(1)!;
-      } else {
-        // Fallback to checking for the var url = '...'
-        final varMatch = RegExp(r"var url = '(.*?)';").firstMatch(html);
-        if (varMatch != null) {
-          nextUrl = varMatch.group(1)!;
-        }
+
+      final decodedUrl = decodeRedirectPayload(html);
+      if (decodedUrl != null && _looksLikeFileUrl(decodedUrl)) return decodedUrl;
+
+      final page = decodedUrl != null ? await _fetchText(decodedUrl) : html;
+
+      final downloadLink =
+          findDriveDownloadLink(page) ?? _findLegacyVarUrl(page);
+      if (downloadLink != null) {
+        final intermediate = await _fetchText(downloadLink);
+        final finalUrl = findFinalStreamUrl(intermediate);
+        if (finalUrl != null) return finalUrl;
+
+        print('4khdhub final link not found in intermediate page');
+        return null;
       }
 
-      if (nextUrl.isEmpty) {
-        // Fallback to original obfuscated logic just in case older links still use it
-        final match = RegExp(r"'o','(.*?)'").firstMatch(html);
-        if (match == null) {
-          print('4khdhub no redirect link found in html');
-          return null;
-        }
-        final rawData = match.group(1)!;
-        final step1 = utf8.decode(base64.decode(rawData));
-        final step2 = utf8.decode(base64.decode(step1));
-        final step3 = _rot13(step2);
-        final step4 = utf8.decode(base64.decode(step3));
-        final data = jsonDecode(step4) as Map<String, dynamic>;
-        return utf8.decode(base64.decode(data['o'] as String));
-      }
+      // Some links land straight on the page carrying the success button.
+      final direct = findFinalStreamUrl(page);
+      if (direct != null) return direct;
 
-      // We found the intermediate gamerxyt.com URL, let's fetch it
-      final intermediateHtml = await _fetchText(nextUrl);
-      
-      // Look for the final direct download button: class="btn btn-success ... Download File
-      final finalLinkMatch = RegExp(r'<a href="([^"]+)"[^>]*class="[^"]*btn-success').firstMatch(intermediateHtml);
-      if (finalLinkMatch != null) {
-        return finalLinkMatch.group(1)!;
-      }
-
-      print('4khdhub final link not found in intermediate page');
+      print('4khdhub no redirect link found in html');
       return null;
     } catch (e) {
       print('4khdhub resolveRedirectUrl error: $e');
@@ -340,9 +324,77 @@ class FourKHDHubScraper extends StreamScraper {
     }
   }
 
+  /// Decodes the `s('o','…')` payload into the hubcloud drive URL.
+  ///
+  /// Layers: base64 -> base64 -> rot13 -> base64 -> JSON `{o: <base64 url>}`.
+  @visibleForTesting
+  static String? decodeRedirectPayload(String html) {
+    try {
+      final match = RegExp(r"'o','(.*?)'").firstMatch(html);
+      if (match == null) return null;
+
+      final rawData = match.group(1)!;
+      final step1 = utf8.decode(base64.decode(rawData));
+      final step2 = utf8.decode(base64.decode(step1));
+      final step3 = _rot13(step2);
+      final step4 = utf8.decode(base64.decode(step3));
+
+      final data = jsonDecode(step4);
+      if (data is! Map || data['o'] is! String) return null;
+
+      return utf8.decode(base64.decode(data['o'] as String));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Reads the gamerxyt hop from a hubcloud drive page.
+  @visibleForTesting
+  static String? findDriveDownloadLink(String html) {
+    final byId = RegExp(
+      r'<a[^>]*\bid="download"[^>]*\bhref="([^"]+)"',
+      caseSensitive: false,
+    ).firstMatch(html);
+    if (byId != null) return byId.group(1);
+
+    final hrefFirst = RegExp(
+      r'<a[^>]*\bhref="([^"]+)"[^>]*\bid="download"',
+      caseSensitive: false,
+    ).firstMatch(html);
+    return hrefFirst?.group(1);
+  }
+
+  /// Reads the presigned file URL from the gamerxyt page.
+  @visibleForTesting
+  static String? findFinalStreamUrl(String html) {
+    final hrefFirst = RegExp(
+      r'<a[^>]*\bhref="([^"]+)"[^>]*\bclass="[^"]*\bbtn-success\b',
+      caseSensitive: false,
+    ).firstMatch(html);
+    if (hrefFirst != null) return hrefFirst.group(1);
+
+    final classFirst = RegExp(
+      r'<a[^>]*\bclass="[^"]*\bbtn-success\b[^>]*\bhref="([^"]+)"',
+      caseSensitive: false,
+    ).firstMatch(html);
+    return classFirst?.group(1);
+  }
+
+  static String? _findLegacyVarUrl(String html) {
+    return RegExp(r"var url = '(.*?)';").firstMatch(html)?.group(1);
+  }
+
+  static bool _looksLikeFileUrl(String url) {
+    final path = Uri.tryParse(url)?.path.toLowerCase() ?? '';
+    return path.endsWith('.mkv') ||
+        path.endsWith('.mp4') ||
+        path.endsWith('.m3u8') ||
+        path.endsWith('.avi');
+  }
+
   // ── ROT13 cipher ──
   // Mirrors: rot13-cipher npm package
-  String _rot13(String input) {
+  static String _rot13(String input) {
     return input.split('').map((char) {
       final code = char.codeUnitAt(0);
       if (code >= 65 && code <= 90) {

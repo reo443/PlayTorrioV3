@@ -15,7 +15,7 @@ class MappleScraper extends StreamScraper {
   @override
   String get name => 'PlayTorrioHTTP';
 
-  static const _baseUrl = 'https://mapple.club';
+  static const _baseUrl = 'https://mapple.fun';
   static const _ua =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
@@ -28,14 +28,20 @@ class MappleScraper extends StreamScraper {
     {'id': 's10', 'name': 'Chimp'},
   ];
 
-  static String? _solvePoW(String challenge, int difficulty) {
+  /// Solves the SHA-256 proof-of-work challenge issued by `/api/playback-init`.
+  ///
+  /// A nonce is valid when `sha256(challenge + nonce)` starts with
+  /// [difficulty] zero bits. The current challenges use difficulty 18
+  /// (~262k expected nonces), so the search window is deliberately generous.
+  @visibleForTesting
+  static String? solvePoW(String challenge, int difficulty) {
     final maskBytes = difficulty ~/ 8;
     final maskBits = difficulty % 8;
     final finalMask = maskBits > 0 ? ((0xFF << (8 - maskBits)) & 0xFF) : 0;
 
     final challengeBytes = utf8.encode(challenge);
 
-    for (var nonce = 0; nonce < 1000000; nonce++) {
+    for (var nonce = 0; nonce < 2000000; nonce++) {
       final nonceStr = nonce.toString();
       final nonceBytes = utf8.encode(nonceStr);
 
@@ -61,7 +67,36 @@ class MappleScraper extends StreamScraper {
   }
 
   static String? _solvePoWRunner(List<dynamic> args) {
-    return _solvePoW(args[0] as String, args[1] as int);
+    return solvePoW(args[0] as String, args[1] as int);
+  }
+
+  /// Requests a playback token from `/api/ui/session`.
+  ///
+  /// The token used to be embedded in the watch page (`window.__REQUEST_TOKEN__`)
+  /// but is now issued by this endpoint.
+  @visibleForTesting
+  static Future<String?> fetchRequestToken(
+    http.Client client,
+    String baseUrl, {
+    required Map<String, String> headers,
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
+    try {
+      final res = await client.post(
+        Uri.parse('$baseUrl/api/ui/session'),
+        headers: {...headers, 'Accept': 'application/json'},
+      ).timeout(timeout);
+
+      if (res.statusCode != 200) return null;
+
+      final data = jsonDecode(res.body);
+      if (data is! Map) return null;
+
+      final token = data['token'];
+      return token is String && token.isNotEmpty ? token : null;
+    } catch (_) {
+      return null;
+    }
   }
   @override
   Stream<StreamSource> scrapeStream({
@@ -104,11 +139,6 @@ class MappleScraper extends StreamScraper {
         ).timeout(const Duration(seconds: 8));
 
         if (pageRes.statusCode != 200) return;
-        final html = pageRes.body;
-
-        final reqMatch = RegExp(r'''window\.__REQUEST_TOKEN__\s*=\s*"([^"]+)"''').firstMatch(html);
-        if (reqMatch == null || reqMatch.group(1) == null) return;
-        final requestToken = reqMatch.group(1)!;
 
         final rawCookie = pageRes.headers['set-cookie'];
         final cookieParts = <String>[];
@@ -119,6 +149,18 @@ class MappleScraper extends StreamScraper {
           }
         }
         final cookieHeader = cookieParts.join('; ');
+
+        final requestToken = await fetchRequestToken(
+          client,
+          _baseUrl,
+          headers: {
+            'User-Agent': _ua,
+            'Referer': pageUrl,
+            'Origin': _baseUrl,
+            if (cookieHeader.isNotEmpty) 'Cookie': cookieHeader,
+          },
+        );
+        if (requestToken == null) return;
 
         final initHeaders = {
           'Content-Type': 'application/json',
@@ -194,19 +236,24 @@ class MappleScraper extends StreamScraper {
                   'mediaType': mediaType,
                   'tv_slug': tvSlug,
                   'source': sId,
-                  'apikey': 'mptv_sk_a8f29c4e7b3d1f',
                 },
+                'endpoint': 'stream-encrypted',
+                'requestToken': requestToken,
               }),
             ).timeout(const Duration(seconds: 6));
 
             if (encryptRes.statusCode != 200) return null;
             final encryptData = jsonDecode(encryptRes.body);
-            final encrypted = encryptData['encrypted']?.toString();
-            if (encrypted == null) return null;
+            final encryptedUrl =
+                encryptData is Map ? encryptData['url']?.toString() : null;
+            if (encryptedUrl == null || encryptedUrl.isEmpty) return null;
 
-            final streamEncryptedUrl = Uri.parse('$_baseUrl/api/stream-encrypted').replace(
+            // The API answers with a relative `/api/stream-encrypted?data=...`
+            // URL; the session and stream tokens are appended by the client.
+            final resolved = Uri.parse(_baseUrl).resolve(encryptedUrl);
+            final streamEncryptedUrl = resolved.replace(
               queryParameters: {
-                'data': encrypted,
+                ...resolved.queryParameters,
                 'requestToken': requestToken,
                 'token': streamToken!,
               },
