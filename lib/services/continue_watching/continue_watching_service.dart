@@ -446,6 +446,23 @@ class ContinueWatchingService {
     }
   }
 
+  /// The stream id used to rescrape [item] on resume.
+  ///
+  /// Stremio addons and the built-in scrapers address an episode as
+  /// `<imdb>:<season>:<episode>`. Older saves from TMDB-backed series stored the
+  /// numeric TMDB episode id in [ContinueWatchingItem.episodeId], which no source
+  /// understands, so a show-level IMDb id always wins when we have season and
+  /// episode numbers. Provider-specific ids (CloudStream, AniList, …) are kept.
+  static String resolveStreamId(ContinueWatchingItem item) {
+    if (item.type == 'series' &&
+        item.id.startsWith('tt') &&
+        item.season != null &&
+        item.episode != null) {
+      return '${item.id}:${item.season}:${item.episode}';
+    }
+    return item.episodeId ?? item.id;
+  }
+
   /// Resumes playback when a continue-watching card is clicked:
   /// - For First Launch from Trakt/Simkl: Opens WatchScreen to let user manually pick source, then auto-seeks.
   /// - For Anime: Rescrapes streams with AnimeScraperService and auto-seeks.
@@ -824,9 +841,7 @@ class ContinueWatchingService {
       ),
     );
 
-    final streamId = item.episodeId ?? (item.type == 'series' && item.season != null && item.episode != null
-        ? '${item.id}:${item.season}:${item.episode}'
-        : item.id);
+    final streamId = resolveStreamId(item);
 
     final candidateSources = <StreamSource>[];
     StreamSubscription<StreamSource>? sub;

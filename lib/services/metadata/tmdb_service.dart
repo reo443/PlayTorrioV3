@@ -281,24 +281,33 @@ class TmdbService {
   // ── Season episodes ───────────────────────────────────────────────────
 
   /// Episodes of a series season as [Video]s. Empty on failure.
+  ///
+  /// [showImdbId] is the show's IMDb id (a `tt…` id). When it is known, episode
+  /// ids are stamped as `<imdb>:<season>:<episode>` — the only id shape that
+  /// Stremio stream addons and the built-in scrapers understand. Without it the
+  /// TMDB episode id is kept as a last resort.
   static Future<List<Video>> fetchSeasonEpisodes(
     String tmdbId,
-    int season,
-  ) async {
+    int season, {
+    String? showImdbId,
+  }) async {
     final data = await _get('/tv/$tmdbId/season/$season');
     if (data == null) return const [];
-    return seasonEpisodesFromJson(data, season);
+    return seasonEpisodesFromJson(data, season, showImdbId: showImdbId);
   }
 
   /// Parses a `/tv/{id}/season/{n}` response into episode [Video]s.
   @visibleForTesting
   static List<Video> seasonEpisodesFromJson(
     Map<String, dynamic> data,
-    int season,
-  ) {
+    int season, {
+    String? showImdbId,
+  }) {
     final episodes = data['episodes'];
     if (episodes is! List) return const [];
 
+    final imdb = (showImdbId ?? '').trim();
+    final hasImdb = imdb.startsWith('tt');
     final videos = <Video>[];
     for (final ep in episodes) {
       if (ep is! Map<String, dynamic>) continue;
@@ -310,7 +319,9 @@ class TmdbService {
 
       final still = imageUrl(ep['still_path']?.toString());
       videos.add(Video(
-        id: ep['id']?.toString() ?? '${season}x$episodeNumber',
+        id: hasImdb
+            ? '$imdb:$season:$episodeNumber'
+            : (ep['id']?.toString() ?? '${season}x$episodeNumber'),
         title: (ep['name'] ?? 'Episode $episodeNumber').toString(),
         season: season,
         episode: episodeNumber,

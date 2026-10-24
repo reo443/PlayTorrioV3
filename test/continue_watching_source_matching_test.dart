@@ -62,4 +62,54 @@ void main() {
       expect(exactScore, greaterThan(diffScore + 1000.0));
     });
   });
+
+  group('Continue Watching resume stream id', () {
+    ContinueWatchingItem item({
+      String id = 'tt0903747',
+      String type = 'series',
+      int? season = 1,
+      int? episode = 5,
+      String? episodeId,
+    }) =>
+        ContinueWatchingItem(
+          id: id,
+          title: 'Breaking Bad',
+          type: type,
+          season: season,
+          episode: episode,
+          episodeId: episodeId,
+          positionSeconds: 60,
+          totalDurationSeconds: 3000,
+          lastWatchedAt: DateTime.now(),
+          isTorrent: false,
+        );
+
+    test('rebuilds an IMDb episode id from a stored TMDB episode id', () {
+      expect(
+        ContinueWatchingService.resolveStreamId(item(episodeId: '62085')),
+        'tt0903747:1:5',
+      );
+    });
+
+    test('keeps a movie id untouched', () {
+      expect(
+        ContinueWatchingService.resolveStreamId(
+          item(id: 'tt0137523', type: 'movie', season: null, episode: null),
+        ),
+        'tt0137523',
+      );
+    });
+
+    test('keeps provider-specific episode ids untouched', () {
+      expect(
+        ContinueWatchingService.resolveStreamId(
+          item(
+            id: 'cloudstream_ep:source:data',
+            episodeId: 'cloudstream_ep:source:data',
+          ),
+        ),
+        'cloudstream_ep:source:data',
+      );
+    });
+  });
 }

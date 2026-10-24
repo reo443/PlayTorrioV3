@@ -542,7 +542,11 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     final tmdbNumericId = _tmdbNumericId;
     if (tmdbNumericId == null) return;
 
-    final episodes = await TmdbService.fetchSeasonEpisodes(tmdbNumericId, season);
+    final episodes = await TmdbService.fetchSeasonEpisodes(
+      tmdbNumericId,
+      season,
+      showImdbId: _detail?.id,
+    );
     if (!mounted) return;
 
     setState(() {

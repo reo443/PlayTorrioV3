@@ -193,6 +193,36 @@ void main() {
     test('missing episodes list yields empty', () {
       expect(TmdbService.seasonEpisodesFromJson({'season_number': 1}, 1), isEmpty);
     });
+
+    test('uses IMDb-style episode ids when the show id is an IMDb id', () {
+      final videos = TmdbService.seasonEpisodesFromJson(
+        {
+          'season_number': 2,
+          'episodes': [
+            {'id': 4591234, 'name': 'Pilot', 'episode_number': 1},
+          ],
+        },
+        2,
+        showImdbId: 'tt0903747',
+      );
+
+      expect(videos.single.id, 'tt0903747:2:1');
+    });
+
+    test('keeps the TMDB episode id when the show id is not an IMDb id', () {
+      final videos = TmdbService.seasonEpisodesFromJson(
+        {
+          'season_number': 2,
+          'episodes': [
+            {'id': 4591234, 'name': 'Pilot', 'episode_number': 1},
+          ],
+        },
+        2,
+        showImdbId: 'tmdb:1396',
+      );
+
+      expect(videos.single.id, '4591234');
+    });
   });
 
   group('TmdbService.findResultFromJson', () {
