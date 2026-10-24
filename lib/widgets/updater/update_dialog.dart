@@ -9,6 +9,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../services/updater/app_updater_service.dart';
+import '../../theme/app_elevation.dart';
+import '../../theme/app_glass_colors.dart';
+import '../../theme/app_radii.dart';
+import '../../theme/app_semantic_colors.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/playtorrio_tokens.dart';
+import '../ui/app_button.dart';
+import '../ui/app_dialog.dart';
 
 class UpdateDialog extends StatefulWidget {
   final UpdateInfo updateInfo;
@@ -23,10 +32,6 @@ class _UpdateDialogState extends State<UpdateDialog> {
   bool _isDownloading = false;
   double _downloadProgress = 0.0;
 
-  static const Color _surfaceColor = Color(0xFF12151E);
-  static const Color _backgroundColor = Color(0xFF080A0F);
-  static const Color _accentColor = Color(0xFF7C5CFF);
-
   @override
   void dispose() {
     WakelockPlus.disable();
@@ -35,6 +40,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     return PopScope(
       canPop: !_isDownloading,
       onPopInvokedWithResult: (didPop, result) {
@@ -47,20 +53,14 @@ class _UpdateDialogState extends State<UpdateDialog> {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 500),
           decoration: BoxDecoration(
-            color: _surfaceColor,
+            color: tokens.surfaceElevated,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: _accentColor.withValues(alpha: 0.3),
+              color: tokens.accent.withValues(alpha: 0.3),
               width: 1.5,
             ),
-          boxShadow: [
-            BoxShadow(
-              color: _accentColor.withValues(alpha: 0.2),
-              blurRadius: 40,
-              spreadRadius: 5,
-            ),
-          ],
-        ),
+            boxShadow: [AppElevation.glow(tokens.accent)],
+          ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -70,8 +70,8 @@ class _UpdateDialogState extends State<UpdateDialog> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    _accentColor.withValues(alpha: 0.2),
-                    _accentColor.withValues(alpha: 0.05),
+                    tokens.accent.withValues(alpha: 0.2),
+                    tokens.accent.withValues(alpha: 0.05),
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
@@ -84,12 +84,12 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: _accentColor.withValues(alpha: 0.2),
+                      color: tokens.accent.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.system_update_rounded,
-                      color: _accentColor,
+                      color: tokens.accent,
                       size: 32,
                     ),
                   ),
@@ -98,22 +98,22 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'UPDATE AVAILABLE',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 2,
-                            color: _accentColor,
+                            color: tokens.accent,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Version ${widget.updateInfo.latestVersion}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: tokens.textPrimary,
                           ),
                         ),
                       ],
@@ -133,10 +133,10 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: AppGlassColors.wash,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: tokens.borderSubtle,
                       ),
                     ),
                     child: Row(
@@ -145,47 +145,47 @@ class _UpdateDialogState extends State<UpdateDialog> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Current',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.white38,
+                                color: tokens.textTertiary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               widget.updateInfo.currentVersion,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white70,
+                                color: tokens.textSecondary,
                               ),
                             ),
                           ],
                         ),
-                        const Icon(
+                        Icon(
                           Icons.arrow_forward_rounded,
-                          color: _accentColor,
+                          color: tokens.accent,
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text(
+                            Text(
                               'Latest',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.white38,
+                                color: tokens.textTertiary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               widget.updateInfo.latestVersion,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: _accentColor,
+                                color: tokens.accent,
                               ),
                             ),
                           ],
@@ -197,13 +197,13 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   const SizedBox(height: 20),
 
                   // Release notes header & box
-                  const Text(
+                  Text(
                     "WHAT'S NEW",
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.5,
-                      color: Colors.white38,
+                      color: tokens.textTertiary,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -211,18 +211,18 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     constraints: const BoxConstraints(maxHeight: 180),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: _backgroundColor.withValues(alpha: 0.4),
+                      color: tokens.bgPrimary.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: tokens.borderSubtle,
                       ),
                     ),
                     child: SingleChildScrollView(
                       child: Text(
                         widget.updateInfo.releaseNotes,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white70,
+                          color: tokens.textSecondary,
                           height: 1.5,
                         ),
                       ),
@@ -234,17 +234,19 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: AppSemanticColors.warning.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Colors.orange.withValues(alpha: 0.3),
+                          color: AppSemanticColors.warning.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.info_outline,
-                            color: Colors.orange.shade300,
+                            color: AppSemanticColors.warning,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -253,9 +255,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
                               widget.updateInfo.isIOS
                                   ? "iOS: You'll be redirected to GitHub to download the IPA"
                                   : "macOS: You'll be redirected to GitHub to download",
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.orange.shade200,
+                                color: AppSemanticColors.warning,
                               ),
                             ),
                           ),
@@ -271,20 +273,20 @@ class _UpdateDialogState extends State<UpdateDialog> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
+                            Text(
                               'Downloading...',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: _accentColor,
+                                color: tokens.accent,
                               ),
                             ),
                             Text(
                               '${(_downloadProgress * 100).toStringAsFixed(0)}%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white70,
+                                color: tokens.textSecondary,
                               ),
                             ),
                           ],
@@ -294,11 +296,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
                           borderRadius: BorderRadius.circular(8),
                           child: LinearProgressIndicator(
                             value: _downloadProgress,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.1,
-                            ),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              _accentColor,
+                            backgroundColor: tokens.borderStrong,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              tokens.accent,
                             ),
                             minHeight: 8,
                           ),
@@ -317,58 +317,26 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: TextButton(
+                      child: AppButton(
+                        label: 'Later',
+                        variant: AppButtonVariant.secondary,
+                        expand: true,
                         onPressed: () {
-                          AppUpdaterService.dismissVersion(widget.updateInfo.latestVersion);
+                          AppUpdaterService.dismissVersion(
+                            widget.updateInfo.latestVersion,
+                          );
                           Navigator.of(context).pop();
                         },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.15),
-                            ),
-                          ),
-                        ),
-                        child: const Text(
-                          'Later',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white70,
-                          ),
-                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
-                      child: ElevatedButton(
+                      child: AppButton(
+                        label: 'Update Now',
+                        trailingIcon: Icons.download_rounded,
+                        expand: true,
                         onPressed: _handleUpdate,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _accentColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Update Now',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(Icons.download_rounded, size: 20),
-                          ],
-                        ),
                       ),
                     ),
                   ],
@@ -440,7 +408,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                             'Please enable "Install unknown apps" permission for PlayTorrio in Android settings.',
                           ),
                           duration: Duration(seconds: 5),
-                          backgroundColor: Colors.orange,
+                          backgroundColor: AppSemanticColors.warning,
                         ),
                       );
                       Navigator.of(context).pop();
@@ -454,7 +422,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Update failed: ${event.status}'),
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor: AppSemanticColors.destructive,
                         ),
                       );
                       Navigator.of(context).pop();
@@ -472,7 +440,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Download failed: $error'),
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: AppSemanticColors.destructive,
                   ),
                 );
               }
@@ -485,7 +453,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Update failed: $e'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppSemanticColors.destructive,
           ),
         );
       }
@@ -550,76 +518,76 @@ class _UpdateDialogState extends State<UpdateDialog> {
       if (mounted) {
         WakelockPlus.disable();
         setState(() => _isDownloading = false);
+        final tokens = PlayTorrioTokens.of(context);
 
         await showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: _surfaceColor,
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 32),
-                SizedBox(width: 12),
-                Text(
-                  'Download Complete',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
+          builder: (dialogContext) => AppDialog(
+            title: 'Download Complete',
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Update downloaded to:',
-                  style: TextStyle(color: Colors.white70),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      color: AppSemanticColors.success,
+                      size: 28,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      'Update downloaded.',
+                      style: AppTypography.supporting.copyWith(
+                        color: tokens.textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.md),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: _backgroundColor.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(8),
+                    color: tokens.bgPrimary.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(AppRadii.input),
                   ),
                   child: SelectableText(
                     filePath,
-                    style: const TextStyle(
-                      color: _accentColor,
-                      fontSize: 12,
+                    style: AppTypography.supporting.copyWith(
+                      color: tokens.accent,
                       fontFamily: 'monospace',
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   Platform.isWindows
                       ? 'Close PlayTorrio and run the installer to update.'
                       : 'Make the file executable and run it:\nchmod +x "$fileName"\n./$fileName',
-                  style: const TextStyle(color: Colors.white70),
+                  style: AppTypography.supporting.copyWith(
+                    color: tokens.textSecondary,
+                  ),
                 ),
               ],
             ),
             actions: [
-              TextButton(
+              AppButton(
+                label: 'Open Folder',
+                variant: AppButtonVariant.tertiary,
                 onPressed: () async {
                   if (Platform.isWindows) {
                     await Process.run('explorer', ['/select,', filePath]);
                   } else if (Platform.isLinux) {
                     await Process.run('xdg-open', [dir.path]);
                   }
-                  if (context.mounted) Navigator.of(context).pop();
+                  if (dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
+                  }
                 },
-                child: const Text(
-                  'Open Folder',
-                  style: TextStyle(color: Colors.white70),
-                ),
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _accentColor,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('OK'),
+              AppButton(
+                label: 'OK',
+                onPressed: () => Navigator.of(dialogContext).pop(),
               ),
             ],
           ),
