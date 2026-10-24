@@ -278,6 +278,32 @@ class HindMoviezScraper extends StreamScraper {
     return '1080p';
   }
 
+  // ── HShare link parsing ──
+  /// Extracts the HShare file ids from an MvLink page.
+  ///
+  /// The share host rotates (`hshare.ink` -> `hshare.lol`), so any
+  /// `hshare.<tld>` is accepted, in both the `/?id=` and `/dl/` shapes.
+  @visibleForTesting
+  static List<String> extractHShareIds(String html) {
+    final regex = RegExp(
+      r'href="https?://hshare\.[a-z]+/(?:\?id=|dl/)([^"&]+)"',
+      caseSensitive: false,
+    );
+
+    final ids = <String>[];
+    for (final match in regex.allMatches(html)) {
+      final raw = match.group(1);
+      if (raw == null || raw.isEmpty) continue;
+
+      var id = raw;
+      try {
+        id = Uri.decodeComponent(raw);
+      } catch (_) {}
+      if (id.isNotEmpty) ids.add(id);
+    }
+    return ids;
+  }
+
   // ── Process MvLink page ──
   Future<List<StreamSource>> _processMvlink({
     required String mvlinkUrl,
@@ -303,16 +329,7 @@ class HindMoviezScraper extends StreamScraper {
       }
       final mvHtml = res.body;
 
-      final hshareRegex = RegExp(r'href="(?:https:\/\/hshare\.ink\/\?id=([^"]+)|https:\/\/hshare\.ink\/dl\/([^"]+))"', caseSensitive: false);
-      final matches = hshareRegex.allMatches(mvHtml);
-
-      final hshareIds = <String>[];
-      for (final m in matches) {
-        final id = m.group(1) ?? m.group(2);
-        if (id != null && id.isNotEmpty) {
-          hshareIds.add(Uri.decodeComponent(id));
-        }
-      }
+      final hshareIds = extractHShareIds(mvHtml);
 
       debugPrint('[HindMoviez] Found ${hshareIds.length} HShare IDs in $mvlinkUrl');
       if (hshareIds.isEmpty) return sources;
@@ -661,7 +678,9 @@ class HindMoviezScraper extends StreamScraper {
       }
 
       // 11. Send Challenge GET Request
-      final challengeUrl = 'https://hshare.ink$actionPath?wsidchk=$wsidchk&pdata=$pdata&id=$idVal&ts=$ts&cttl=0';
+      final shareOrigin = Uri.parse(rUrl).origin;
+      final challengeUrl =
+          '$shareOrigin$actionPath?wsidchk=$wsidchk&pdata=$pdata&id=$idVal&ts=$ts&cttl=0';
       debugPrint('[HindMoviez] Submitting challenge GET: $challengeUrl');
 
       final client = http.Client();
@@ -688,7 +707,7 @@ class HindMoviezScraper extends StreamScraper {
         }
 
         final finalTarget = locationHeader != null
-            ? (locationHeader.startsWith('http') ? locationHeader : 'https://hshare.ink$locationHeader')
+            ? (locationHeader.startsWith('http') ? locationHeader : '$shareOrigin$locationHeader')
             : rUrl;
 
         debugPrint('[HindMoviez] Fetching unlocked target with redirects: $finalTarget (cookie: $cookie)');
