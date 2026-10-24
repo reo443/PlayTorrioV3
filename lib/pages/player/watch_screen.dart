@@ -29,6 +29,7 @@ import '../settings/settings_page.dart';
 import '../details/details_page.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../utils/format/media_format.dart';
+import '../../utils/stream/stream_ids.dart';
 
 // ---------------------------------------------------------------------------
 // Design tokens
@@ -182,7 +183,15 @@ class _WatchScreenState extends State<WatchScreen>
     _streamSub = null;
     StreamService.stopAllScrapers();
 
-    final streamId = widget.selectedEpisode?.id ?? widget.detail.id;
+    final selectedEp = widget.selectedEpisode;
+    final streamId = selectedEp == null
+        ? widget.detail.id
+        : resolveEpisodeStreamId(
+            detailId: widget.detail.id,
+            episodeId: selectedEp.id,
+            season: selectedEp.season,
+            episode: selectedEp.episode,
+          );
 
     // 1. Immediately inject any embedded streams from the video (e.g. Torbox/Debrid direct streams)
     if (widget.selectedEpisode != null && widget.selectedEpisode!.streams.isNotEmpty) {

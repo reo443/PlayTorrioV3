@@ -6,10 +6,10 @@ import '../../models/movie/movie_detail.dart';
 import '../../models/movie/video.dart';
 import '../../models/stream/stream_model.dart';
 import '../../services/stream/stream_service.dart';
-import '../../services/stream/stream_bitrate_resolver.dart';
-import '../../services/anime/anime_scraper_service.dart';
+import '../../services/stream/stream_bitrate_resolver.dart';import '../../services/anime/anime_scraper_service.dart';
 import '../../services/anime_arabic/anime_arabic_service.dart';
 import '../../services/anime_arabic/anime_arabic_extractor.dart';
+import '../../utils/stream/stream_ids.dart';
 import 'player_glass.dart';
 
 /// Glassmorphic Sources Side Panel for selecting episode stream sources,
@@ -76,9 +76,12 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
     final detail = widget.detail;
     final ep = widget.episode;
     final type = detail?.type ?? 'tv';
-    final id = ep.id.isNotEmpty
-        ? ep.id
-        : '${detail?.id ?? ""}:${ep.season ?? 1}:${ep.episode ?? 1}';
+    final id = resolveEpisodeStreamId(
+      detailId: detail?.id ?? '',
+      episodeId: ep.id,
+      season: ep.season,
+      episode: ep.episode,
+    );
     final title = detail?.name ?? ep.title;
     final year = int.tryParse(detail?.year ?? '');
     final epNum = ep.episode ?? 1;

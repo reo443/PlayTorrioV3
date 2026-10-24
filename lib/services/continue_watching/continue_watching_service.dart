@@ -17,6 +17,7 @@ import '../../services/anime_arabic/anime_arabic_service.dart';
 import '../../services/anime_arabic/anime_arabic_extractor.dart';
 import '../../services/stream/stream_service.dart';
 import '../../utils/navigation/route_transitions.dart';
+import '../../utils/stream/stream_ids.dart';
 import '../trakt/trakt_service.dart';
 import '../trakt/trakt_continue_watching_service.dart';
 import '../simkl/simkl_service.dart';
@@ -485,7 +486,12 @@ class ContinueWatchingService {
     Video? video;
     if (item.season != null && item.episode != null) {
       video = Video(
-        id: item.episodeId ?? '${item.id}:${item.season}:${item.episode}',
+        id: resolveEpisodeStreamId(
+          detailId: item.id,
+          episodeId: item.episodeId,
+          season: item.season,
+          episode: item.episode,
+        ),
         title: item.episodeTitle ?? 'Episode ${item.episode}',
         season: item.season ?? 1,
         episode: item.episode ?? 1,
