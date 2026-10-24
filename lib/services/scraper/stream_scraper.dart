@@ -134,8 +134,32 @@ class ScraperManager {
     final seenUrls = <String>{};
     final List<StreamSubscription> currentRunSubs = [];
 
+    // Per-scraper tally, reported once in the debug summary below so a slow or
+    // blocked provider is obvious when comparing devices.
+    final resultCounts = <String, int>{};
+    final failureCounts = <String, int>{};
+
+    void emit(StreamSource source, String provider) {
+      resultCounts[provider] = (resultCounts[provider] ?? 0) + 1;
+      controller.add(source);
+    }
+
+    void reportResults() {
+      final rows = activeScrapers.map((s) {
+        final count = resultCounts[s.providerName] ?? 0;
+        final failures = failureCounts[s.providerName] ?? 0;
+        return failures > 0
+            ? '${s.providerName}=$count (failed $failures)'
+            : '${s.providerName}=$count';
+      }).join(', ');
+      final total = resultCounts.values.fold<int>(0, (sum, n) => sum + n);
+      debugPrint('[ScraperManager] Results for "$title": $total sources from '
+          '${resultCounts.length}/${activeScrapers.length} scrapers | $rows');
+    }
+
     void checkClose() {
       if (pendingScrapers <= 0 && !controller.isClosed) {
+        reportResults();
         controller.close();
       }
     }
@@ -181,7 +205,7 @@ class ScraperManager {
             final hashLower = source.infoHash!.toLowerCase();
             if (seenHashes.contains(hashLower)) return;
             seenHashes.add(hashLower);
-            controller.add(source);
+            emit(source, scraper.providerName);
             return;
           }
 
@@ -190,12 +214,15 @@ class ScraperManager {
             if (seenUrls.contains(rawUrl)) return;
             seenUrls.add(rawUrl);
             // Emit immediately as streams are found so the UI displays them progressively!
-            controller.add(source);
+            emit(source, scraper.providerName);
           } else {
-            controller.add(source);
+            emit(source, scraper.providerName);
           }
         },
-        onError: (_) {},
+        onError: (_) {
+          failureCounts[scraper.providerName] =
+              (failureCounts[scraper.providerName] ?? 0) + 1;
+        },
         onDone: () {
           pendingScrapers--;
           checkClose();
