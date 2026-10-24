@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/home/home_page_settings.dart';
+import '../../theme/app_semantic_colors.dart';
+import '../../theme/app_sponsor_colors.dart';
+import '../../theme/playtorrio_tokens.dart';
+import '../ui/app_dialog.dart';
 
 /// Helper class to open the sponsor ad link in the user's default browser.
 abstract final class SupportDevHelper {
@@ -24,74 +28,27 @@ abstract final class SupportDevHelper {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Could not open browser. Please try again!'),
-            backgroundColor: Color(0xFFE50914),
+            backgroundColor: AppSemanticColors.destructive,
           ),
         );
       }
     }
   }
 
-  static void showWhyDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF141721),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: const Color(0xFFFFD700).withValues(alpha: 0.3)),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFD700).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.favorite_rounded, color: Color(0xFFFFD700), size: 22),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Why 1 Click?',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        content: const Text(
+  static Future<void> showWhyDialog(BuildContext context) async {
+    final confirmed = await showAppDialog(
+      context,
+      title: 'Why 1 Click?',
+      message:
           'PlayTorrio is completely free with zero subscriptions and zero paywalls.\n\n'
           'I build and maintain this project on my own. Tapping this opens 1 quick sponsor ad in your default browser — every click helps support me so I can keep developing PlayTorrio and pay for uni!\n\n'
           'Thank you so much for the support! ❤️',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-            height: 1.5,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              openSponsorLink(context);
-            },
-            icon: const Icon(Icons.bolt_rounded, size: 18),
-            label: const Text('Support Now'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFB300),
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ],
-      ),
+      confirmLabel: 'Support Now',
+      cancelLabel: 'Close',
     );
+    if (confirmed == true && context.mounted) {
+      await openSponsorLink(context);
+    }
   }
 }
 
@@ -132,6 +89,7 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     final isCompact = widget.screenWidth < 600;
     final heroStyle = HomePageSettings.heroStyle.value;
 
@@ -140,16 +98,16 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
       children: [
         // ── Rich cinematic dark gradient with warm gold & purple ambient glows ──
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: RadialGradient(
-              center: Alignment(0.4, -0.3),
+              center: const Alignment(0.4, -0.3),
               radius: 1.2,
               colors: [
-                Color(0xFF2A1F0A), // Warm dark amber
-                Color(0xFF140F1E), // Deep royal violet
-                Color(0xFF080A0F), // App dark background
+                AppSponsorColors.ambientWarm, // Warm dark amber
+                AppSponsorColors.ambientViolet, // Deep royal violet
+                tokens.bgPrimary, // App dark background
               ],
-              stops: [0.0, 0.55, 1.0],
+              stops: const [0.0, 0.55, 1.0],
             ),
           ),
         ),
@@ -176,8 +134,8 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          const Color(0xFFFFD700).withValues(alpha: 0.6),
-                          const Color(0xFFFF8F00).withValues(alpha: 0.2),
+                          AppSponsorColors.gold.withValues(alpha: 0.6),
+                          AppSponsorColors.amberDeep.withValues(alpha: 0.2),
                           Colors.transparent,
                         ],
                       ),
@@ -186,7 +144,7 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                       child: Icon(
                         Icons.diamond_rounded,
                         size: isCompact ? 140 : 240,
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.35),
+                        color: AppSponsorColors.gold.withValues(alpha: 0.35),
                       ),
                     ),
                   ),
@@ -205,8 +163,8 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                 end: Alignment.centerRight,
                 stops: const [0.0, 0.45, 0.9],
                 colors: [
-                  const Color(0xFF080A0F).withValues(alpha: 0.95),
-                  const Color(0xFF080A0F).withValues(alpha: 0.75),
+                  tokens.bgPrimary.withValues(alpha: 0.95),
+                  tokens.bgPrimary.withValues(alpha: 0.75),
                   Colors.transparent,
                 ],
               ),
@@ -223,8 +181,8 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                 end: Alignment.topCenter,
                 stops: const [0.0, 0.35, 0.7],
                 colors: [
-                  const Color(0xFF080A0F),
-                  const Color(0xFF080A0F).withValues(alpha: 0.85),
+                  tokens.bgPrimary,
+                  tokens.bgPrimary.withValues(alpha: 0.85),
                   Colors.transparent,
                 ],
               ),
@@ -256,20 +214,20 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
+                          gradient: LinearGradient(
                             colors: [
-                              Color(0x38FFD700),
-                              Color(0x1FFF8F00),
+                              AppSponsorColors.gold.withValues(alpha: 0.22),
+                              AppSponsorColors.amberDeep.withValues(alpha: 0.12),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: const Color(0xFFFFD700).withValues(alpha: 0.45),
+                            color: AppSponsorColors.gold.withValues(alpha: 0.45),
                             width: 1.2,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFFD700).withValues(alpha: 0.25),
+                              color: AppSponsorColors.gold.withValues(alpha: 0.25),
                               blurRadius: 10,
                             ),
                           ],
@@ -277,14 +235,18 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.bolt_rounded, size: 16, color: Color(0xFFFFD700)),
+                            Icon(
+                              Icons.bolt_rounded,
+                              size: 16,
+                              color: AppSponsorColors.gold,
+                            ),
                             SizedBox(width: 5),
                             Text(
                               'SUPPORT THE DEV • \$0 SUBSCRIPTION',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFFFFD700),
+                                color: AppSponsorColors.gold,
                                 letterSpacing: 0.8,
                               ),
                             ),
@@ -298,14 +260,14 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
 
                   // Catchy Main Title in Playfair Display (Semi-Bold Italic)
                   ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
+                    shaderCallback: (bounds) => LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Color(0xFFFFFFFF),
-                        Color(0xFFFFF2A1),
-                        Color(0xFFFFD700),
-                        Color(0xFFFFA000),
+                        tokens.textPrimary,
+                        AppSponsorColors.goldLight,
+                        AppSponsorColors.gold,
+                        AppSponsorColors.amberBright,
                       ],
                     ).createShader(bounds),
                     child: Text(
@@ -319,7 +281,7 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                             : (widget.screenWidth < 1100 ? 32.0 : 38.0),
                         height: 1.18,
                         letterSpacing: -0.3,
-                        color: Colors.white,
+                        color: tokens.textPrimary,
                       ),
                     ),
                   ),
@@ -337,7 +299,7 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: isCompact ? 13.0 : 15.0,
-                          color: Colors.white.withValues(alpha: 0.75),
+                          color: tokens.textPrimary.withValues(alpha: 0.75),
                           height: 1.45,
                         ),
                       ),
@@ -361,8 +323,11 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFFFB300)
-                                      .withValues(alpha: 0.45 + (_pulseController.value * 0.25)),
+                                  color: AppSponsorColors.amber.withValues(
+                                    alpha:
+                                        0.45 +
+                                        (_pulseController.value * 0.25),
+                                  ),
                                   blurRadius: glow,
                                   spreadRadius: 1,
                                 ),
@@ -382,8 +347,8 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFB300),
-                            foregroundColor: const Color(0xFF160F02),
+                            backgroundColor: AppSponsorColors.amber,
+                            foregroundColor: AppSponsorColors.ink,
                             padding: EdgeInsets.symmetric(
                               horizontal: isCompact ? 18 : 24,
                               vertical: isCompact ? 12 : 15,
@@ -402,14 +367,14 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                         icon: Icon(
                           Icons.help_outline_rounded,
                           size: 18,
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: tokens.textPrimary.withValues(alpha: 0.8),
                         ),
                         label: Text(
                           'Why 1 Click?',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: isCompact ? 13 : 14,
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: tokens.textPrimary.withValues(alpha: 0.8),
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -421,7 +386,7 @@ class _SupportHeroSlideState extends State<SupportHeroSlide>
                             borderRadius: BorderRadius.circular(14),
                           ),
                           side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.22),
+                            color: tokens.borderStrong,
                             width: 1.2,
                           ),
                         ),
@@ -477,6 +442,7 @@ class _SupportSliderCardState extends State<SupportSliderCard>
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     final posterHeight = widget.cardWidth * 1.48;
 
     return MouseRegion(
@@ -520,22 +486,26 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF261A07), // Deep amber-black
-                              Color(0xFF14101A), // Dark purple-black
-                              Color(0xFF0C0E14), // Dark base
+                              AppSponsorColors.cardWarm, // Deep amber-black
+                              AppSponsorColors.cardViolet, // Dark purple-black
+                              AppSponsorColors.cardBase, // Dark base
                             ],
                           ),
                           border: Border.all(
                             color: Color.lerp(
-                              const Color(0xFFFFD700).withValues(alpha: 0.5),
-                              const Color(0xFFFF9100).withValues(alpha: 0.8),
+                              AppSponsorColors.gold.withValues(alpha: 0.5),
+                              AppSponsorColors.amberHover.withValues(
+                                alpha: 0.8,
+                              ),
                               _glowController.value,
                             )!,
                             width: _hovered ? 2.0 : 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFFB300).withValues(alpha: glowOpacity),
+                              color: AppSponsorColors.amber.withValues(
+                                alpha: glowOpacity,
+                              ),
                               blurRadius: _hovered ? 18 : 12,
                               spreadRadius: 1,
                             ),
@@ -557,7 +527,9 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                               height: 100,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                                color: AppSponsorColors.gold.withValues(
+                                  alpha: 0.15,
+                                ),
                               ),
                             ),
                           ),
@@ -572,23 +544,31 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                                    color: AppSponsorColors.gold.withValues(
+                                      alpha: 0.2,
+                                    ),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                                      color: AppSponsorColors.gold.withValues(
+                                        alpha: 0.4,
+                                      ),
                                     ),
                                   ),
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.bolt_rounded, size: 12, color: Color(0xFFFFD700)),
+                                      Icon(
+                                        Icons.bolt_rounded,
+                                        size: 12,
+                                        color: AppSponsorColors.gold,
+                                      ),
                                       SizedBox(width: 3),
                                       Text(
                                         '100% FREE',
                                         style: TextStyle(
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.w900,
-                                          color: Color(0xFFFFD700),
+                                          color: AppSponsorColors.gold,
                                           letterSpacing: 0.5,
                                         ),
                                       ),
@@ -604,14 +584,18 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: const Color(0xFFFFD700).withValues(alpha: 0.12),
+                                      color: AppSponsorColors.gold.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       border: Border.all(
-                                        color: const Color(0xFFFFD700).withValues(alpha: 0.25),
+                                        color: AppSponsorColors.gold.withValues(
+                                          alpha: 0.25,
+                                        ),
                                       ),
                                     ),
                                     child: const Icon(
                                       Icons.favorite_rounded,
-                                      color: Color(0xFFFFD700),
+                                      color: AppSponsorColors.gold,
                                       size: 32,
                                     ),
                                   ),
@@ -627,7 +611,7 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                                     fontStyle: FontStyle.italic,
                                     fontWeight: FontWeight.w700,
                                     fontSize: widget.cardWidth < 160 ? 15 : 17,
-                                    color: const Color(0xFFFFF0A6),
+                                    color: AppSponsorColors.goldPale,
                                     height: 1.15,
                                   ),
                                 ),
@@ -636,7 +620,7 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                                   '1 quick click supports the dev & uni.',
                                   style: TextStyle(
                                     fontSize: widget.cardWidth < 160 ? 10.5 : 11.5,
-                                    color: Colors.white70,
+                                    color: tokens.textSecondary,
                                     height: 1.25,
                                   ),
                                   maxLines: 2,
@@ -650,12 +634,17 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                                   padding: const EdgeInsets.symmetric(vertical: 6),
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFFFFB300), Color(0xFFFF8F00)],
+                                      colors: [
+                                        AppSponsorColors.amber,
+                                        AppSponsorColors.amberDeep,
+                                      ],
                                     ),
                                     borderRadius: BorderRadius.circular(10),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFFFB300).withValues(alpha: 0.4),
+                                        color: AppSponsorColors.amber.withValues(
+                                          alpha: 0.4,
+                                        ),
                                         blurRadius: 6,
                                       ),
                                     ],
@@ -666,7 +655,7 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                                       style: TextStyle(
                                         fontSize: 11.5,
                                         fontWeight: FontWeight.w800,
-                                        color: Color(0xFF160F02),
+                                        color: AppSponsorColors.ink,
                                       ),
                                     ),
                                   ),
@@ -683,12 +672,12 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                 const SizedBox(height: 8),
 
                 // ── Card Title below Poster ──────────────────────────────────
-                const Text(
+                Text(
                   'Support The Developer',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: tokens.textPrimary,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -697,7 +686,7 @@ class _SupportSliderCardState extends State<SupportSliderCard>
                 Text(
                   '1 Click • Help Pay for Uni',
                   style: TextStyle(
-                    color: const Color(0xFFFFD700).withValues(alpha: 0.8),
+                    color: AppSponsorColors.gold.withValues(alpha: 0.8),
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
                   ),

@@ -26,6 +26,7 @@ const List<String> migratedFiles = [
   'lib/widgets/search/magnet_files_view.dart',
   'lib/widgets/p2p/p2p_warning_dialog.dart',
   'lib/widgets/updater/update_dialog.dart',
+  'lib/widgets/home/support_dev_cards.dart',
 ];
 
 /// Matches a `Color(0x…)` literal or a `Colors.<name>` reference, without
