@@ -13,10 +13,13 @@ import '../../services/metadata/tmdb_service.dart';
 import '../../services/metadata/metadata_service.dart';
 import '../../services/my_list/my_list_service.dart';
 import '../../services/cloudstream/cloudstream_manager.dart';
+import '../../services/stream/auto_play_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../utils/format/media_format.dart';
+import '../../widgets/ui/app_button.dart';
+import '../../widgets/ui/app_dialog.dart';
 import '../discover/discover_page.dart';
-import '../player/watch_screen.dart';
+import '../player/player_screen.dart';
 // ---------------------------------------------------------------------------
 // Design tokens
 // ---------------------------------------------------------------------------
@@ -85,6 +88,11 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
   String? _resolvedType;
   String? _resolvedBaseUrl;
+
+  /// True while a Play tap is resolving its source; the button shows progress
+  /// and further taps are ignored.
+  bool _isResolvingPlayback = false;
+  AutoPlaySession? _playSession;
 
   bool get _isTmdb =>
       widget.movie.addonBaseUrl == TmdbService.kSentinel ||
@@ -173,6 +181,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    _playSession?.cancel();
     _animController.dispose();
     for (final c in _episodeControllers.values) {
       c.dispose();
@@ -185,17 +194,65 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Future<void> _handlePlayAction(Video? ep) async {
-    if (_detail == null) return;
-    
+    final detail = _detail;
+    if (detail == null || _isResolvingPlayback) return;
+
+    final request = AutoPlayRequest.forDetails(
+      detail: detail,
+      episode: ep,
+      type: _resolvedType ?? detail.type,
+      isCollection: _isCollection,
+    );
+
+    setState(() => _isResolvingPlayback = true);
+    final session = _playSession = AutoPlayService.start(request);
+    final result = await session.result;
+    if (_playSession == session) _playSession = null;
+    if (!mounted) return;
+    setState(() => _isResolvingPlayback = false);
+
+    if (result == null) {
+      _showNoSourceDialog(ep);
+      return;
+    }
+
     Navigator.push(
       context,
       CinematicSlideRoute(
-        page: WatchScreen(
-          detail: _detail!,
-          type: _resolvedType ?? _detail!.type,
-          selectedEpisode: ep,
-          isCollection: _isCollection,
+        page: PlayerScreen(
+          source: result.source,
+          initialSources: result.sources,
+          sourceCacheKey: result.cacheKey,
+          title: request.scrapeTitle,
+          backdropUrl: detail.background,
+          logoUrl: detail.logo,
+          detail: detail,
+          episode: ep,
         ),
+      ),
+    );
+  }
+
+  void _showNoSourceDialog(Video? ep) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AppDialog(
+        title: 'No working source found',
+        message: 'None of the enabled sources returned a playable stream.',
+        actions: [
+          AppButton(
+            label: 'Cancel',
+            variant: AppButtonVariant.tertiary,
+            onPressed: () => Navigator.pop(dialogContext),
+          ),
+          AppButton(
+            label: 'Retry',
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _handlePlayAction(ep);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -1085,12 +1142,17 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildPlayButton({required bool fullWidth}) {
+    final resolving = _isResolvingPlayback;
     return _HoverButton(
-      onTap: () => _handlePlayAction(
-        _currentSeasonEpisodes.isNotEmpty
-            ? _currentSeasonEpisodes.first
-            : (_detail?.videos.isNotEmpty == true ? _detail!.videos.first : null),
-      ),
+      onTap: resolving
+          ? () {}
+          : () => _handlePlayAction(
+                _currentSeasonEpisodes.isNotEmpty
+                    ? _currentSeasonEpisodes.first
+                    : (_detail?.videos.isNotEmpty == true
+                        ? _detail!.videos.first
+                        : null),
+              ),
       child: Container(
         width: fullWidth ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -1103,12 +1165,24 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
           mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+            if (resolving)
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            else
+              const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
             const SizedBox(width: 6),
             Text(
-              _isCollection
-                  ? 'Play First Movie'
-                  : (_isSeries ? 'Play Episodes' : 'Play Movie'),
+              resolving
+                  ? 'Finding source…'
+                  : (_isCollection
+                      ? 'Play First Movie'
+                      : (_isSeries ? 'Play Episodes' : 'Play Movie')),
               style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
             ),
           ],
