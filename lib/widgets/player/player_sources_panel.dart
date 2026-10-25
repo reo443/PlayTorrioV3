@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import '../../models/movie/movie_detail.dart';
 import '../../models/movie/video.dart';
 import '../../models/stream/stream_model.dart';
+import '../../services/stream/auto_play_service.dart';
+import '../../services/stream/source_ranker.dart';
 import '../../services/stream/stream_service.dart';
 import '../../services/stream/stream_bitrate_resolver.dart';import '../../services/anime/anime_scraper_service.dart';
 import '../../services/anime_arabic/anime_arabic_service.dart';
@@ -15,15 +17,23 @@ import 'player_glass.dart';
 /// Glassmorphic Sources Side Panel for selecting episode stream sources,
 /// with targeted scraping, episode caching, and error recovery banners.
 class PlayerSourcesPanel extends StatefulWidget {
-  final Video episode;
+  final Video? episode;
   final MovieDetail? detail;
   final String currentAddonName;
   final String? errorMessage;
   final List<StreamSource>? cachedSources;
   final Function(List<StreamSource> sources) onSourcesLoaded;
-  final Function(StreamSource source, Video episode) onPlaySource;
-  final VoidCallback onBackToEpisodes;
+  final Function(StreamSource source, Video? episode) onPlaySource;
+  final VoidCallback? onBackToEpisodes;
   final VoidCallback onClose;
+
+  /// Playback ordering. Defaults to the live provider/addon/quality ordering.
+  final StreamSorter ranker;
+
+  /// Test seam: when set, the panel scrapes from this stream instead of the
+  /// live providers.
+  @visibleForTesting
+  final SourceStreamFactory? sourceStream;
 
   const PlayerSourcesPanel({
     super.key,
@@ -34,8 +44,10 @@ class PlayerSourcesPanel extends StatefulWidget {
     this.cachedSources,
     required this.onSourcesLoaded,
     required this.onPlaySource,
-    required this.onBackToEpisodes,
+    this.onBackToEpisodes,
     required this.onClose,
+    this.ranker = SourceRanker.rankWithLiveSettings,
+    this.sourceStream,
   });
 
   @override
@@ -76,21 +88,29 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
     final detail = widget.detail;
     final ep = widget.episode;
     final type = detail?.type ?? 'tv';
-    final id = resolveEpisodeStreamId(
-      detailId: detail?.id ?? '',
-      episodeId: ep.id,
-      season: ep.season,
-      episode: ep.episode,
-    );
-    final title = detail?.name ?? ep.title;
+    final id = ep == null
+        ? (detail?.id ?? '')
+        : resolveEpisodeStreamId(
+            detailId: detail?.id ?? '',
+            episodeId: ep.id,
+            season: ep.season,
+            episode: ep.episode,
+          );
+    final title = detail?.name ?? ep?.title ?? '';
     final year = int.tryParse(detail?.year ?? '');
-    final epNum = ep.episode ?? 1;
+    final epNum = ep?.episode ?? 1;
 
     final isArabicAnime = id.startsWith('arabic_anime:') ||
         (detail?.id.startsWith('arabic_anime:') ?? false) ||
         widget.currentAddonName == 'ArabicAnime';
 
     _streamSub?.cancel();
+
+    final injected = widget.sourceStream;
+    if (injected != null) {
+      _listenTo(injected());
+      return;
+    }
 
     if (isArabicAnime) {
       String slug = '';
@@ -201,16 +221,20 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
       return;
     }
 
-    _streamSub = StreamService.fetchStreamsForTargetAddon(
+    _listenTo(StreamService.fetchStreamsForTargetAddon(
       targetAddonName: widget.currentAddonName,
       type: type,
       id: id,
       title: title,
       year: year,
-      season: ep.season,
-      episode: ep.episode,
+      season: ep?.season,
+      episode: ep?.episode,
       genres: detail?.genres,
-    ).listen(
+    ));
+  }
+
+  void _listenTo(Stream<StreamSource> stream) {
+    _streamSub = stream.listen(
       (source) {
         if (!mounted) return;
         setState(() {
@@ -248,8 +272,6 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isCompact = screenWidth < 680;
     final drawerWidth = isCompact ? screenWidth * 0.94 : 440.0;
-    final sNum = widget.episode.season ?? 1;
-    final eNum = widget.episode.episode ?? 1;
 
     return Align(
       alignment: Alignment.centerRight,
@@ -277,7 +299,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // ── Header Bar ──
-                _buildHeader(sNum, eNum, isCompact),
+                _buildHeader(widget.episode, isCompact),
 
                 // ── Error Notice Banner (if previous stream failed) ──
                 if (widget.errorMessage != null && widget.errorMessage!.isNotEmpty)
@@ -302,7 +324,12 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
     );
   }
 
-  Widget _buildHeader(int sNum, int eNum, bool isCompact) {
+  Widget _buildHeader(Video? episode, bool isCompact) {
+    final sNum = episode?.season ?? 1;
+    final eNum = episode?.episode ?? 1;
+    final episodeTitle = episode?.title ?? '';
+    final fallbackTitle = widget.detail?.name ?? 'Sources';
+
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.paddingOf(context).top + 12,
@@ -313,16 +340,18 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
       color: const Color(0x66000000),
       child: Row(
         children: [
-          // Back to Episodes Button
-          PlayerIconButton(
-            size: 36,
-            iconSize: 20,
-            icon: const Icon(Icons.chevron_left_rounded),
-            tooltip: 'Back to Episodes',
-            backgroundColor: Colors.white.withValues(alpha: 0.08),
-            onPressed: widget.onBackToEpisodes,
-          ),
-          const SizedBox(width: 10),
+          // Back to Episodes Button (series only)
+          if (widget.onBackToEpisodes != null) ...[
+            PlayerIconButton(
+              size: 36,
+              iconSize: 20,
+              icon: const Icon(Icons.chevron_left_rounded),
+              tooltip: 'Back to Episodes',
+              backgroundColor: Colors.white.withValues(alpha: 0.08),
+              onPressed: widget.onBackToEpisodes,
+            ),
+            const SizedBox(width: 10),
+          ],
 
           Expanded(
             child: Column(
@@ -331,29 +360,30 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
               children: [
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: PlayerTheme.accent.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(5),
-                        border: Border.all(color: PlayerTheme.accent.withValues(alpha: 0.50)),
-                      ),
-                      child: Text(
-                        'S$sNum : E$eNum',
-                        style: const TextStyle(
-                          color: Color(0xFF9D84FF),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
+                    if (episode != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: PlayerTheme.accent.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(color: PlayerTheme.accent.withValues(alpha: 0.50)),
+                        ),
+                        child: Text(
+                          'S$sNum : E$eNum',
+                          style: const TextStyle(
+                            color: Color(0xFF9D84FF),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
+                    if (episode != null) const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        widget.episode.title.isNotEmpty
-                            ? widget.episode.title
-                            : 'Episode $eNum',
+                        episodeTitle.isNotEmpty
+                            ? episodeTitle
+                            : fallbackTitle,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14.5,
@@ -466,7 +496,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
             Icon(Icons.search_off_rounded, color: Colors.white.withValues(alpha: 0.30), size: 48),
             const SizedBox(height: 12),
             const Text(
-              'No streams found for this episode',
+              'No streams found',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 14.5,
@@ -475,7 +505,9 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Try going back to episodes and choosing another episode or provider.',
+              widget.episode == null
+                  ? 'Try rescraping, or pick another provider.'
+                  : 'Try going back to episodes and choosing another episode or provider.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.50),
@@ -500,16 +532,18 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
   }
 
   Widget _buildSourcesList(bool isCompact) {
+    final ordered = widget.ranker(_sources);
+
     return ListView.separated(
       physics: const ClampingScrollPhysics(),
       padding: EdgeInsets.symmetric(
         horizontal: isCompact ? 12 : 16,
         vertical: 14,
       ),
-      itemCount: _sources.length + (_isLoading ? 1 : 0),
+      itemCount: ordered.length + (_isLoading ? 1 : 0),
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
-        if (index == _sources.length && _isLoading) {
+        if (index == ordered.length && _isLoading) {
           return Container(
             padding: const EdgeInsets.all(12),
             alignment: Alignment.center,
@@ -537,7 +571,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
           );
         }
 
-        final source = _sources[index];
+        final source = ordered[index];
         final isHovered = _hoveredIndex == index;
 
         return _buildSourceCard(source, index, isHovered, isCompact);

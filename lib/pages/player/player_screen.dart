@@ -2452,7 +2452,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                       onSourcesLoaded: (sources) {
                         _cachedSourcesByEpisode['${_sourcesEpisode!.season ?? 1}:${_sourcesEpisode!.episode ?? 1}'] = sources;
                       },
-                      onPlaySource: _playNewSource,
+                      onPlaySource: (source, episode) {
+                        // Movies reach this once the player opens the panel
+                        // without an episode (see the sources button work).
+                        if (episode != null) _playNewSource(source, episode);
+                      },
                       onBackToEpisodes: _onBackToEpisodes,
                       onClose: () => setState(() => _showSourcesPanel = false),
                     ),
