@@ -11,10 +11,10 @@ import '../../models/stream/stream_model.dart';
 import '../../pages/anime/anime_stream_sheet.dart';
 import '../../pages/anime_arabic/anime_arabic_details_page.dart';
 import '../../pages/player/player_screen.dart';
-import '../../pages/player/watch_screen.dart';
 import '../../services/anime/anime_scraper_service.dart';
 import '../../services/anime_arabic/anime_arabic_service.dart';
 import '../../services/anime_arabic/anime_arabic_extractor.dart';
+import '../../services/stream/auto_play_service.dart';
 import '../../services/stream/stream_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../utils/stream/stream_ids.dart';
@@ -464,12 +464,100 @@ class ContinueWatchingService {
     return item.episodeId ?? item.id;
   }
 
+  /// Resolves the best source for [item] and opens the player with it.
+  ///
+  /// Used when there is no saved stream to resume: instead of a manual source
+  /// list, the user gets the resolved winner and can swap sources in the player.
+  static Future<void> _resolveAndOpenPlayer(
+    BuildContext context,
+    ContinueWatchingItem item,
+    MovieDetail movieDetail,
+    Video? video,
+  ) async {
+    final request = AutoPlayRequest.forDetails(
+      detail: movieDetail,
+      episode: video,
+      type: item.type,
+      isCollection: false,
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+          decoration: BoxDecoration(
+            color: const Color(0xFF12151E),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: Color(0xFF7C5CFF),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Flexible(
+                child: Text(
+                  'Finding a source for ${item.title}...',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final result = await AutoPlayService.start(request).result;
+
+    if (context.mounted && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+    if (!context.mounted) return;
+
+    if (result == null) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('No working source found')),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PlayerScreen(
+          source: result.source,
+          initialSources: result.sources,
+          sourceCacheKey: result.cacheKey,
+          title: request.scrapeTitle,
+          backdropUrl: item.backdropUrl,
+          detail: movieDetail,
+          episode: video,
+          initialPosition: Duration(seconds: item.positionSeconds),
+        ),
+      ),
+    );
+  }
+
   /// Resumes playback when a continue-watching card is clicked:
-  /// - For First Launch from Trakt/Simkl: Opens WatchScreen to let user manually pick source, then auto-seeks.
+  /// - For First Launch from Trakt/Simkl: resolves the best source, then auto-seeks.
   /// - For Anime: Rescrapes streams with AnimeScraperService and auto-seeks.
   /// - For Torrents: launches directly using saved magnet and fileIdx (no rescraping).
   /// - For PlayTorrioHTTP & Addons: rescrapes and selects the best matching healthy stream.
-  /// - Fallback: opens WatchScreen or AnimeStreamSheet if source died.
+  /// - Fallback: resolves a fresh source or opens the AnimeStreamSheet if source died.
   static Future<void> resumePlayback(
     BuildContext context,
     ContinueWatchingItem item,
@@ -500,24 +588,14 @@ class ContinueWatchingService {
     }
 
     // 0. First-Launch Trakt/Simkl Cloud Session:
-    // If no saved local stream source or magnet exists, open WatchScreen
-    // so the user can choose their preferred provider manually, then auto-seek!
+    // If no saved local stream source or magnet exists, resolve the best source
+    // and let the player's sources panel handle provider changes.
     final isFirstLaunchCloudItem = item.addonName == null &&
         (item.magnetUrl == null || item.magnetUrl!.isEmpty) &&
         (item.rawUrl == null || item.rawUrl!.isEmpty);
 
     if (isFirstLaunchCloudItem) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => WatchScreen(
-            detail: movieDetail,
-            selectedEpisode: video,
-            type: item.type,
-            initialPosition: Duration(seconds: item.positionSeconds),
-          ),
-        ),
-      );
+      await _resolveAndOpenPlayer(context, item, movieDetail, video);
       return;
     }
 
@@ -922,18 +1000,8 @@ class ContinueWatchingService {
         ),
       );
     } else {
-      // Fallback to WatchScreen so the user can choose from all available sources
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => WatchScreen(
-            detail: movieDetail,
-            selectedEpisode: video,
-            type: item.type,
-            initialPosition: Duration(seconds: item.positionSeconds),
-          ),
-        ),
-      );
+      // No candidate scored: resolve a fresh source and open the player on it.
+      await _resolveAndOpenPlayer(context, item, movieDetail, video);
     }
   }
 
