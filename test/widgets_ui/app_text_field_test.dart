@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:playtorrio/widgets/ui/app_text_field.dart';
 
@@ -62,5 +63,50 @@ void main() {
     await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pump();
     expect(values.last, '');
+  });
+
+  testWidgets('inputFormatters are applied to typed text', (tester) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      host(
+        AppTextField(
+          controller: controller,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), '12ab34');
+    expect(controller.text, '1234');
+  });
+
+  testWidgets('labelText renders as a floating label', (tester) async {
+    await tester.pumpWidget(
+      host(const AppTextField(labelText: 'From (year)')),
+    );
+    expect(find.text('From (year)'), findsOneWidget);
+  });
+
+  testWidgets('AppSearchField shows emptySuffix only while empty', (
+    tester,
+  ) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      host(
+        AppSearchField(
+          controller: controller,
+          emptySuffix: const Icon(Icons.content_paste_rounded),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.content_paste_rounded), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'dune');
+    await tester.pump();
+    expect(find.byIcon(Icons.content_paste_rounded), findsNothing);
   });
 }

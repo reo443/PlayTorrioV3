@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../theme/app_radii.dart';
 import '../../theme/app_spacing.dart';
@@ -15,6 +16,7 @@ class AppTextField extends StatelessWidget {
     super.key,
     this.controller,
     this.hintText,
+    this.labelText,
     this.prefixIcon,
     this.suffix,
     this.onChanged,
@@ -25,11 +27,17 @@ class AppTextField extends StatelessWidget {
     this.errorText,
     this.keyboardType,
     this.textInputAction,
+    this.inputFormatters,
     this.semanticsLabel,
   });
 
   final TextEditingController? controller;
   final String? hintText;
+
+  /// Floating label. When both this and [hintText] are given, Material floats
+  /// the label on focus and shows the hint inside the field.
+  final String? labelText;
+
   final IconData? prefixIcon;
 
   /// Trailing widget, e.g. a clear affordance.
@@ -43,6 +51,7 @@ class AppTextField extends StatelessWidget {
   final String? errorText;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
+  final List<TextInputFormatter>? inputFormatters;
   final String? semanticsLabel;
 
   @override
@@ -65,6 +74,12 @@ class AppTextField extends StatelessWidget {
           : tokens.surface.withValues(alpha: 0.5),
       hintText: hintText,
       hintStyle: AppTypography.body.copyWith(
+        color: enabled
+            ? tokens.textTertiary
+            : tokens.textTertiary.withValues(alpha: 0.6),
+      ),
+      labelText: labelText,
+      labelStyle: AppTypography.body.copyWith(
         color: enabled
             ? tokens.textTertiary
             : tokens.textTertiary.withValues(alpha: 0.6),
@@ -94,6 +109,7 @@ class AppTextField extends StatelessWidget {
       obscureText: obscureText,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
+      inputFormatters: inputFormatters,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       cursorColor: tokens.accent,
@@ -120,6 +136,7 @@ class AppSearchField extends StatelessWidget {
     this.onSubmitted,
     this.autofocus = false,
     this.onClear,
+    this.emptySuffix,
   });
 
   final TextEditingController? controller;
@@ -128,6 +145,9 @@ class AppSearchField extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final bool autofocus;
   final VoidCallback? onClear;
+
+  /// Trailing widget shown only while the field is empty, e.g. a paste action.
+  final Widget? emptySuffix;
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +166,9 @@ class AppSearchField extends StatelessWidget {
           : ValueListenableBuilder<TextEditingValue>(
               valueListenable: activeController,
               builder: (context, value, _) {
-                if (value.text.isEmpty) return const SizedBox.shrink();
+                if (value.text.isEmpty) {
+                  return emptySuffix ?? const SizedBox.shrink();
+                }
                 return IconButton(
                   icon: const Icon(Icons.close_rounded),
                   tooltip: 'Clear',
