@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Widgets migrated onto the token layer. Add to this list from each phase-2b
-/// plan as files move across.
+/// Files that have been moved onto the token layer. Add a path here first, watch
+/// the guard fail, then migrate the file.
 const List<String> migratedFiles = [
   'lib/widgets/common/poster_skeleton.dart',
   'lib/widgets/common/error_view.dart',
@@ -27,6 +27,7 @@ const List<String> migratedFiles = [
   'lib/widgets/p2p/p2p_warning_dialog.dart',
   'lib/widgets/updater/update_dialog.dart',
   'lib/widgets/home/support_dev_cards.dart',
+  'lib/pages/search/search_page.dart',
 ];
 
 /// Matches a `Color(0x…)` literal or a `Colors.<name>` reference, without

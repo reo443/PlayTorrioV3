@@ -11,8 +11,12 @@ import '../../models/stream/stream_model.dart';
 import '../../services/addon/addon_manager.dart';
 import '../../services/cloudstream/cloudstream_manager.dart';
 import '../../services/metadata/tmdb_service.dart';
+import '../../theme/playtorrio_tokens.dart';
 import '../../widgets/movie/movie_card.dart';
 import '../../widgets/search/magnet_files_view.dart';
+import '../../widgets/ui/app_button.dart';
+import '../../widgets/ui/app_empty_state.dart';
+import '../../widgets/ui/app_text_field.dart';
 import '../player/player_screen.dart';
 import 'search_filter_sheet.dart';
 
@@ -27,7 +31,6 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
 
   Timer? _debounce;
   bool _isLoading = false;
@@ -51,7 +54,6 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void dispose() {
     _searchController.dispose();
-    _focusNode.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -527,6 +529,7 @@ class _SearchPageState extends State<SearchPage> {
   // ── UI ────────────────────────────────────────────────────────────────
 
   Widget _buildFilterButton() {
+    final tokens = PlayTorrioTokens.of(context);
     final count = _filters.activeCount;
     final isActive = count > 0;
 
@@ -543,14 +546,10 @@ class _SearchPageState extends State<SearchPage> {
         width: 42,
         margin: const EdgeInsets.only(left: 8, right: 12),
         decoration: BoxDecoration(
-          color: isActive
-              ? const Color(0xFF7C5CFF)
-              : Colors.white.withValues(alpha: 0.06),
+          color: isActive ? tokens.accent : tokens.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive
-                ? const Color(0xFF7C5CFF)
-                : Colors.white.withValues(alpha: 0.1),
+            color: isActive ? tokens.accent : tokens.borderSubtle,
           ),
         ),
         child: Stack(
@@ -559,7 +558,7 @@ class _SearchPageState extends State<SearchPage> {
               child: Icon(
                 Icons.tune_rounded,
                 size: 19,
-                color: isActive ? Colors.white : Colors.white70,
+                color: isActive ? tokens.onAccent : tokens.textPrimary,
               ),
             ),
             if (count > 0)
@@ -572,15 +571,15 @@ class _SearchPageState extends State<SearchPage> {
                     vertical: 1,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: tokens.textPrimary,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '$count',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF7C5CFF),
+                      color: tokens.accent,
                     ),
                   ),
                 ),
@@ -593,11 +592,12 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     final topPadding = MediaQuery.of(context).padding.top;
     final movies = _filteredMovies;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080A0F),
+      backgroundColor: tokens.bgPrimary,
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight + 10),
@@ -611,14 +611,12 @@ class _SearchPageState extends State<SearchPage> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFF080A0F).withValues(alpha: 0.90),
-                    const Color(0xFF080A0F).withValues(alpha: 0.60),
+                    tokens.bgPrimary.withValues(alpha: 0.90),
+                    tokens.bgPrimary.withValues(alpha: 0.60),
                   ],
                 ),
                 border: Border(
-                  bottom: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.06),
-                  ),
+                  bottom: BorderSide(color: tokens.borderSubtle),
                 ),
               ),
               child: Row(
@@ -626,7 +624,7 @@ class _SearchPageState extends State<SearchPage> {
                   const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-                    color: Colors.white,
+                    color: tokens.textPrimary,
                     onPressed: () => Navigator.pop(context),
                   ),
                   Expanded(
@@ -634,67 +632,19 @@ class _SearchPageState extends State<SearchPage> {
                       alignment: Alignment.centerLeft,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 560),
-                        child: Container(
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
+                        child: AppSearchField(
+                          controller: _searchController,
+                          hintText: 'Search movies, series, or paste links',
+                          autofocus: true,
+                          onChanged: _onSearchChanged,
+                          onSubmitted: _performSearch,
+                          emptySuffix: IconButton(
+                            icon: const Icon(
+                              Icons.content_paste_rounded,
+                              size: 17,
                             ),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            focusNode: _focusNode,
-                            autofocus: true,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textInputAction: TextInputAction.search,
-                            onChanged: _onSearchChanged,
-                            onSubmitted: _performSearch,
-                            decoration: InputDecoration(
-                              hintText: 'Search movies, series, or paste links',
-                              hintStyle: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.35),
-                                fontSize: 14,
-                              ),
-                              border: InputBorder.none,
-                              prefixIcon: const Icon(
-                                Icons.search_rounded,
-                                size: 19,
-                                color: Colors.white38,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(
-                                        Icons.close_rounded,
-                                        size: 18,
-                                      ),
-                                      color: Colors.white60,
-                                      splashRadius: 18,
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        _onSearchChanged('');
-                                      },
-                                    )
-                                  : IconButton(
-                                      icon: const Icon(
-                                        Icons.content_paste_rounded,
-                                        size: 17,
-                                      ),
-                                      tooltip: 'Paste from clipboard',
-                                      color: Colors.white54,
-                                      splashRadius: 18,
-                                      onPressed: _pasteFromClipboard,
-                                    ),
-                            ),
+                            tooltip: 'Paste from clipboard',
+                            onPressed: _pasteFromClipboard,
                           ),
                         ),
                       ),
@@ -712,8 +662,8 @@ class _SearchPageState extends State<SearchPage> {
           if (_isMagnetMode && _magnetQuery.isNotEmpty)
             MagnetFilesView(key: ValueKey(_magnetQuery), magnet: _magnetQuery)
           else if (_isLoading && _results.isEmpty)
-            const Center(
-              child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
+            Center(
+              child: CircularProgressIndicator(color: tokens.accent),
             )
           else if (!_isLoading && _lastQuery.isNotEmpty && movies.isEmpty)
             Center(
@@ -723,49 +673,23 @@ class _SearchPageState extends State<SearchPage> {
                   horizontal: 32,
                   vertical: 32,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _results.isNotEmpty
-                          ? Icons.filter_alt_off_rounded
-                          : Icons.search_off_rounded,
-                      size: 64,
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _results.isNotEmpty
-                          ? 'No results match your active filters'
-                          : 'No results for "$_lastQuery"',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (_results.isNotEmpty) ...[
-                      const SizedBox(height: 18),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7C5CFF),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                child: AppEmptyState(
+                  icon: _results.isNotEmpty
+                      ? Icons.filter_alt_off_rounded
+                      : Icons.search_off_rounded,
+                  title: _results.isNotEmpty
+                      ? 'No results match your active filters'
+                      : 'No results for "$_lastQuery"',
+                  action: _results.isNotEmpty
+                      ? AppButton(
+                          label: 'Clear Filters',
+                          icon: Icons.filter_alt_off_outlined,
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () => setState(
+                            () => _filters = const SearchFilterState(),
                           ),
-                        ),
-                        onPressed: () => setState(
-                          () => _filters = const SearchFilterState(),
-                        ),
-                        icon: const Icon(
-                          Icons.filter_alt_off_outlined,
-                          size: 17,
-                        ),
-                        label: const Text('Clear Filters'),
-                      ),
-                    ],
-                  ],
+                        )
+                      : null,
                 ),
               ),
             )
@@ -809,11 +733,11 @@ class _SearchPageState extends State<SearchPage> {
               top: topPadding + kToolbarHeight + 10,
               left: 0,
               right: 0,
-              child: const SizedBox(
+              child: SizedBox(
                 height: 2,
                 child: LinearProgressIndicator(
                   backgroundColor: Colors.transparent,
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF7C5CFF)),
+                  valueColor: AlwaysStoppedAnimation<Color>(tokens.accent),
                 ),
               ),
             ),
@@ -823,6 +747,8 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget _buildEmptyState(double topPadding) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return ListView(
       clipBehavior: Clip.none,
       padding: EdgeInsets.only(
@@ -831,22 +757,9 @@ class _SearchPageState extends State<SearchPage> {
       ),
       physics: const ClampingScrollPhysics(),
       children: [
-        Icon(
-          Icons.search_rounded,
-          size: 56,
-          color: Colors.white.withValues(alpha: 0.18),
-        ),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            'Search for movies, series, or paste a link',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.45),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
+        const AppEmptyState(
+          icon: Icons.search_rounded,
+          title: 'Search for movies, series, or paste a link',
         ),
 
         // Recent Searches
@@ -857,23 +770,23 @@ class _SearchPageState extends State<SearchPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'RECENT SEARCHES',
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
-                    color: Colors.white38,
+                    color: tokens.textTertiary,
                     letterSpacing: 1.1,
                   ),
                 ),
                 GestureDetector(
                   onTap: _clearSearchHistory,
-                  child: const Text(
+                  child: Text(
                     'Clear All',
                     style: TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF00E5FF),
+                      color: tokens.accent,
                     ),
                   ),
                 ),
@@ -889,19 +802,19 @@ class _SearchPageState extends State<SearchPage> {
               children: _searchHistory.map((query) {
                 return InputChip(
                   label: Text(query),
-                  labelStyle: const TextStyle(
-                    color: Colors.white,
+                  labelStyle: TextStyle(
+                    color: tokens.textPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
-                  backgroundColor: Colors.white.withValues(alpha: 0.07),
-                  side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  backgroundColor: tokens.surface,
+                  side: BorderSide(color: tokens.borderSubtle),
                   onPressed: () {
                     _searchController.text = query;
                     _performSearch(query);
                   },
                   onDeleted: () => _removeSearchHistory(query),
-                  deleteIconColor: Colors.white38,
+                  deleteIconColor: tokens.textTertiary,
                   deleteIcon: const Icon(Icons.close_rounded, size: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
