@@ -205,9 +205,17 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     );
 
     setState(() => _isResolvingPlayback = true);
-    final session = _playSession = AutoPlayService.start(request);
-    final result = await session.result;
-    if (_playSession == session) _playSession = null;
+    AutoPlaySession? session;
+    AutoPlayResult? result;
+    try {
+      session = _playSession = AutoPlayService.start(request);
+      result = await session.result;
+    } catch (_) {
+      // Never leave the button spinning on an unexpected failure.
+      result = null;
+    } finally {
+      if (_playSession == session) _playSession = null;
+    }
     if (!mounted) return;
     setState(() => _isResolvingPlayback = false);
 

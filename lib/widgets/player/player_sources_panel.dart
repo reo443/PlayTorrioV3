@@ -87,17 +87,28 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
 
     final detail = widget.detail;
     final ep = widget.episode;
-    final type = detail?.type ?? 'tv';
-    final id = ep == null
-        ? (detail?.id ?? '')
-        : resolveEpisodeStreamId(
-            detailId: detail?.id ?? '',
-            episodeId: ep.id,
-            season: ep.season,
-            episode: ep.episode,
+    // Same scrape parameters the play resolver used, so the panel hits the
+    // same id/title (a collection part scrapes as a movie with the part title).
+    final request = detail == null
+        ? null
+        : AutoPlayRequest.forDetails(
+            detail: detail,
+            episode: ep,
+            type: detail.type,
+            isCollection: detail.isCollection,
           );
-    final title = detail?.name ?? ep?.title ?? '';
-    final year = int.tryParse(detail?.year ?? '');
+    final type = request?.scrapeType ?? (detail?.type ?? 'tv');
+    final id = request?.scrapeId ??
+        (ep == null
+            ? (detail?.id ?? '')
+            : resolveEpisodeStreamId(
+                detailId: detail?.id ?? '',
+                episodeId: ep.id,
+                season: ep.season,
+                episode: ep.episode,
+              ));
+    final title = request?.scrapeTitle ?? (detail?.name ?? ep?.title ?? '');
+    final year = request?.scrapeYear ?? int.tryParse(detail?.year ?? '');
     final epNum = ep?.episode ?? 1;
 
     final isArabicAnime = id.startsWith('arabic_anime:') ||

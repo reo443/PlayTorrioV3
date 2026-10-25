@@ -25,6 +25,7 @@ import '../../services/trakt/trakt_service.dart';
 import '../../services/simkl/simkl_service.dart';
 import '../../services/player/player_settings.dart';
 import '../../services/stream/stream_bitrate_resolver.dart';
+import '../../services/stream/auto_play_service.dart';
 import '../../services/stream/playback_source_cache.dart';
 import '../../services/discord/discord_rpc_service.dart';
 
@@ -222,6 +223,19 @@ class _PlayerScreenState extends State<PlayerScreen>
       final key = _sourcesKeyFor(widget.episode);
       _cachedSourcesByEpisode[key] = List<StreamSource>.from(initialSources);
       PlaybackSourceCache.write(key, initialSources);
+
+      // Carry every source's discovered subtitles, like the old source list
+      // did, so the subtitle menu is not limited to the winning source.
+      final discovered = <SubtitleVariant>[];
+      final seenSubtitleUrls = <String>{};
+      for (final source in initialSources) {
+        for (final sub in source.subtitles ?? const <SubtitleVariant>[]) {
+          if (seenSubtitleUrls.add(sub.downloadUrl.toLowerCase())) {
+            discovered.add(sub);
+          }
+        }
+      }
+      if (discovered.isNotEmpty) _loadSourceSubtitles(discovered);
     }
 
     if (widget.initialSubtitles != null && widget.initialSubtitles!.isNotEmpty) {
@@ -1293,15 +1307,29 @@ class _PlayerScreenState extends State<PlayerScreen>
         return resolvedKey;
       }
     }
+    final detail = widget.detail;
+    if (detail != null) {
+      // Same transform the play resolver uses, so a collection part cannot
+      // share a cache key with its siblings.
+      return AutoPlayRequest.forDetails(
+        detail: detail,
+        episode: episode,
+        type: detail.type,
+        isCollection: detail.isCollection,
+      ).cacheKey;
+    }
     return PlaybackSourceCache.keyFor(
-      type: widget.detail?.type ?? 'movie',
-      id: widget.detail?.id ?? '',
+      type: 'movie',
+      id: episode?.id ?? '',
       season: episode?.season,
       episode: episode?.episode,
     );
   }
 
   void _toggleSourcesPanel() {
+    // The panel is hidden while buffering, so a tap then would only set a flag
+    // that _switchStream clears again.
+    if (_isLoading) return;
     setState(() {
       _showSourcesPanel = !_showSourcesPanel;
       if (_showSourcesPanel) {
@@ -2169,7 +2197,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                       onToggleEpisodes: (!_isLoading && widget.detail?.videos.isNotEmpty == true)
                           ? _toggleEpisodesPanel
                           : null,
-                      onShowSources: _toggleSourcesPanel,
+                      onShowSources:
+                          widget.detail == null ? null : _toggleSourcesPanel,
                       isSourcesActive: _showSourcesPanel,
                       isEpisodesActive: _showEpisodesPanel,
                       onBack: () {
@@ -2498,7 +2527,7 @@ class _PlayerScreenState extends State<PlayerScreen>
             ),
 
           // In-Player Sources Side Panel (Targeted Scraping & Error Recovery)
-          if (_showSourcesPanel && !_isLoading)
+          if (_showSourcesPanel && widget.detail != null && !_isLoading)
             Positioned.fill(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,

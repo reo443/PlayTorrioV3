@@ -216,6 +216,7 @@ class _Resolution {
   Timer? _hardCapTimer;
   Timer? _drainTimer;
   bool _done = false;
+  bool _stopRecording = false;
 
   late final AutoPlaySession session =
       AutoPlaySession._(_completer, cancel);
@@ -235,6 +236,7 @@ class _Resolution {
   }
 
   void _onSource(StreamSource source) {
+    if (_stopRecording) return;
     if (!_seen.add(_dedupeKey(source))) return;
     _collected.add(source);
 
@@ -281,7 +283,10 @@ class _Resolution {
     }
 
     // Keep listening so the panel sees the full list, not the first winner.
-    _drainTimer ??= Timer(drainCap, _stopListening);
+    // Only the *recording* stops at the cap: cancelling here would run the
+    // source stream's onCancel, which stops every scraper (including one the
+    // open panel started).
+    _drainTimer ??= Timer(drainCap, () => _stopRecording = true);
   }
 
   void cancel() {
@@ -293,11 +298,6 @@ class _Resolution {
     _done = true;
     AutoPlayService._inFlight.remove(request.cacheKey);
     if (!_completer.isCompleted) _completer.complete(null);
-  }
-
-  void _stopListening() {
-    _subscription?.cancel();
-    _subscription = null;
   }
 
   static String _dedupeKey(StreamSource source) => [

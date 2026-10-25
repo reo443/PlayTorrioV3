@@ -478,9 +478,10 @@ class ContinueWatchingService {
       detail: movieDetail,
       episode: video,
       type: item.type,
-      isCollection: false,
+      isCollection: movieDetail.isCollection,
     );
 
+    var dialogOpen = true;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -519,12 +520,13 @@ class ContinueWatchingService {
           ),
         ),
       ),
-    );
+    ).whenComplete(() => dialogOpen = false);
 
     final result = await AutoPlayService.start(request).result;
 
-    if (context.mounted && Navigator.canPop(context)) {
+    if (context.mounted && dialogOpen) {
       Navigator.pop(context);
+      dialogOpen = false;
     }
     if (!context.mounted) return;
 

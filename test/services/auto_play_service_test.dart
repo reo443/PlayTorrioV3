@@ -339,5 +339,38 @@ void main() {
 
       expect(result!.source.title, 'Second 720p');
     });
+
+    test('drain cap stops recording without cancelling the source stream',
+        () async {
+      var cancelled = false;
+      final controller = StreamController<StreamSource>(
+        onCancel: () => cancelled = true,
+      );
+      final request = requestFor(movie());
+
+      final session = AutoPlayService.start(
+        request,
+        sourceStreamFactory: () => controller.stream,
+        ranker: identity,
+        drainCap: const Duration(milliseconds: 20),
+      );
+      controller.add(http('First 1080p'));
+      expect(
+        await session.result.timeout(const Duration(seconds: 2)),
+        isNotNull,
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+
+      expect(cancelled, isFalse);
+
+      controller.add(torrent('Late 720p'));
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        PlaybackSourceCache.read(request.cacheKey)!.map((s) => s.title),
+        isNot(contains('Late 720p')),
+      );
+      await controller.close();
+    });
   });
 }
