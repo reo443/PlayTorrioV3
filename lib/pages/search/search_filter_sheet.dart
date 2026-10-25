@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../theme/playtorrio_tokens.dart';
+import '../../widgets/ui/app_button.dart';
+import '../../widgets/ui/app_chip.dart';
+import '../../widgets/ui/app_text_field.dart';
+
 /// Full client-side filter state for search results.
 class SearchFilterState {
   final String type; // 'all' | 'movie' | 'series'
@@ -115,8 +120,6 @@ class _SearchFilterSheet extends StatefulWidget {
 }
 
 class _SearchFilterSheetState extends State<_SearchFilterSheet> {
-  static const _accent = Color(0xFF7C5CFF);
-
   late String _type;
   String? _sortKey;
   late bool _sortDescending;
@@ -248,6 +251,7 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     final mq = MediaQuery.of(context);
     final keyboardInset = mq.viewInsets.bottom;
     final maxHeight =
@@ -258,7 +262,7 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: Container(
-          color: const Color(0xFF12151E),
+          color: tokens.surfaceElevated,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: SafeArea(
@@ -271,7 +275,7 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: tokens.borderStrong,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -279,26 +283,30 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
                     padding: const EdgeInsets.fromLTRB(20, 14, 12, 0),
                     child: Row(
                       children: [
-                        const Icon(Icons.tune_rounded, color: _accent, size: 20),
+                        Icon(Icons.tune_rounded, color: tokens.accent, size: 20),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Filters',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: tokens.textPrimary,
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: tokens.textSecondary,
+                            size: 20,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                       ],
                     ),
                   ),
-                  Divider(color: Colors.white.withValues(alpha: 0.06), height: 20),
+                  Divider(color: tokens.borderSubtle, height: 20),
 
                   Flexible(
                     child: ListView(
@@ -321,37 +329,24 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
                     child: Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
+                          child: AppButton(
+                            label: 'Clear All',
+                            icon: Icons.filter_alt_off_outlined,
+                            variant: AppButtonVariant.secondary,
+                            expand: true,
                             onPressed: _clearAll,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white70,
-                              side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                            ),
-                            icon: const Icon(Icons.filter_alt_off_outlined, size: 17),
-                            label: const Text(
-                              'Clear All',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
-                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           flex: 2,
-                          child: ElevatedButton.icon(
+                          child: AppButton(
+                            label: _activeCount > 0
+                                ? 'Apply ($_activeCount Active)'
+                                : 'Apply',
+                            icon: Icons.check_rounded,
+                            expand: true,
                             onPressed: _apply,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _accent,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                            ),
-                            icon: const Icon(Icons.check_rounded, size: 18),
-                            label: Text(
-                              _activeCount > 0 ? 'Apply ($_activeCount Active)' : 'Apply',
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5),
-                            ),
                           ),
                         ),
                       ],
@@ -367,12 +362,14 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
   }
 
   Widget _buildSectionHeader(String label) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return Text(
       label,
       style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: Colors.white.withValues(alpha: 0.35),
+        color: tokens.textTertiary,
         letterSpacing: 1.1,
       ),
     );
@@ -417,10 +414,10 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
               if (_selectedGenres.isNotEmpty)
                 Text(
                   '${_selectedGenres.length} selected',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white54,
+                    color: PlayTorrioTokens.of(context).textTertiary,
                   ),
                 ),
             ],
@@ -486,6 +483,7 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
   }
 
   Widget _buildOrderToggle() {
+    final tokens = PlayTorrioTokens.of(context);
     final enabled = _sortKey != null;
     final desc = _sortDescending;
 
@@ -499,10 +497,14 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: enabled ? _accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
+            color: enabled
+                ? tokens.accent.withValues(alpha: 0.15)
+                : tokens.surface,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: enabled ? _accent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.08),
+              color: enabled
+                  ? tokens.accent.withValues(alpha: 0.4)
+                  : tokens.borderSubtle,
             ),
           ),
           child: Row(
@@ -511,7 +513,7 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
               Icon(
                 desc ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
                 size: 14,
-                color: enabled ? const Color(0xFF9D85FF) : Colors.white30,
+                color: enabled ? tokens.accent : tokens.textTertiary,
               ),
               const SizedBox(width: 4),
               Text(
@@ -519,7 +521,7 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: enabled ? const Color(0xFF9D85FF) : Colors.white30,
+                  color: enabled ? tokens.accent : tokens.textTertiary,
                 ),
               ),
             ],
@@ -641,30 +643,11 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
     required TextInputType keyboardType,
     List<TextInputFormatter>? inputFormatters,
   }) {
-    return TextField(
+    return AppTextField(
       controller: controller,
+      labelText: label,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
-        filled: true,
-        fillColor: const Color(0xFF0D1017),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _accent),
-        ),
-      ),
     );
   }
 
@@ -673,22 +656,6 @@ class _SearchFilterSheetState extends State<_SearchFilterSheet> {
     required bool selected,
     required VoidCallback onSelected,
   }) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      selectedColor: _accent.withValues(alpha: 0.25),
-      backgroundColor: const Color(0xFF0D1017),
-      labelStyle: TextStyle(
-        color: selected ? const Color(0xFF9D85FF) : Colors.white70,
-        fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
-        fontSize: 12,
-      ),
-      side: BorderSide(
-        color: selected
-            ? _accent.withValues(alpha: 0.6)
-            : Colors.white.withValues(alpha: 0.08),
-      ),
-      onSelected: (_) => onSelected(),
-    );
+    return AppChip(label: label, selected: selected, onTap: onSelected);
   }
 }

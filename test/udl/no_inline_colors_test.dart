@@ -28,6 +28,7 @@ const List<String> migratedFiles = [
   'lib/widgets/updater/update_dialog.dart',
   'lib/widgets/home/support_dev_cards.dart',
   'lib/pages/search/search_page.dart',
+  'lib/pages/search/search_filter_sheet.dart',
 ];
 
 /// Matches a `Color(0x…)` literal or a `Colors.<name>` reference, without
