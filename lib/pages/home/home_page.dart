@@ -18,7 +18,11 @@ import '../../services/theme/app_theme_service.dart';
 import '../../services/continue_watching/continue_watching_service.dart';
 import '../../services/my_list/my_list_service.dart';
 import '../../utils/navigation/route_transitions.dart';
+import '../../theme/app_semantic_colors.dart';
+import '../../theme/app_sponsor_colors.dart';
+import '../../theme/playtorrio_tokens.dart';
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/custom_scroll_track.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/home/continue_watching_slider.dart';
@@ -33,6 +37,7 @@ import '../../services/updater/app_updater_service.dart';
 import '../../widgets/updater/update_dialog.dart';
 import '../../services/p2p/p2p_settings_service.dart';
 import '../../widgets/p2p/p2p_warning_dialog.dart';
+import '../../widgets/ui/app_button.dart';
 import 'package:flutter/services.dart';
 import '../../services/window/window_service.dart';
 import '../../utils/format/media_format.dart';
@@ -419,6 +424,7 @@ class _HomePageState extends State<HomePage> {
     double topPadding,
     BuildContext context,
   ) {
+    final tokens = PlayTorrioTokens.of(context);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final overlayChildren = <Widget>[
       // ── Floating glass app bar ──
@@ -439,7 +445,7 @@ class _HomePageState extends State<HomePage> {
                   visualDensity: VisualDensity.compact,
                   icon: Icon(
                     Icons.calendar_month_rounded,
-                    color: Colors.white.withValues(alpha: 0.75),
+                    color: tokens.textSecondary,
                     size: 20,
                   ),
                   tooltip: 'TV Airing Calendar',
@@ -462,8 +468,8 @@ class _HomePageState extends State<HomePage> {
                     icon: Icon(
                       isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
                       color: isFullscreen
-                          ? const Color(0xFFFFB300)
-                          : Colors.white.withValues(alpha: 0.75),
+                          ? tokens.accent
+                          : tokens.textSecondary,
                       size: 22,
                     ),
                     tooltip: isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)',
@@ -480,7 +486,7 @@ class _HomePageState extends State<HomePage> {
         Positioned(
           right: 24,
           bottom: 40,
-          child: _CustomScrollTrack(controller: _scrollController),
+          child: CustomScrollTrack(controller: _scrollController),
         ),
 
       // ── Liquid Dock Navbar ──
@@ -518,7 +524,7 @@ class _HomePageState extends State<HomePage> {
         }
 
         return Container(
-          color: const Color(0xFF080A0F),
+          color: tokens.bgPrimary,
           child: Stack(
             children: [
               RepaintBoundary(child: backgroundContent),
@@ -531,6 +537,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildIntroOverlay(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     final screenWidth = MediaQuery.sizeOf(context).width;
     final titleSize = (screenWidth * 0.08).clamp(40.0, 56.0);
     final subtitleSize = (screenWidth * 0.03).clamp(16.0, 20.0);
@@ -543,7 +550,7 @@ class _HomePageState extends State<HomePage> {
         duration: const Duration(milliseconds: 800),
         curve: Curves.easeInOut,
         child: Container(
-          color: const Color(0xFF080A0F),
+          color: tokens.bgPrimary,
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -561,7 +568,7 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                     fontSize: titleSize,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: tokens.textPrimary,
                     letterSpacing: -1,
                   ),
                 ),
@@ -572,7 +579,7 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                     fontSize: subtitleSize,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white54,
+                    color: tokens.textSecondary,
                     letterSpacing: 2,
                   ),
                 ),
@@ -752,7 +759,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final screenHeight = MediaQuery.sizeOf(context).height;
     final heroHeight = _heroHeight(screenWidth, screenHeight);
-    final primaryColor = AppThemeService.currentPalette.value.primaryColor;
+    final tokens = PlayTorrioTokens.of(context);
     final totalSlides = _totalSlideCount;
     final showSupport = _showSupportSlide;
     final supportIdx = _supportSlideIndex;
@@ -807,8 +814,10 @@ class _HeroCarouselState extends State<_HeroCarousel> {
                     final active = i == _index;
                     final isSupportDot = showSupport && i == supportIdx;
                     final dotColor = active
-                        ? (isSupportDot ? const Color(0xFFFFD700) : primaryColor)
-                        : Colors.white.withValues(alpha: 0.30);
+                        ? (isSupportDot
+                              ? AppSponsorColors.gold
+                              : tokens.accent)
+                        : tokens.textTertiary;
                     return GestureDetector(
                       onTap: () => _goTo(i),
                       child: AnimatedContainer(
@@ -823,10 +832,11 @@ class _HeroCarouselState extends State<_HeroCarousel> {
                           boxShadow: active
                               ? [
                                   BoxShadow(
-                                    color: (isSupportDot
-                                            ? const Color(0xFFFFD700)
-                                            : primaryColor)
-                                        .withValues(alpha: 0.55),
+                                    color:
+                                        (isSupportDot
+                                                ? AppSponsorColors.gold
+                                                : tokens.accent)
+                                            .withValues(alpha: 0.55),
                                     blurRadius: 8,
                                   ),
                                 ]
@@ -889,6 +899,8 @@ class _CarouselArrowState extends State<_CarouselArrow> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringArrow = true),
       onExit: (_) => setState(() => _isHoveringArrow = false),
@@ -901,18 +913,20 @@ class _CarouselArrowState extends State<_CarouselArrow> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: _isHoveringArrow
-                ? Colors.black.withOpacity(0.6)
-                : Colors.black.withOpacity(0.3),
+                ? tokens.bgPrimary.withValues(alpha: 0.6)
+                : tokens.bgPrimary.withValues(alpha: 0.3),
             border: Border.all(
               color: _isHoveringArrow
-                  ? Colors.white.withOpacity(0.6)
-                  : Colors.white.withOpacity(0.2),
+                  ? tokens.borderStrong
+                  : tokens.borderSubtle,
               width: 1.5,
             ),
           ),
           child: Icon(
             widget.icon,
-            color: _isHoveringArrow ? Colors.white : Colors.white70,
+            color: _isHoveringArrow
+                ? tokens.textPrimary
+                : tokens.textSecondary,
             size: 24,
           ),
         ),
@@ -951,6 +965,7 @@ class _HeroSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompact = screenWidth < 600;
+    final tokens = PlayTorrioTokens.of(context);
     final palette = AppThemeService.currentPalette.value;
     final heroStyle = HomePageSettings.heroStyle.value;
 
@@ -998,10 +1013,10 @@ class _HeroSlide extends StatelessWidget {
                                 filterQuality: FilterQuality.low,
                                 fadeInDuration:
                                     const Duration(milliseconds: 300),
-                                placeholder: (_, __) => const ColoredBox(
-                                    color: Color(0xFF151822)),
-                                errorWidget: (_, __, ___) => const ColoredBox(
-                                    color: Color(0xFF151822)),
+                                placeholder: (_, __) =>
+                                    ColoredBox(color: tokens.surface),
+                                errorWidget: (_, __, ___) =>
+                                    ColoredBox(color: tokens.surface),
                               ),
                             ),
                           ),
@@ -1038,11 +1053,13 @@ class _HeroSlide extends StatelessWidget {
                               .clamp(0.0, containerWidth),
                           child: ShaderMask(
                             shaderCallback: (bounds) {
-                              return const LinearGradient(
+                              // Alpha-only mask: the gradient's colour never
+                              // reaches the screen.
+                              return LinearGradient(
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
-                                stops: [0.0, 0.22],
-                                colors: [Colors.transparent, Colors.white],
+                                stops: const [0.0, 0.22],
+                                colors: [Colors.transparent, tokens.textPrimary],
                               ).createShader(bounds);
                             },
                             blendMode: BlendMode.dstIn,
@@ -1085,7 +1102,9 @@ class _HeroSlide extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.65),
+                                    color: tokens.bgPrimary.withValues(
+                                      alpha: 0.65,
+                                    ),
                                     blurRadius: 36,
                                     spreadRadius: 4,
                                     offset: const Offset(0, 14),
@@ -1116,7 +1135,7 @@ class _HeroSlide extends StatelessWidget {
             ),
           )
         else
-          const ColoredBox(color: Color(0xFF151822)),
+          ColoredBox(color: tokens.surface),
 
         // Left horizontal wash for cinematic readability
         Positioned.fill(
@@ -1197,10 +1216,14 @@ class _HeroSlide extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFD700).withValues(alpha: 0.14),
+                            color: AppSemanticColors.rating.withValues(
+                              alpha: 0.14,
+                            ),
                             borderRadius: BorderRadius.circular(9),
                             border: Border.all(
-                              color: const Color(0xFFFFD700).withValues(alpha: 0.28),
+                              color: AppSemanticColors.rating.withValues(
+                                alpha: 0.28,
+                              ),
                             ),
                           ),
                           child: Row(
@@ -1209,7 +1232,7 @@ class _HeroSlide extends StatelessWidget {
                               const Icon(
                                 Icons.star_rounded,
                                 size: 16,
-                                color: Color(0xFFFFD700),
+                                color: AppSemanticColors.rating,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -1217,7 +1240,7 @@ class _HeroSlide extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFFFFD700),
+                                  color: AppSemanticColors.rating,
                                 ),
                               ),
                             ],
@@ -1230,7 +1253,7 @@ class _HeroSlide extends StatelessWidget {
                           year,
                           style: TextStyle(
                             fontSize: 14.5,
-                            color: Colors.white.withValues(alpha: 0.55),
+                            color: tokens.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1240,14 +1263,14 @@ class _HeroSlide extends StatelessWidget {
                           child: Icon(
                             Icons.circle,
                             size: 4,
-                            color: Colors.white.withValues(alpha: 0.25),
+                            color: tokens.textTertiary,
                           ),
                         ),
                         Text(
                           formatRuntime(detail!.runtime)!,
                           style: TextStyle(
                             fontSize: 14.5,
-                            color: Colors.white.withValues(alpha: 0.55),
+                            color: tokens.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1279,7 +1302,7 @@ class _HeroSlide extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: isCompact ? 14.0 : 15.0,
-                          color: Colors.white.withValues(alpha: 0.65),
+                          color: tokens.textSecondary,
                           height: 1.45,
                         ),
                       ),
@@ -1299,17 +1322,15 @@ class _HeroSlide extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
+                            color: tokens.surface,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.12),
-                            ),
+                            border: Border.all(color: tokens.borderSubtle),
                           ),
                           child: Text(
                             genre,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withValues(alpha: 0.70),
+                              color: tokens.textSecondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1319,73 +1340,27 @@ class _HeroSlide extends StatelessWidget {
                   ],
 
                   // Action buttons
-                  SizedBox(height: heroStyle == HeroStyle.minimalist ? 12 : (isCompact ? 18 : 24)),
-                  Row(
+                  SizedBox(
+                    height: heroStyle == HeroStyle.minimalist
+                        ? 12
+                        : (isCompact ? 18 : 24),
+                  ),
+                  Wrap(
+                    spacing: isCompact ? 8 : 12,
+                    runSpacing: 12,
                     children: [
-                      Builder(
-                        builder: (context) {
-                          return ElevatedButton.icon(
-                            onPressed: () => _openDetails(context),
-                            icon: const Icon(Icons.play_arrow_rounded, size: 22),
-                            label: const Text(
-                              'Watch Now',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: palette.primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isCompact ? 16 : 24,
-                                vertical: isCompact ? 10 : 14,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              elevation: 4,
-                              shadowColor: Colors.black.withValues(alpha: 0.35),
-                            ),
-                          );
-                        },
+                      AppButton(
+                        label: 'Watch Now',
+                        icon: Icons.play_arrow_rounded,
+                        onPressed: () => _openDetails(context),
                       ),
-                      if (heroStyle != HeroStyle.minimalist) ...[
-                        SizedBox(width: isCompact ? 8 : 12),
-                        Builder(
-                          builder: (context) {
-                            return OutlinedButton.icon(
-                              onPressed: () => _openDetails(context),
-                              icon: Icon(
-                                Icons.info_outline_rounded,
-                                size: isCompact ? 18 : 20,
-                                color: Colors.white.withValues(alpha: 0.80),
-                              ),
-                              label: Text(
-                                'Details',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: isCompact ? 13.5 : 15,
-                                  color: Colors.white.withValues(alpha: 0.80),
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: isCompact ? 14 : 20,
-                                  vertical: isCompact ? 10 : 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                side: BorderSide(
-                                  color: Colors.white.withValues(alpha: 0.18),
-                                  width: 1.2,
-                                ),
-                              ),
-                            );
-                          },
+                      if (heroStyle != HeroStyle.minimalist)
+                        AppButton(
+                          label: 'Details',
+                          icon: Icons.info_outline_rounded,
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () => _openDetails(context),
                         ),
-                      ],
                     ],
                   ),
                 ],
@@ -1415,13 +1390,14 @@ class _HeroTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     final maxHeight = isCompact ? 76.0 : 118.0;
     final textStyle = TextStyle(
       fontSize: isCompact ? 32 : 46,
       fontWeight: FontWeight.w900,
       letterSpacing: -1.2,
       height: 1.05,
-      color: Colors.white,
+      color: tokens.textPrimary,
     );
 
     final titleText = Text(
@@ -1455,199 +1431,3 @@ class _HeroTitle extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Custom Scroll Track
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _CustomScrollTrack extends StatefulWidget {
-  final ScrollController controller;
-
-  const _CustomScrollTrack({required this.controller});
-
-  @override
-  State<_CustomScrollTrack> createState() => _CustomScrollTrackState();
-}
-
-class _CustomScrollTrackState extends State<_CustomScrollTrack> {
-  double _thumbFraction = 0.0;
-  bool _isHovering = false;
-  bool _isDragging = false;
-  final double _trackHeight = 300.0;
-  final double _thumbHeight = 60.0;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.controller.addListener(_updateThumbFromScroll);
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_updateThumbFromScroll);
-    super.dispose();
-  }
-
-  void _updateThumbFromScroll() {
-    if (!widget.controller.hasClients || _isDragging) return;
-    final max = widget.controller.position.maxScrollExtent;
-    if (max <= 0) return;
-
-    setState(() {
-      _thumbFraction = (widget.controller.position.pixels / max).clamp(
-        0.0,
-        1.0,
-      );
-    });
-  }
-
-  void _onDragUpdate(DragUpdateDetails details) {
-    if (!widget.controller.hasClients) return;
-    final max = widget.controller.position.maxScrollExtent;
-    if (max <= 0) return;
-
-    final usableTrack = _trackHeight - _thumbHeight;
-    setState(() {
-      _thumbFraction += details.delta.dy / usableTrack;
-      _thumbFraction = _thumbFraction.clamp(0.0, 1.0);
-    });
-
-    widget.controller.jumpTo(_thumbFraction * max);
-  }
-
-  void _scroll(double direction) {
-    if (!widget.controller.hasClients) return;
-    final target = widget.controller.position.pixels + (direction * 400);
-    widget.controller.animateTo(
-      target.clamp(0.0, widget.controller.position.maxScrollExtent),
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final thumbPosition = _thumbFraction * (_trackHeight - _thumbHeight);
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      child: AnimatedOpacity(
-        opacity: _isHovering || _isDragging ? 1.0 : 0.35,
-        duration: const Duration(milliseconds: 200),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xF01A1D27),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.12),
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _HoverArrow(
-                icon: Icons.keyboard_arrow_up_rounded,
-                onTap: () => _scroll(-1),
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onVerticalDragStart: (_) => setState(() => _isDragging = true),
-                onVerticalDragUpdate: _onDragUpdate,
-                onVerticalDragEnd: (_) => setState(() => _isDragging = false),
-                onVerticalDragCancel: () => setState(() => _isDragging = false),
-                child: Container(
-                  height: _trackHeight,
-                  width: 24, // Wider hit area for easy grabbing
-                  alignment: Alignment.center,
-                  child: Container(
-                    height: _trackHeight,
-                    width: 6, // Visual track
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Positioned(
-                          top: thumbPosition,
-                          left:
-                              -2, // To make the thumb slightly wider than the track
-                          right: -2,
-                          child: Container(
-                            height: _thumbHeight,
-                            decoration: BoxDecoration(
-                              color: AppThemeService.currentPalette.value.primaryColor,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppThemeService.currentPalette.value.primaryColor.withOpacity(0.6),
-                                  blurRadius: 12,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _HoverArrow(
-                icon: Icons.keyboard_arrow_down_rounded,
-                onTap: () => _scroll(1),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HoverArrow extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _HoverArrow({required this.icon, required this.onTap});
-
-  @override
-  State<_HoverArrow> createState() => _HoverArrowState();
-}
-
-class _HoverArrowState extends State<_HoverArrow> {
-  bool _isHovering = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryColor = AppThemeService.currentPalette.value.primaryColor;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _isHovering
-                ? Colors.white.withOpacity(0.15)
-                : Colors.white.withOpacity(0.05),
-            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-          ),
-          child: Icon(
-            widget.icon,
-            color: _isHovering ? primaryColor : Colors.white70,
-            size: 22,
-          ),
-        ),
-      ),
-    );
-  }
-}
