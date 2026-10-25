@@ -25,6 +25,7 @@ import '../../services/trakt/trakt_service.dart';
 import '../../services/simkl/simkl_service.dart';
 import '../../services/player/player_settings.dart';
 import '../../services/stream/stream_bitrate_resolver.dart';
+import '../../services/stream/playback_source_cache.dart';
 import '../../services/discord/discord_rpc_service.dart';
 
 import '../../widgets/player/player_glass.dart';
@@ -60,6 +61,14 @@ class PlayerScreen extends StatefulWidget {
   final Duration? initialPosition;
   final List<SubtitleVariant>? initialSubtitles;
 
+  /// Sources the caller already resolved for this title/episode, so the
+  /// sources panel opens from cache instead of re-scraping.
+  final List<StreamSource>? initialSources;
+
+  /// Cache key the caller resolved under. Passed in because a collection part's
+  /// key cannot be derived from [detail] alone.
+  final String? sourceCacheKey;
+
   const PlayerScreen({
     super.key,
     required this.source,
@@ -70,6 +79,8 @@ class PlayerScreen extends StatefulWidget {
     this.episode,
     this.initialPosition,
     this.initialSubtitles,
+    this.initialSources,
+    this.sourceCacheKey,
   });
 
   @override
@@ -205,6 +216,13 @@ class _PlayerScreenState extends State<PlayerScreen>
     _currentTitle = widget.title;
     _volume = PlayerSettings.savedVolume.value;
     _isMuted = _volume == 0;
+
+    final initialSources = widget.initialSources;
+    if (initialSources != null && initialSources.isNotEmpty) {
+      final key = _sourcesKeyFor(widget.episode);
+      _cachedSourcesByEpisode[key] = List<StreamSource>.from(initialSources);
+      PlaybackSourceCache.write(key, initialSources);
+    }
 
     if (widget.initialSubtitles != null && widget.initialSubtitles!.isNotEmpty) {
       _loadSourceSubtitles(widget.initialSubtitles!);
@@ -509,8 +527,9 @@ class _PlayerScreenState extends State<PlayerScreen>
 
       if (!mounted) return;
 
-      // If we have an episode context (TV show), reopen the sources panel with error notice!
-      if (_currentEpisode != null && widget.detail?.videos.isNotEmpty == true) {
+      // Offer the alternate sources. Works for movies too: the panel scrapes by
+      // title when there is no episode.
+      if (widget.detail != null || _currentEpisode != null) {
         setState(() {
           _isLoading = false;
           _showSourcesPanel = true;
@@ -1144,7 +1163,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     // 4. Critical error on dead stream
     print('[PlayerScreen ERROR] Critical player error on dead stream: $errorMsg');
 
-    if (_currentEpisode != null && widget.detail?.videos.isNotEmpty == true) {
+    if (widget.detail != null || _currentEpisode != null) {
       setState(() {
         _isLoading = false;
         _showSourcesPanel = true;
@@ -1259,6 +1278,44 @@ class _PlayerScreenState extends State<PlayerScreen>
     });
   }
 
+  /// The cache key for [episode], matching the one the resolver used when the
+  /// caller passed [PlayerScreen.sourceCacheKey].
+  String _sourcesKeyFor(Video? episode) {
+    final resolvedKey = widget.sourceCacheKey;
+    final current = widget.episode;
+    if (resolvedKey != null) {
+      if (episode == null && current == null) return resolvedKey;
+      if (episode != null &&
+          current != null &&
+          episode.id == current.id &&
+          episode.season == current.season &&
+          episode.episode == current.episode) {
+        return resolvedKey;
+      }
+    }
+    return PlaybackSourceCache.keyFor(
+      type: widget.detail?.type ?? 'movie',
+      id: widget.detail?.id ?? '',
+      season: episode?.season,
+      episode: episode?.episode,
+    );
+  }
+
+  void _toggleSourcesPanel() {
+    setState(() {
+      _showSourcesPanel = !_showSourcesPanel;
+      if (_showSourcesPanel) {
+        _sourcesEpisode = _currentEpisode;
+        _sourcesErrorMessage = null;
+        _showEpisodesPanel = false;
+        _activeMenu = null;
+        _showSubSyncBar = false;
+        _showTextSyncOverlay = false;
+        _showControls = true;
+      }
+    });
+  }
+
   void _onEpisodeChosen(Video episode) {
     setState(() {
       _showEpisodesPanel = false;
@@ -1278,7 +1335,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     });
   }
 
-  void _playNewSource(StreamSource newSource, Video episode) {
+  void _playNewSource(StreamSource newSource, Video? episode) {
     setState(() {
       _showSourcesPanel = false;
       _showEpisodesPanel = false;
@@ -1287,7 +1344,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     _switchStream(newSource, episode);
   }
 
-  void _switchStream(StreamSource newSource, Video newEpisode) async {
+  void _switchStream(StreamSource newSource, Video? newEpisode) async {
     _progressSaveTimer?.cancel();
     _frameWatchdogTimer?.cancel();
     _fallbackNoticeTimer?.cancel();
@@ -1306,11 +1363,16 @@ class _PlayerScreenState extends State<PlayerScreen>
       _masterStreamUrl = null;
       PlayerSettings.hlsBitrateCap.value = 'max';
       final showName = widget.detail?.name ?? widget.title;
-      final epNum = newEpisode.episode ?? 1;
-      final sNum = newEpisode.season ?? 1;
-      _currentTitle = '$showName - S${sNum}E$epNum ${newEpisode.title}';
+      if (newEpisode != null) {
+        final epNum = newEpisode.episode ?? 1;
+        final sNum = newEpisode.season ?? 1;
+        _currentTitle = '$showName - S${sNum}E$epNum ${newEpisode.title}';
+        _statusMessage = 'Buffering S$sNum:E$epNum - ${newEpisode.title.isNotEmpty ? newEpisode.title : "Episode $epNum"}...';
+      } else {
+        _currentTitle = showName;
+        _statusMessage = 'Buffering $showName...';
+      }
       _isLoading = true;
-      _statusMessage = 'Buffering S$sNum:E$epNum - ${newEpisode.title.isNotEmpty ? newEpisode.title : "Episode $epNum"}...';
       _showEpisodesPanel = false;
       _showSourcesPanel = false;
       _activeMenu = null;
@@ -2107,7 +2169,9 @@ class _PlayerScreenState extends State<PlayerScreen>
                       onToggleEpisodes: (!_isLoading && widget.detail?.videos.isNotEmpty == true)
                           ? _toggleEpisodesPanel
                           : null,
-                      isEpisodesActive: _showEpisodesPanel || _showSourcesPanel,
+                      onShowSources: _toggleSourcesPanel,
+                      isSourcesActive: _showSourcesPanel,
+                      isEpisodesActive: _showEpisodesPanel,
                       onBack: () {
                         if (!_wasFullscreenBeforeEntering && WindowService.instance.isFullscreen) {
                           WindowService.instance.exitFullscreen();
@@ -2434,7 +2498,7 @@ class _PlayerScreenState extends State<PlayerScreen>
             ),
 
           // In-Player Sources Side Panel (Targeted Scraping & Error Recovery)
-          if (_showSourcesPanel && _sourcesEpisode != null && !_isLoading)
+          if (_showSourcesPanel && !_isLoading)
             Positioned.fill(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -2444,20 +2508,20 @@ class _PlayerScreenState extends State<PlayerScreen>
                   child: GestureDetector(
                     onTap: () {},
                     child: PlayerSourcesPanel(
-                      episode: _sourcesEpisode!,
+                      episode: _sourcesEpisode,
                       detail: widget.detail,
                       currentAddonName: _currentSource.addonName,
                       errorMessage: _sourcesErrorMessage,
-                      cachedSources: _cachedSourcesByEpisode['${_sourcesEpisode!.season ?? 1}:${_sourcesEpisode!.episode ?? 1}'],
+                      cachedSources: _cachedSourcesByEpisode[_sourcesKeyFor(_sourcesEpisode)],
                       onSourcesLoaded: (sources) {
-                        _cachedSourcesByEpisode['${_sourcesEpisode!.season ?? 1}:${_sourcesEpisode!.episode ?? 1}'] = sources;
+                        final key = _sourcesKeyFor(_sourcesEpisode);
+                        _cachedSourcesByEpisode[key] = sources;
+                        PlaybackSourceCache.write(key, sources);
                       },
-                      onPlaySource: (source, episode) {
-                        // Movies reach this once the player opens the panel
-                        // without an episode (see the sources button work).
-                        if (episode != null) _playNewSource(source, episode);
-                      },
-                      onBackToEpisodes: _onBackToEpisodes,
+                      onPlaySource: _playNewSource,
+                      onBackToEpisodes: (widget.detail?.videos.isNotEmpty ?? false)
+                          ? _onBackToEpisodes
+                          : null,
                       onClose: () => setState(() => _showSourcesPanel = false),
                     ),
                   ),
