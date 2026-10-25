@@ -10,12 +10,17 @@ import '../../services/metadata/metadata_service.dart';
 import '../../services/metadata/tmdb_service.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../services/theme/dock_settings.dart';
+import '../../theme/playtorrio_tokens.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/page_top_bar.dart';
 import '../../widgets/discover/advanced_filter_sheet.dart';
 import '../../widgets/discover/filter_option_sheet.dart';
 import '../../widgets/movie/movie_card.dart';
+import '../../widgets/ui/app_button.dart';
+import '../../widgets/ui/app_dialog.dart';
+import '../../widgets/ui/app_empty_state.dart';
+import '../../widgets/ui/app_text_field.dart';
 import '../search/search_page.dart';
 
 class DiscoverPage extends StatefulWidget {
@@ -504,26 +509,16 @@ class _DiscoverPageState extends State<DiscoverPage> {
     double bottomInset,
     AppThemePalette palette,
   ) {
+    final tokens = PlayTorrioTokens.of(context);
+
     if (_selectedCatalogEntry == null && !_isTmdbMode) {
       return Center(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20, topOffset + 30, 20, 100),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.category_outlined,
-                size: 48,
-                color: Colors.white.withValues(alpha: 0.3),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'No catalogs available for "$_selectedType"',
-                style: const TextStyle(color: Colors.white54, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ],
+          child: AppEmptyState(
+            icon: Icons.category_outlined,
+            title: 'No catalogs available for "$_selectedType"',
           ),
         ),
       );
@@ -536,7 +531,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     if (_items.isEmpty && _isLoading) {
       return Center(
-        child: CircularProgressIndicator(color: palette.primaryColor),
+        child: CircularProgressIndicator(color: tokens.accent),
       );
     }
 
@@ -558,21 +553,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20, topOffset + 30, 20, 100),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.inbox_rounded,
-                size: 48,
-                color: Colors.white.withValues(alpha: 0.3),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'No titles found in this catalog',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ],
+          child: const AppEmptyState(
+            icon: Icons.inbox_rounded,
+            title: 'No titles found in this catalog',
           ),
         ),
       );
@@ -607,7 +590,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
       itemBuilder: (context, index) {
         if (index == visibleItems.length) {
           return Center(
-            child: CircularProgressIndicator(color: palette.primaryColor),
+            child: CircularProgressIndicator(color: tokens.accent),
           );
         }
         return MovieCard(movie: visibleItems[index]);
@@ -628,12 +611,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
     return grid;
   }
 
-  // ── Control bar palette (premium dark streaming look) ──
-  static const Color _kBarSurface = Color(0xFF1B2231);
-  static const Color _kBarMuted = Color(0xFF9AA6B8);
 
   /// Unified control bar: animated Movies/TV segmented control + Sort + Filters.
   Widget _buildControlBar(AppThemePalette palette) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -645,14 +627,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
           _iconButton(
             icon: Icons.swap_vert_rounded,
             tooltip: 'Sort: $_sortLabel',
-            accent: palette.primaryColor,
+            accent: tokens.accent,
             onTap: _openSortSheet,
           ),
           const SizedBox(width: 10),
           _iconButton(
             icon: Icons.filter_alt_rounded,
             tooltip: 'Filters',
-            accent: palette.primaryColor,
+            accent: tokens.accent,
             badge: _filters.activeCount,
             onTap: _openAdvancedFilters,
           ),
@@ -661,22 +643,23 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-  Widget _barDivider() => Container(
-        width: 1,
-        height: 28,
-        color: Colors.white.withValues(alpha: 0.08),
-      );
+  Widget _barDivider() {
+    final tokens = PlayTorrioTokens.of(context);
+
+    return Container(width: 1, height: 28, color: tokens.borderSubtle);
+  }
 
   /// Rounded segmented Movies/TV control with a sliding highlight.
   Widget _buildTypeSegmented(AppThemePalette palette) {
+    final tokens = PlayTorrioTokens.of(context);
     final isMovies = _tmdbType == 'movie';
     return Container(
       height: 44,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: _kBarSurface,
+        color: tokens.surfaceElevated,
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: tokens.borderSubtle),
       ),
       child: Stack(
         children: [
@@ -689,11 +672,11 @@ class _DiscoverPageState extends State<DiscoverPage> {
               heightFactor: 1,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: palette.primaryColor,
+                  color: tokens.accent,
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: [
                     BoxShadow(
-                      color: palette.primaryColor.withValues(alpha: 0.35),
+                      color: tokens.accent.withValues(alpha: 0.35),
                       blurRadius: 14,
                       offset: const Offset(0, 3),
                     ),
@@ -730,6 +713,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return Semantics(
       button: true,
       selected: selected,
@@ -741,7 +726,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 200),
             style: TextStyle(
-              color: selected ? Colors.white : _kBarMuted,
+              color: selected ? tokens.textPrimary : tokens.textSecondary,
               fontSize: 14,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
               letterSpacing: 0.1,
@@ -760,6 +745,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
     required VoidCallback onTap,
     int badge = 0,
   }) {
+    final tokens = PlayTorrioTokens.of(context);
+
     return Semantics(
       button: true,
       label: tooltip,
@@ -774,9 +761,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: _kBarSurface,
+                color: tokens.surfaceElevated,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                border: Border.all(color: tokens.borderSubtle),
               ),
               child: Stack(
                 alignment: Alignment.center,
@@ -784,7 +771,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                   Icon(
                     icon,
                     size: 20,
-                    color: Colors.white.withValues(alpha: 0.92),
+                    color: tokens.textPrimary,
                   ),
                   if (badge > 0)
                     Positioned(
@@ -803,8 +790,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         alignment: Alignment.center,
                         child: Text(
                           '$badge',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: tokens.onAccent,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -831,11 +818,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Future<void> _openSortSheet() async {
+    final tokens = PlayTorrioTokens.of(context);
     final options = TmdbService.sortOptionsFor(_tmdbType);
-    final accent = AppThemeService.currentPalette.value.primaryColor;
+    final accent = tokens.accent;
     final result = await showModalBottomSheet<({String? value})>(
       context: context,
-      backgroundColor: AppThemeService.currentPalette.value.cardBackgroundColor,
+      backgroundColor: tokens.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -882,8 +870,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
   }
 
   Widget _buildRequiredExtraGatingPrompt(double topOffset) {
+    final tokens = PlayTorrioTokens.of(context);
     final missing = _missingRequiredExtras;
-    final palette = AppThemeService.currentPalette.value;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isNarrow = screenWidth < 420;
 
@@ -903,14 +891,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
             vertical: isNarrow ? 20 : 28,
           ),
           decoration: BoxDecoration(
-            color: palette.cardBackgroundColor.withValues(alpha: 0.85),
+            color: tokens.surface.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: palette.primaryColor.withValues(alpha: 0.3),
+              color: tokens.accent.withValues(alpha: 0.3),
             ),
             boxShadow: [
               BoxShadow(
-                color: palette.primaryColor.withValues(alpha: 0.1),
+                color: tokens.accent.withValues(alpha: 0.1),
                 blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
@@ -922,12 +910,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: palette.primaryColor.withValues(alpha: 0.15),
+                  color: tokens.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.tune_rounded,
-                  color: palette.primaryColor,
+                  color: tokens.accent,
                   size: 30,
                 ),
               ),
@@ -935,7 +923,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
               Text(
                 'Select Required Filter',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: tokens.textPrimary,
                   fontSize: isNarrow ? 17 : 19,
                   fontWeight: FontWeight.bold,
                 ),
@@ -945,7 +933,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 'This catalog requires selecting ${missing.map((e) => e.name).join(' & ')} before loading titles.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: tokens.textSecondary,
                   fontSize: isNarrow ? 13 : 14,
                   height: 1.4,
                 ),
@@ -961,12 +949,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     return PopupMenuButton<String>(
                       tooltip: extra.name,
                       constraints: const BoxConstraints(maxHeight: 360),
-                      color: palette.cardBackgroundColor,
+                      color: tokens.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
+                        side: BorderSide(color: tokens.borderSubtle),
                       ),
                       onSelected: (val) =>
                           _onExtraOptionSelected(extra.name, val),
@@ -976,7 +962,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                               value: opt,
                               child: Text(
                                 opt,
-                                style: const TextStyle(color: Colors.white),
+                                style: TextStyle(color: tokens.textPrimary),
                               ),
                             ),
                           )
@@ -987,7 +973,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                           vertical: isNarrow ? 7 : 8,
                         ),
                         decoration: BoxDecoration(
-                          color: palette.primaryColor,
+                          color: tokens.accent,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -996,15 +982,15 @@ class _DiscoverPageState extends State<DiscoverPage> {
                             Text(
                               'Select ${extra.name[0].toUpperCase()}${extra.name.substring(1)}',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: tokens.onAccent,
                                 fontWeight: FontWeight.bold,
                                 fontSize: isNarrow ? 12.5 : 14,
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Icon(
+                            Icon(
                               Icons.arrow_drop_down,
-                              color: Colors.white,
+                              color: tokens.onAccent,
                               size: 20,
                             ),
                           ],
@@ -1015,8 +1001,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     return ElevatedButton.icon(
                       onPressed: () => _showCustomExtraDialog(extra.name),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: palette.primaryColor,
-                        foregroundColor: Colors.white,
+                        backgroundColor: tokens.accent,
+                        foregroundColor: tokens.onAccent,
                         padding: EdgeInsets.symmetric(
                           horizontal: isNarrow ? 14 : 18,
                           vertical: isNarrow ? 8 : 10,
@@ -1041,84 +1027,50 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-  void _showCustomExtraDialog(String extraName) {
+  Future<void> _showCustomExtraDialog(String extraName) async {
     final controller = TextEditingController(
       text: _selectedExtras[extraName] ?? '',
     );
-    final palette = AppThemeService.currentPalette.value;
-    final screenWidth = MediaQuery.sizeOf(context).width;
 
-    showDialog(
+    final result = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: palette.cardBackgroundColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-        ),
-        title: Text(
-          'Enter $extraName',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+      builder: (dialogContext) => AppDialog(
+        title: 'Enter $extraName',
         content: SizedBox(
-          width: (screenWidth - 64).clamp(260.0, 420.0),
-          child: TextField(
+          width: 340,
+          child: AppTextField(
             controller: controller,
             autofocus: true,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Type $extraName here...',
-              hintStyle: const TextStyle(color: Colors.white38),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.2),
-                ),
-              ),
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: palette.primaryColor),
-              ),
-            ),
-            onSubmitted: (val) {
-              Navigator.pop(ctx);
-              _onCustomExtraSubmitted(extraName, val);
-            },
+            hintText: 'Type $extraName here...',
+            onSubmitted: (val) => Navigator.of(dialogContext).pop(val),
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.white54),
-            ),
+          AppButton(
+            label: 'Cancel',
+            variant: AppButtonVariant.tertiary,
+            onPressed: () => Navigator.of(dialogContext).pop(),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: palette.primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              _onCustomExtraSubmitted(extraName, controller.text);
-            },
-            child: const Text('Apply'),
+          AppButton(
+            label: 'Apply',
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
           ),
         ],
       ),
     );
+
+    final value = result;
+    controller.dispose();
+    if (value == null) return;
+    _onCustomExtraSubmitted(extraName, value);
   }
 
   // ───────────────────────────────────────────────────────────────────────────
   // Legacy Search/Genre Scaffold (Backwards compatibility)
   // ───────────────────────────────────────────────────────────────────────────
+
   Widget _buildLegacyScaffold(AppThemePalette palette) {
+    final tokens = PlayTorrioTokens.of(context);
     final topPadding = MediaQuery.of(context).padding.top;
     final isDesktop = MediaQuery.sizeOf(context).width >= 800;
 
@@ -1128,7 +1080,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         children: [
           if (_legacyLoading)
             Center(
-              child: CircularProgressIndicator(color: palette.primaryColor),
+              child: CircularProgressIndicator(color: tokens.accent),
             )
           else if (_legacyError != null)
             ErrorView(error: _legacyError, onRetry: _fetchLegacyData)
@@ -1136,7 +1088,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
             Center(
               child: Text(
                 'No results found for "${widget.query}"',
-                style: const TextStyle(color: Colors.white54, fontSize: 16),
+                style: TextStyle(color: tokens.textSecondary, fontSize: 16),
               ),
             )
           else
@@ -1161,7 +1113,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     color: palette.appBarBackgroundColor.withValues(alpha: 0.6),
                     border: Border(
                       bottom: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: tokens.borderSubtle,
                         width: 1,
                       ),
                     ),
@@ -1169,7 +1121,10 @@ class _DiscoverPageState extends State<DiscoverPage> {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: tokens.textPrimary,
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       const SizedBox(width: 8),
@@ -1179,7 +1134,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                               ? 'Genre: ${widget.query}'
                               : 'Search: ${widget.query}',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: tokens.textPrimary,
                             fontSize: isDesktop ? 22 : 20,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
