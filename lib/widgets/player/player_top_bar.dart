@@ -17,6 +17,8 @@ class PlayerTopBar extends StatelessWidget {
   final bool isDownloading;
   final VoidCallback? onCopyStreamUrl;
   final VoidCallback? onLock;
+  final VoidCallback? onShowSources;
+  final bool isSourcesActive;
 
   const PlayerTopBar({
     super.key,
@@ -34,6 +36,8 @@ class PlayerTopBar extends StatelessWidget {
     this.isDownloading = false,
     this.onCopyStreamUrl,
     this.onLock,
+    this.onShowSources,
+    this.isSourcesActive = false,
   });
 
   @override
@@ -150,6 +154,17 @@ class PlayerTopBar extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              PlayerIconButton(
+                size: 40,
+                iconSize: 20,
+                icon: const Icon(Icons.source_rounded),
+                tooltip: 'Sources',
+                active: isSourcesActive,
+                activeColor: PlayerTheme.accent.withValues(alpha: 0.30),
+                backgroundColor: const Color(0x22080C12),
+                onPressed: onShowSources,
+              ),
+              const SizedBox(width: 8),
               if (onToggleEpisodes != null) ...[
                 Material(
                   color: Colors.transparent,
