@@ -6,13 +6,17 @@ import '../../models/movie/movie_detail.dart';
 import '../../models/movie/video.dart';
 import '../../models/stream/stream_model.dart';
 import '../../services/stream/auto_play_service.dart';
+import '../../services/stream/playback_source_cache.dart';
 import '../../services/stream/source_ranker.dart';
 import '../../services/stream/stream_service.dart';
-import '../../services/stream/stream_bitrate_resolver.dart';import '../../services/anime/anime_scraper_service.dart';
+import '../../services/stream/stream_bitrate_resolver.dart';
+import '../../services/anime/anime_scraper_service.dart';
 import '../../services/anime_arabic/anime_arabic_service.dart';
 import '../../services/anime_arabic/anime_arabic_extractor.dart';
 import '../../utils/stream/stream_ids.dart';
 import 'player_glass.dart';
+
+enum SourceFilter { all, torrent, debrid, direct }
 
 /// Glassmorphic Sources Side Panel for selecting episode stream sources,
 /// with targeted scraping, episode caching, and error recovery banners.
@@ -22,6 +26,7 @@ class PlayerSourcesPanel extends StatefulWidget {
   final String currentAddonName;
   final String? errorMessage;
   final List<StreamSource>? cachedSources;
+  final String? cacheKey;
   final Function(List<StreamSource> sources) onSourcesLoaded;
   final Function(StreamSource source, Video? episode) onPlaySource;
   final VoidCallback? onBackToEpisodes;
@@ -42,6 +47,7 @@ class PlayerSourcesPanel extends StatefulWidget {
     required this.currentAddonName,
     this.errorMessage,
     this.cachedSources,
+    this.cacheKey,
     required this.onSourcesLoaded,
     required this.onPlaySource,
     this.onBackToEpisodes,
@@ -59,6 +65,8 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
   bool _isLoading = false;
   StreamSubscription<StreamSource>? _streamSub;
   int? _hoveredIndex;
+  SourceFilter _selectedFilter = SourceFilter.all;
+  bool _cacheListening = false;
 
   // Resolved bitrates for direct streams (url -> kbps), read from HLS manifests
   final Map<String, int> _resolvedBitrates = {};
@@ -69,15 +77,59 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
   @override
   void initState() {
     super.initState();
+    _loadFromCacheOrScrape();
+  }
 
+  void _loadFromCacheOrScrape() {
     if (widget.cachedSources != null && widget.cachedSources!.isNotEmpty) {
       _sources.addAll(widget.cachedSources!);
       _isLoading = false;
+      _listenForDrainedSources();
       _queueBitrateProbes(_sources);
+    } else if (widget.cacheKey != null) {
+      final cached = PlaybackSourceCache.read(widget.cacheKey!);
+      if (cached != null && cached.isNotEmpty) {
+        _sources.addAll(cached);
+        _isLoading = false;
+        _listenForDrainedSources();
+        _queueBitrateProbes(cached);
+      } else {
+        _startScraping();
+      }
     } else {
       _startScraping();
     }
   }
+
+  /// The play resolver keeps draining sources after it hands playback the
+  /// first working one. Follow the cache so the panel shows the full list
+  /// instead of the snapshot taken when the player opened.
+  void _listenForDrainedSources() {
+    if (widget.cacheKey == null) return;
+    PlaybackSourceCache.revision.addListener(_adoptDrainedSources);
+    _cacheListening = true;
+    _adoptDrainedSources();
+  }
+
+  void _adoptDrainedSources() {
+    final key = widget.cacheKey;
+    if (!mounted || key == null) return;
+
+    final cached = PlaybackSourceCache.read(key);
+    if (cached == null || cached.isEmpty) return;
+
+    final added = cached.where((s) => !_containsSource(s)).toList();
+    if (added.isEmpty) return;
+
+    setState(() => _sources.addAll(added));
+    _queueBitrateProbes(added);
+    widget.onSourcesLoaded(List.from(_sources));
+  }
+
+  bool _containsSource(StreamSource source) => _sources.any((s) =>
+      (source.infoHash != null && s.infoHash == source.infoHash) ||
+      (source.url != null && s.url == source.url) ||
+      (s.name == source.name && s.title == source.title));
 
   void _startScraping() {
     setState(() {
@@ -210,10 +262,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
         (source) {
           if (!mounted) return;
           setState(() {
-            final exists = _sources.any((s) =>
-                (source.url != null && s.url == source.url) ||
-                (s.name == source.name && s.title == source.title));
-            if (!exists) {
+            if (!_containsSource(source)) {
               _sources.add(source);
               _queueBitrateProbes([source]);
             }
@@ -250,11 +299,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
         if (!mounted) return;
         setState(() {
           // Deduplicate by URL / infoHash / title
-          final exists = _sources.any((s) =>
-              (source.infoHash != null && s.infoHash == source.infoHash) ||
-              (source.url != null && s.url == source.url) ||
-              (s.name == source.name && s.title == source.title));
-          if (!exists) {
+          if (!_containsSource(source)) {
             _sources.add(source);
             _queueBitrateProbes([source]);
           }
@@ -274,6 +319,9 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
 
   @override
   void dispose() {
+    if (_cacheListening) {
+      PlaybackSourceCache.revision.removeListener(_adoptDrainedSources);
+    }
     _streamSub?.cancel();
     super.dispose();
   }
@@ -311,6 +359,9 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
               children: [
                 // ── Header Bar ──
                 _buildHeader(widget.episode, isCompact),
+
+                // ── Filter Chips ──
+                if (_sources.isNotEmpty) _buildFilterChips(isCompact),
 
                 // ── Error Notice Banner (if previous stream failed) ──
                 if (widget.errorMessage != null && widget.errorMessage!.isNotEmpty)
@@ -434,6 +485,92 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
     );
   }
 
+  Widget _buildFilterChips(bool isCompact) {
+    final ordered = widget.ranker(_sources);
+    final chips = [
+      (SourceFilter.all, 'All', ordered.length),
+      (
+        SourceFilter.torrent,
+        'Torrents',
+        ordered.where((s) => s.isTorrent).length,
+      ),
+      (
+        SourceFilter.debrid,
+        'Debrid',
+        ordered.where((s) => s.isDebrid).length,
+      ),
+      (
+        SourceFilter.direct,
+        'Direct',
+        ordered.where((s) => s.isHttpDirect).length,
+      ),
+    ];
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        isCompact ? 12 : 16,
+        10,
+        isCompact ? 12 : 16,
+        8,
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final (filter, label, count) in chips)
+            _buildFilterChip(filter, label, count),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(SourceFilter filter, String label, int count) {
+    final isSelected = _selectedFilter == filter;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _selectedFilter = filter),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? PlayerTheme.accent
+              : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? PlayerTheme.accent
+                : Colors.white.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.70),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '·  $count',
+              style: TextStyle(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.80)
+                    : Colors.white.withValues(alpha: 0.40),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildErrorBanner(String message, bool isCompact) {
     return Container(
       margin: EdgeInsets.all(isCompact ? 10 : 14),
@@ -543,7 +680,48 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
   }
 
   Widget _buildSourcesList(bool isCompact) {
-    final ordered = widget.ranker(_sources);
+    var ordered = widget.ranker(_sources);
+    if (_selectedFilter == SourceFilter.torrent) {
+      ordered = ordered.where((s) => s.isTorrent).toList();
+    } else if (_selectedFilter == SourceFilter.debrid) {
+      ordered = ordered.where((s) => s.isDebrid).toList();
+    } else if (_selectedFilter == SourceFilter.direct) {
+      ordered = ordered.where((s) => s.isHttpDirect).toList();
+    }
+
+    if (ordered.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search_off_rounded, color: Colors.white.withValues(alpha: 0.30), size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'No ${_selectedFilter.name} sources',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => setState(() => _selectedFilter = SourceFilter.all),
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text('Show all'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PlayerTheme.accent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return ListView.separated(
       physics: const ClampingScrollPhysics(),
@@ -624,9 +802,43 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
     bool isCompact,
   ) {
     final title = source.title ?? source.name ?? 'Stream Source';
-    final isTorrent = source.infoHash != null && source.infoHash!.isNotEmpty;
+    final isDebrid = source.isDebrid;
+    final isTorrent = source.isTorrent;
+    final isDirect = source.isHttpDirect;
     final resolution = _extractResolution(title);
     final bitrateKbps = source.bitrateKbps ?? _resolvedBitrates[source.url];
+
+    final kindLabel = isDebrid
+        ? 'DEBRID'
+        : isTorrent
+            ? 'TORRENT'
+            : isDirect
+                ? 'DIRECT'
+                : 'HTTP';
+    final kindColor = isDebrid
+        ? const Color(0xFF10B981)
+        : isTorrent
+            ? const Color(0xFFF59E0B)
+            : isDirect
+                ? const Color(0xFF3B82F6)
+                : Colors.white.withValues(alpha: 0.70);
+    final kindBackground = isDebrid
+        ? const Color(0x3310B981)
+        : isTorrent
+            ? const Color(0x33F59E0B)
+            : isDirect
+                ? const Color(0x333B82F6)
+                : Colors.white.withValues(alpha: 0.10);
+    final kindIcon = isDebrid
+        ? Icons.bolt_rounded
+        : isTorrent
+            ? Icons.cloud_download_rounded
+            : Icons.play_arrow_rounded;
+    final kindIconColor = isDebrid
+        ? const Color(0xFF34D399)
+        : isTorrent
+            ? const Color(0xFFFBBF24)
+            : const Color(0xFF9D84FF);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
@@ -665,14 +877,12 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: isTorrent
-                        ? const Color(0x33F59E0B)
-                        : const Color(0x337C5CFF),
+                    color: kindBackground,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    isTorrent ? Icons.cloud_download_rounded : Icons.play_arrow_rounded,
-                    color: isTorrent ? const Color(0xFFFBBF24) : const Color(0xFF9D84FF),
+                    kindIcon,
+                    color: kindIconColor,
                     size: 18,
                   ),
                 ),
@@ -710,13 +920,13 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                             margin: const EdgeInsets.only(right: 6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.10),
+                              color: kindBackground,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              isTorrent ? 'P2P' : 'HTTP',
+                              kindLabel,
                               style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.70),
+                                color: kindColor,
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w700,
                               ),

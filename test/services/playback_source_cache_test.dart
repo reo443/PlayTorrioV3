@@ -64,6 +64,30 @@ void main() {
       expect(PlaybackSourceCache.read(key), isNull);
     });
 
+    test('notifies listeners whenever the cache changes', () {
+      var notifications = 0;
+      void listener() => notifications++;
+      PlaybackSourceCache.revision.addListener(listener);
+      addTearDown(() => PlaybackSourceCache.revision.removeListener(listener));
+
+      PlaybackSourceCache.write('movie:tt1:0:0', [source('A')]);
+      PlaybackSourceCache.write('movie:tt1:0:0', [source('A'), source('B')]);
+      PlaybackSourceCache.clear();
+
+      expect(notifications, 3);
+    });
+
+    test('does not notify when a write empties an unused key', () {
+      var notifications = 0;
+      void listener() => notifications++;
+      PlaybackSourceCache.revision.addListener(listener);
+      addTearDown(() => PlaybackSourceCache.revision.removeListener(listener));
+
+      PlaybackSourceCache.write('movie:tt1:0:0', const []);
+
+      expect(notifications, 0);
+    });
+
     test('clear empties every entry', () {
       PlaybackSourceCache.write('movie:tt1:0:0', [source('A')]);
       PlaybackSourceCache.write('series:tt2:1:1', [source('B')]);

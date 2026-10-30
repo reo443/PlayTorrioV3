@@ -221,8 +221,16 @@ class _PlayerScreenState extends State<PlayerScreen>
     final initialSources = widget.initialSources;
     if (initialSources != null && initialSources.isNotEmpty) {
       final key = _sourcesKeyFor(widget.episode);
-      _cachedSourcesByEpisode[key] = List<StreamSource>.from(initialSources);
-      PlaybackSourceCache.write(key, initialSources);
+      // Playback starts on the first working source, so [initialSources] is a
+      // snapshot from that moment; the resolver keeps draining into the cache.
+      // Never overwrite a fuller cache with it.
+      final cached = PlaybackSourceCache.read(key);
+      if (cached == null || cached.isEmpty) {
+        PlaybackSourceCache.write(key, initialSources);
+        _cachedSourcesByEpisode[key] = List<StreamSource>.from(initialSources);
+      } else {
+        _cachedSourcesByEpisode[key] = List<StreamSource>.from(cached);
+      }
 
       // Carry every source's discovered subtitles, like the old source list
       // did, so the subtitle menu is not limited to the winning source.
@@ -2541,7 +2549,11 @@ class _PlayerScreenState extends State<PlayerScreen>
                       detail: widget.detail,
                       currentAddonName: _currentSource.addonName,
                       errorMessage: _sourcesErrorMessage,
-                      cachedSources: _cachedSourcesByEpisode[_sourcesKeyFor(_sourcesEpisode)],
+                      cacheKey: _sourcesKeyFor(_sourcesEpisode),
+                      cachedSources: PlaybackSourceCache
+                              .read(_sourcesKeyFor(_sourcesEpisode)) ??
+                          _cachedSourcesByEpisode[
+                              _sourcesKeyFor(_sourcesEpisode)],
                       onSourcesLoaded: (sources) {
                         final key = _sourcesKeyFor(_sourcesEpisode);
                         _cachedSourcesByEpisode[key] = sources;

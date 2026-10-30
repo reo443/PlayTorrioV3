@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:playtorrio/models/movie/movie_detail.dart';
 import 'package:playtorrio/models/movie/video.dart';
 import 'package:playtorrio/models/stream/stream_model.dart';
+import 'package:playtorrio/services/stream/playback_source_cache.dart';
 import 'package:playtorrio/widgets/player/player_sources_panel.dart';
 
 StreamSource src(String title, {String? url}) => StreamSource(
@@ -25,8 +26,8 @@ Video episode({int season = 1, int number = 3}) => Video(
 Widget host(PlayerSourcesPanel panel) => MaterialApp(
       home: Scaffold(
         body: MediaQuery(
-          data: const MediaQueryData(size: Size(1200, 800)),
-          child: SizedBox(width: 1200, height: 800, child: panel),
+          data: const MediaQueryData(size: Size(800, 600)),
+          child: SizedBox.expand(child: panel),
         ),
       ),
     );
@@ -163,6 +164,146 @@ void main() {
     expect(scraped, 1);
     expect(find.text('Scraped 1080p'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('filters the list with the kind chips', (tester) async {
+    await tester.pumpWidget(host(PlayerSourcesPanel(
+      episode: null,
+      detail: movie(),
+      currentAddonName: 'AddonA',
+      cachedSources: [
+        src('Source Torrent'),
+        StreamSource(
+          addonName: 'AddonA',
+          title: 'Source Direct',
+          url: 'https://cdn.example/a.m3u8',
+        ),
+        StreamSource(
+          addonName: 'AddonA',
+          name: '[RD] AddonA',
+          title: 'Source Debrid',
+          url: 'magnet:?xt=urn:btih:abc',
+        ),
+      ],
+      onSourcesLoaded: (_) {},
+      onPlaySource: (_, __) {},
+      onClose: () {},
+      ranker: (sources) => sources.toList(),
+      sourceStream: () => throw StateError('scraped'),
+    )));
+    await tester.pump();
+
+    expect(find.text('Source Torrent'), findsOneWidget);
+    expect(find.text('Source Direct'), findsOneWidget);
+    expect(find.text('Source Debrid'), findsOneWidget);
+
+    await tester.tap(find.text('Direct'));
+    await tester.pump();
+
+    expect(find.text('Source Direct'), findsOneWidget);
+    expect(find.text('Source Torrent'), findsNothing);
+    expect(find.text('Source Debrid'), findsNothing);
+
+    await tester.tap(find.text('Torrents'));
+    await tester.pump();
+
+    expect(find.text('Source Torrent'), findsOneWidget);
+    expect(find.text('Source Direct'), findsNothing);
+
+    await tester.tap(find.text('All'));
+    await tester.pump();
+
+    expect(find.text('Source Direct'), findsOneWidget);
+    expect(find.text('Source Torrent'), findsOneWidget);
+    expect(find.text('Source Debrid'), findsOneWidget);
+  });
+
+  testWidgets('chips count the sources of each kind', (tester) async {
+    await tester.pumpWidget(host(PlayerSourcesPanel(
+      episode: null,
+      detail: movie(),
+      currentAddonName: 'AddonA',
+      cachedSources: [
+        src('Source Torrent'),
+        src('Source Torrent Two'),
+        StreamSource(
+          addonName: 'AddonA',
+          title: 'Source Direct',
+          url: 'https://cdn.example/a.m3u8',
+        ),
+      ],
+      onSourcesLoaded: (_) {},
+      onPlaySource: (_, __) {},
+      onClose: () {},
+      ranker: (sources) => sources.toList(),
+      sourceStream: () => throw StateError('scraped'),
+    )));
+    await tester.pump();
+
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Torrents'), findsOneWidget);
+    expect(find.text('Direct'), findsOneWidget);
+    expect(find.text('·  3'), findsOneWidget); // All
+    expect(find.text('·  2'), findsOneWidget); // Torrents
+    expect(find.text('·  1'), findsOneWidget); // Direct
+  });
+
+  testWidgets('offers a way back when a chip matches nothing', (tester) async {
+    await tester.pumpWidget(host(PlayerSourcesPanel(
+      episode: null,
+      detail: movie(),
+      currentAddonName: 'AddonA',
+      cachedSources: [src('Source Torrent')],
+      onSourcesLoaded: (_) {},
+      onPlaySource: (_, __) {},
+      onClose: () {},
+      ranker: (sources) => sources.toList(),
+      sourceStream: () => throw StateError('scraped'),
+    )));
+    await tester.pump();
+
+    await tester.tap(find.text('Direct'));
+    await tester.pump();
+
+    expect(find.text('No direct sources'), findsOneWidget);
+
+    await tester.tap(find.text('Show all'));
+    await tester.pump();
+
+    expect(find.text('Source Torrent'), findsOneWidget);
+  });
+
+  testWidgets('adopts sources the resolver is still draining', (tester) async {
+    const key = 'movie:tt9:0:0';
+    PlaybackSourceCache.clear();
+    PlaybackSourceCache.write(key, [src('Source Early')]);
+
+    await tester.pumpWidget(host(PlayerSourcesPanel(
+      episode: null,
+      detail: movie(),
+      currentAddonName: 'AddonA',
+      cacheKey: key,
+      cachedSources: PlaybackSourceCache.read(key),
+      onSourcesLoaded: (_) {},
+      onPlaySource: (_, __) {},
+      onClose: () {},
+      ranker: (sources) => sources.toList(),
+      sourceStream: () => throw StateError('scraped'),
+    )));
+    await tester.pump();
+
+    expect(find.text('Source Torrent'), findsNothing);
+
+    PlaybackSourceCache.write(
+      key,
+      [src('Source Early'), src('Source Torrent')],
+    );
+    await tester.pump();
+
+    expect(find.text('Source Torrent'), findsOneWidget);
+    expect(find.text('Source Early'), findsOneWidget);
+
+    PlaybackSourceCache.clear();
   });
 
   testWidgets('uses movie wording in the empty state', (tester) async {

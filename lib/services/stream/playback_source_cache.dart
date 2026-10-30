@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../models/stream/stream_model.dart';
 
 /// Session-scoped, in-memory cache of resolved sources.
@@ -10,6 +12,10 @@ abstract final class PlaybackSourceCache {
 
   /// Clock seam, so tests can move time without sleeping.
   static DateTime Function() now = DateTime.now;
+
+  /// Bumped on every change, so an open sources panel can adopt sources the
+  /// play resolver is still draining into the cache.
+  static final ValueNotifier<int> revision = ValueNotifier<int>(0);
 
   static final Map<String, _CacheEntry> _entries = {};
 
@@ -34,14 +40,22 @@ abstract final class PlaybackSourceCache {
   }
 
   static void write(String key, List<StreamSource> sources) {
+    final existed = _entries.containsKey(key);
     if (sources.isEmpty) {
       _entries.remove(key);
-      return;
+    } else {
+      _entries[key] = _CacheEntry(List<StreamSource>.from(sources), now());
     }
-    _entries[key] = _CacheEntry(List<StreamSource>.from(sources), now());
+    // Only notify if we actually changed something
+    if (sources.isNotEmpty || existed) {
+      revision.value++;
+    }
   }
 
-  static void clear() => _entries.clear();
+  static void clear() {
+    _entries.clear();
+    revision.value++;
+  }
 }
 
 class _CacheEntry {
