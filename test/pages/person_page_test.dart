@@ -17,11 +17,11 @@ Movie _credit(String name, {String year = '2020'}) => Movie(
   addonBaseUrl: 'tmdb',
 );
 
-TmdbPerson _person({List<Movie>? credits}) => TmdbPerson(
+TmdbPerson _person({List<Movie>? credits, String? biography}) => TmdbPerson(
   id: 2524,
   name: 'Tom Hardy',
   department: 'Acting',
-  biography: 'Edward Thomas Hardy is an English actor.',
+  biography: biography ?? 'Edward Thomas Hardy is an English actor.',
   credits:
       credits ??
       [
@@ -29,6 +29,12 @@ TmdbPerson _person({List<Movie>? credits}) => TmdbPerson(
         _credit('Fury', year: '2014'),
       ],
 );
+
+/// Long enough to overflow the four-line clamp even in the Ahem test font.
+final String _longBio = List.filled(
+  12,
+  'Edward Thomas Hardy is an English actor. ',
+).join();
 
 Widget _page(Future<TmdbPerson?> Function(String) loader) => host(
   PersonPage(name: 'Tom Hardy', loader: loader),
@@ -96,5 +102,27 @@ void main() {
     expect(find.text('Tom Hardy'), findsOneWidget);
     expect(find.text('No credits yet'), findsOneWidget);
     expect(find.byType(MovieCard), findsNothing);
+  });
+
+  testWidgets('expands a long biography from the toggle', (tester) async {
+    await _pumpPage(tester, (_) async => _person(biography: _longBio));
+
+    Text bio() => tester.widget<Text>(find.text(_longBio));
+
+    expect(bio().maxLines, 4);
+    expect(find.text('Read more'), findsOneWidget);
+
+    await tester.tap(find.text('Read more'));
+    await tester.pumpAndSettle();
+
+    expect(bio().maxLines, isNull);
+    expect(find.text('Show less'), findsOneWidget);
+  });
+
+  testWidgets('leaves a short biography without a toggle', (tester) async {
+    await _pumpPage(tester, (_) async => _person(biography: 'English actor.'));
+
+    expect(find.text('Read more'), findsNothing);
+    expect(find.text('Show less'), findsNothing);
   });
 }

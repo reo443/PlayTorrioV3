@@ -34,6 +34,7 @@ class _PersonPageState extends State<PersonPage> {
   TmdbPerson? _person;
   bool _isLoading = true;
   bool _notConfigured = false;
+  bool _isBioExpanded = false;
   String? _error;
 
   @override
@@ -288,15 +289,7 @@ class _PersonPageState extends State<PersonPage> {
         ],
         if (person.biography.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.sm),
-          Text(
-            person.biography,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.supporting.copyWith(
-              color: tokens.textSecondary,
-              height: 1.45,
-            ),
-          ),
+          _buildBiography(person.biography, tokens),
         ],
       ],
     );
@@ -319,6 +312,61 @@ class _PersonPageState extends State<PersonPage> {
         const SizedBox(width: AppSpacing.xxl),
         Expanded(child: info),
       ],
+    );
+  }
+
+  /// Biography clamped to four lines, with a toggle that only appears when the
+  /// text actually overflows (same treatment as the details synopsis).
+  Widget _buildBiography(String text, PlayTorrioTokens tokens) {
+    const collapsedLines = 4;
+    final style = AppTypography.supporting.copyWith(
+      color: tokens.textSecondary,
+      height: 1.45,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          maxLines: collapsedLines,
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout(maxWidth: constraints.maxWidth);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: Text(
+                text,
+                maxLines: _isBioExpanded ? null : collapsedLines,
+                overflow: _isBioExpanded
+                    ? TextOverflow.visible
+                    : TextOverflow.ellipsis,
+                style: style,
+              ),
+            ),
+            if (painter.didExceedMaxLines) ...[
+              const SizedBox(height: AppSpacing.xs),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () =>
+                    setState(() => _isBioExpanded = !_isBioExpanded),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                  child: Text(
+                    _isBioExpanded ? 'Show less' : 'Read more',
+                    style: AppTypography.label.copyWith(color: tokens.accent),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
