@@ -30,6 +30,7 @@ const List<String> migratedFiles = [
   'lib/pages/search/search_page.dart',
   'lib/pages/search/search_filter_sheet.dart',
   'lib/pages/discover/discover_page.dart',
+  'lib/pages/person/person_page.dart',
   'lib/pages/home/home_page.dart',
 ];
 

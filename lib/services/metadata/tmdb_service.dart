@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../models/movie/movie.dart';
 import '../../models/movie/movie_detail.dart';
+import '../../models/movie/tmdb_person.dart';
 import '../../models/movie/video.dart';
 import '../config/env_service.dart';
 
@@ -696,6 +697,115 @@ class TmdbService {
       if (value != null && value.isNotEmpty) result.add(value);
     }
     return result;
+  }
+
+  // ── People ────────────────────────────────────────────────────────────
+
+  /// Looks up a person by display name and returns their filmography.
+  ///
+  /// TMDB has no "person by name" endpoint, so this searches first and then
+  /// fetches the full profile. Returns `null` when nothing matches or the
+  /// request fails.
+  static Future<TmdbPerson?> fetchPersonByName(String name) async {
+    final q = name.trim();
+    if (q.isEmpty) return null;
+
+    final search = await _get('/search/person', query: {'query': q});
+    if (search == null) return null;
+
+    final id = personIdFromSearchJson(search, name: q);
+    if (id == null) return null;
+    return fetchPerson(id);
+  }
+
+  /// Fetches a person and their combined movie + TV credits by TMDB id.
+  static Future<TmdbPerson?> fetchPerson(int id) async {
+    final data = await _get(
+      '/person/$id',
+      query: {'append_to_response': 'combined_credits'},
+    );
+    if (data == null) return null;
+    return personFromJson(data);
+  }
+
+  /// Picks the person id out of a `/search/person` response, preferring an
+  /// exact (case-insensitive) [name] match over the most popular result.
+  @visibleForTesting
+  static int? personIdFromSearchJson(
+    Map<String, dynamic> data, {
+    String? name,
+  }) {
+    final results = data['results'];
+    if (results is! List) return null;
+
+    final target = name?.trim().toLowerCase();
+    int? firstId;
+    for (final item in results) {
+      if (item is! Map) continue;
+      final rawId = item['id'];
+      final id = rawId is int ? rawId : int.tryParse('$rawId');
+      if (id == null) continue;
+      firstId ??= id;
+      if (target != null &&
+          item['name']?.toString().trim().toLowerCase() == target) {
+        return id;
+      }
+    }
+    return firstId;
+  }
+
+  /// Parses `/person/{id}?append_to_response=combined_credits`.
+  @visibleForTesting
+  static TmdbPerson? personFromJson(Map<String, dynamic> data) {
+    final rawId = data['id'];
+    final id = rawId is int ? rawId : int.tryParse('$rawId');
+    final name = data['name']?.toString().trim() ?? '';
+    if (id == null || name.isEmpty) return null;
+
+    final profileUrl = imageUrl(data['profile_path']?.toString(), size: 'w185');
+
+    return TmdbPerson(
+      id: id,
+      name: name,
+      profileUrl: profileUrl.isEmpty ? null : profileUrl,
+      department: data['known_for_department']?.toString() ?? '',
+      biography: data['biography']?.toString().trim() ?? '',
+      credits: _creditsFromJson(data['combined_credits']),
+    );
+  }
+
+  static List<Movie> _creditsFromJson(dynamic combined) {
+    if (combined is! Map) return const [];
+    final cast = combined['cast'];
+    if (cast is! List) return const [];
+
+    // Keyed by media type + numeric id: a movie and a series can share the
+    // same numeric id, and Movie.id alone would collapse them.
+    final byKey = <String, Movie>{};
+    for (final item in cast) {
+      if (item is! Map<String, dynamic>) continue;
+      final mediaType = item['media_type']?.toString();
+      if (mediaType != 'movie' && mediaType != 'tv') continue;
+
+      final movie = Movie.fromTmdb(item, mediaType!);
+      if (!_isUsable(movie)) continue;
+
+      final key = '${movie.type}|${movie.id}';
+      final existing = byKey[key];
+      if (existing == null ||
+          (movie.popularity ?? 0) > (existing.popularity ?? 0)) {
+        byKey[key] = movie;
+      }
+    }
+
+    final credits = byKey.values.toList()
+      ..sort((a, b) {
+        final yearA = int.tryParse(a.year ?? '') ?? -1;
+        final yearB = int.tryParse(b.year ?? '') ?? -1;
+        if (yearA != yearB) return yearB.compareTo(yearA);
+        return (b.popularity ?? 0).compareTo(a.popularity ?? 0);
+      });
+    return credits;
   }
 
   static List<({int id, String name})> _idNameList(

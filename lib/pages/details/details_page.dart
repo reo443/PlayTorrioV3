@@ -19,6 +19,7 @@ import '../../utils/format/media_format.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/app_dialog.dart';
 import '../discover/discover_page.dart';
+import '../person/person_page.dart';
 import '../player/player_screen.dart';
 // ---------------------------------------------------------------------------
 // Design tokens
@@ -1417,7 +1418,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                     Navigator.push(
                                       context,
                                       LiquidRevealRoute(
-                                        page: DiscoverPage(query: name, isGenre: false),
+                                        page: PersonPage(name: name),
                                         tapPosition: lastTap,
                                       ),
                                     );
