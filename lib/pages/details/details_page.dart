@@ -684,19 +684,22 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     final topInset = MediaQuery.paddingOf(context).top;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
-    // This is now just how far down the *content* starts — the backdrop
-    // itself is full-viewport and persistent (see _buildBackdrop), so this
-    // no longer controls when the image "runs out".
-    final heroHeight = (screenSize.height * (isDesktop ? 0.46 : 0.4)).clamp(320.0, 520.0);
+    final showBackdrop = bgUrl != null &&
+        HomePageSettings.detailsBackground.value ==
+            DetailsBackground.backdrop;
+
+    // The backdrop is a hero band behind the poster, not a full-screen image:
+    // it scrolls with the page and fades into the background before the
+    // synopsis, cast and episode lists begin.
+    final posterTop = isDesktop ? 96.0 : topInset + 72.0;
+    final posterHeight = isDesktop ? 420.0 : 165.0;
+    final bandHeight = showBackdrop
+        ? (posterTop + posterHeight * 0.85).clamp(0.0, screenSize.height * 0.62)
+        : 0.0;
     final contentMaxWidth = isDesktop ? 1440.0 : double.infinity;
-    final overlap = isDesktop ? 120.0 : 70.0;
 
     return Stack(
       children: [
-        if (bgUrl != null &&
-            HomePageSettings.detailsBackground.value ==
-                DetailsBackground.backdrop)
-          _buildBackdrop(bgUrl, screenSize),
         Positioned.fill(
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
@@ -717,8 +720,15 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: heroHeight - overlap),
-                          isDesktop ? _buildDesktopLayout(meta, posterUrl) : _buildMobileLayout(meta, posterUrl),
+                          _buildHero(
+                            meta,
+                            posterUrl,
+                            isDesktop: isDesktop,
+                            bgUrl: bgUrl,
+                            showBackdrop: showBackdrop,
+                            posterTop: posterTop,
+                            bandHeight: bandHeight,
+                          ),
                           const SizedBox(height: _Space.xl),
                           if (meta.cast.isNotEmpty || meta.castMembers.isNotEmpty) ...[
                             _buildCastRow(meta),
@@ -837,76 +847,98 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   // -------------------------------------------------------------------------
-  // Persistent, full-viewport cinematic backdrop.
-  //
-  // Unlike a hero strip that gets cropped to a fixed height and then hands
-  // off to flat background color, this sits behind the *entire* screen and
-  // stays there while the foreground scrolls over it — so the image never
-  // abruptly disappears, it just gradually recedes under layered scrims.
-  // Three separate gradients do different jobs so no single one has to be
-  // aggressive enough to look like a hard cutoff:
-  //   1. a soft cap at the very top (keeps the back button legible)
-  //   2. a slow bottom fade that only reaches solid bg near ~90% down
-  //   3. a gentle horizontal wash so text on the left never fights the image
+  // Hero: the poster (and the title beside it) sit on a backdrop band that
+  // fades into the page background. Deliberately *not* full-screen — the
+  // synopsis, cast and episode lists below read on the plain background, and
+  // the image scrolls away with the hero instead of sitting behind them.
   // -------------------------------------------------------------------------
-  Widget _buildBackdrop(String bgUrl, Size screenSize) {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      height: screenSize.height,
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Stack(
-          fit: StackFit.expand,
+  Widget _buildHero(
+    MovieDetail meta,
+    String? posterUrl, {
+    required bool isDesktop,
+    required String? bgUrl,
+    required bool showBackdrop,
+    required double posterTop,
+    required double bandHeight,
+  }) {
+    final sideBleed = isDesktop ? _Space.xxl : _Space.lg;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        if (showBackdrop && bgUrl != null)
+          Positioned(
+            top: 0,
+            left: -sideBleed,
+            right: -sideBleed,
+            height: bandHeight,
+            child: _buildBackdrop(bgUrl),
+          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CachedNetworkImage(imageUrl: bgUrl, fit: BoxFit.cover, alignment: Alignment.topCenter),
-            // horizontal wash — darkens where the title/synopsis sit, leaves
-            // the rest of the image breathing room instead of blacking it all out
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [_Palette.bg, Color(0x991A1D26), Colors.transparent],
-                  stops: [0.0, 0.42, 0.82],
-                ),
-              ),
-            ),
-            // slow bottom fade — the whole point of the fix: this used to
-            // resolve to solid bg by ~70% of a 300-460px strip, now it takes
-            // nearly the full viewport height to settle
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0x661A1D26), _Palette.bg],
-                  stops: [0.0, 0.62, 0.94],
-                ),
-              ),
-            ),
-            // top cap so the back button always has contrast
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.black45, Colors.transparent],
-                  stops: [0.0, 0.22],
-                ),
-              ),
-            ),
+            SizedBox(height: posterTop),
+            isDesktop
+                ? _buildDesktopLayout(meta, posterUrl)
+                : _buildMobileLayout(meta, posterUrl),
           ],
         ),
-      ),
+      ],
+    );
+  }
+
+  Widget _buildBackdrop(String bgUrl) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CachedNetworkImage(
+          imageUrl: bgUrl,
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+        ),
+        // horizontal wash — darkens the poster side so the image never fights
+        // the poster's edges, while the title side keeps its colour
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [_Palette.bg, Color(0x991A1D26), Colors.transparent],
+              stops: [0.0, 0.42, 0.82],
+            ),
+          ),
+        ),
+        // bottom fade — the band dissolves into the page background instead of
+        // ending on a hard edge
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Color(0x661A1D26), _Palette.bg],
+              stops: [0.0, 0.55, 1.0],
+            ),
+          ),
+        ),
+        // top cap so the back button always has contrast
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black45, Colors.transparent],
+              stops: [0.0, 0.22],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   // -------------------------------------------------------------------------
   // Desktop: real two-column layout. Poster + actions pinned left;
-  // logo/title, metadata, synopsis fill the right. With the backdrop now
-  // persistent behind everything, this row no longer needs a "quick facts"
+  // logo/title, metadata, synopsis fill the right. The backdrop band only
+  // covers the hero, so this row no longer needs a "quick facts"
   // filler box just to feel less empty underneath the poster — genres are
   // already in the metadata line, so it's dropped to avoid repeating itself.
   // -------------------------------------------------------------------------
