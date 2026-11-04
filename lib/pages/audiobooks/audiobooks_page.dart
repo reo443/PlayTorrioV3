@@ -12,6 +12,7 @@ import '../../services/audiobook/audiobook_settings.dart';
 import '../../services/audiobook/paper2audio_service.dart';
 import '../../services/audiobook/custom_audiobook_service.dart';
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../settings/appearance/audiobook_settings_page.dart';
 import 'audiobook_detail_page.dart';
 import 'audiobook_player_screen.dart';
@@ -360,22 +361,8 @@ class _AudiobooksPageState extends State<AudiobooksPage> {
                   child: Row(
                     children: [
                       // Back Button
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                            ),
-                            child: IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
-                            ),
-                          ),
-                        ),
+                      FloatingBackButton(
+                        onPressed: () => Navigator.pop(context),
                       ),
                       const SizedBox(width: 14),
 

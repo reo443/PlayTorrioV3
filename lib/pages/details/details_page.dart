@@ -20,6 +20,7 @@ import '../../utils/details/episode_visibility.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/app_dialog.dart';
 import '../../widgets/ui/app_error_state.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../theme/playtorrio_tokens.dart';
 import '../../theme/app_avatar_colors.dart';
 import '../../theme/app_overlay_colors.dart';
@@ -825,19 +826,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         Positioned(
           top: isDesktop ? _Space.lg : (topInset + 10),
           left: isDesktop ? _Space.xxl : _Space.md,
-          child: ClipOval(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: IconButton(
-                icon: Icon(Icons.arrow_back_ios_new_rounded, color: tokens.textPrimary, size: 20),
-                onPressed: () => Navigator.pop(context),
-                style: IconButton.styleFrom(
-                  backgroundColor: tokens.surface.withValues(alpha: 0.55),
-                  padding: const EdgeInsets.all(12),
-                  side: BorderSide(color: tokens.borderStrong),
-                ),
-              ),
-            ),
+          child: FloatingBackButton(
+            onPressed: () => Navigator.pop(context),
           ),
         ),
       ],

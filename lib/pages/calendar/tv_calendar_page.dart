@@ -6,6 +6,7 @@ import '../../models/movie/movie.dart';
 import '../../services/calendar/tv_calendar_service.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../details/details_page.dart';
 
 class TvCalendarPage extends StatefulWidget {
@@ -249,11 +250,8 @@ class _TvCalendarPageState extends State<TvCalendarPage> {
             child: Row(
               children: [
                 // Back Button
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+                FloatingBackButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  tooltip: 'Back',
-                  splashRadius: 20,
                 ),
                 const SizedBox(width: 8),
 

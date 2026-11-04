@@ -6,6 +6,7 @@ import '../../services/anime_arabic/anime_arabic_service.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../widgets/common/slider_arrow.dart';
 import 'anime_arabic_stream_sheet.dart';
 
@@ -358,12 +359,7 @@ class _AnimeArabicDetailsPageState extends State<AnimeArabicDetailsPage>
                   ),
                   child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                      FloatingBackButton(
                         onPressed: () => Navigator.pop(context),
                       ),
                       const SizedBox(width: 8),

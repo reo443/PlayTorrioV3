@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../models/audiobook/audiobook_model.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../services/audiobook/audiobook_scraper_service.dart';
+import '../../widgets/common/floating_back_button.dart';
 import 'audiobook_player_screen.dart';
 import 'audiobook_route_transitions.dart';
 
@@ -137,13 +138,8 @@ class _AudiobookDetailPageState extends State<AudiobookDetailPage> {
                   ),
                   child: Row(
                     children: [
-                      IconButton(
+                      FloatingBackButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.1),
-                          padding: const EdgeInsets.all(12),
-                        ),
                       ),
                       const SizedBox(width: 16),
                       const Text(

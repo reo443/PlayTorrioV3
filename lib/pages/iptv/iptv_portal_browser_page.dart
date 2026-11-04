@@ -6,6 +6,7 @@ import '../../models/iptv/iptv_models.dart';
 import '../../models/iptv/m3u_models.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../services/iptv/hardcoded_channels.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../services/iptv/iptv_network.dart';
 import '../../services/iptv/iptv_settings.dart';
 import '../../services/iptv/iptv_storage.dart';
@@ -806,9 +807,7 @@ class _IptvPortalBrowserPageState extends State<IptvPortalBrowserPage> {
                 ),
                 child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
-                      tooltip: 'Back',
+                    FloatingBackButton(
                       onPressed: () => Navigator.pop(context),
                     ),
                     const SizedBox(width: 8),

@@ -46,8 +46,14 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
 
     await tester.pumpWidget(
-      const MaterialApp(
-        home: AnimeDetailsPage(anime: testAnime),
+      MaterialApp(
+        // The page is always pushed in the app; a root-route page would not
+        // show the back button. Seed the stack so the route can pop.
+        initialRoute: '/anime',
+        routes: {
+          '/': (_) => const Scaffold(),
+          '/anime': (_) => const AnimeDetailsPage(anime: testAnime),
+        },
       ),
     );
 

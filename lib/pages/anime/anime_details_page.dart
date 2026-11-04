@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import '../../services/anime/extractors/anidb_extractor.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../widgets/common/slider_arrow.dart';
 import 'anime_stream_sheet.dart';
 
@@ -341,29 +341,12 @@ class _AnimeDetailsPageState extends State<AnimeDetailsPage>
             ),
           ),
 
-          // Floating Frosted Back Button (Top Left)
+          // Floating back button (top left)
           Positioned(
             top: _Space.lg,
             left: isDesktop ? _Space.xxl : _Space.md,
-            child: ClipOval(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.1),
-                    padding: const EdgeInsets.all(12),
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.14),
-                    ),
-                  ),
-                ),
-              ),
+            child: FloatingBackButton(
+              onPressed: () => Navigator.pop(context),
             ),
           ),
         ],

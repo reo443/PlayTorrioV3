@@ -5,6 +5,7 @@ import '../../models/my_list/my_list_item.dart';
 import '../../services/my_list/my_list_service.dart';
 import '../../services/home/home_page_settings.dart';
 import '../../utils/navigation/route_transitions.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../details/details_page.dart';
 import '../../models/movie/movie.dart';
 
@@ -244,13 +245,8 @@ class _MyListPageState extends State<MyListPage> {
       ),
       child: Row(
         children: [
-          IconButton(
+          FloatingBackButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.06),
-              padding: const EdgeInsets.all(8),
-            ),
           ),
           const SizedBox(width: 12),
           Expanded(

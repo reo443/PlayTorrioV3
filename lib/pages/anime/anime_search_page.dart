@@ -7,6 +7,7 @@ import '../../models/anime/anime_media.dart';
 import '../../services/anime/anilist_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../widgets/anime/anime_card.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../widgets/movie/movie_card.dart';
 import 'anime_details_page.dart';
 import 'anime_search_filter_sheet.dart';
@@ -279,9 +280,7 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
               child: Row(
                 children: [
                   const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-                    color: Colors.white,
+                  FloatingBackButton(
                     onPressed: () => Navigator.pop(context),
                   ),
                   Expanded(

@@ -7,6 +7,7 @@ import '../../models/movie/movie.dart';
 import '../../services/addon/addon_manager.dart';
 import '../../services/ai/wewatch_service.dart';
 import '../../services/theme/app_theme_service.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import '../details/details_page.dart';
 
@@ -329,9 +330,7 @@ class _WeWatchQuizPageState extends State<WeWatchQuizPage> {
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-            splashRadius: 20,
+          FloatingBackButton(
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 8),

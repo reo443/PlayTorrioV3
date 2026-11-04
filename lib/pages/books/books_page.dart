@@ -8,6 +8,7 @@ import '../../services/theme/dock_settings.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/custom_scroll_track.dart';
+import '../../widgets/common/floating_back_button.dart';
 import 'book_detail_sheet.dart';
 import 'widgets/continue_reading_slider.dart';
 import 'widgets/reader_design_tokens.dart';
@@ -331,8 +332,7 @@ class _BooksPageState extends State<BooksPage> {
       child: Row(
         children: [
           // Back button
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          FloatingBackButton(
             tooltip: 'Back to Home',
             onPressed: () => Navigator.of(context).pop(),
           ),

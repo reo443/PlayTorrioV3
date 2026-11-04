@@ -15,6 +15,7 @@ import '../../services/music/music_player_controller.dart';
 import '../../services/music/music_service.dart';
 import '../../services/music/music_settings.dart';
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../widgets/common/performance_liquid_lens.dart';
 import '../../widgets/common/slider_arrow.dart';
 import '../../widgets/music/music_interactive_physics_button.dart';
@@ -2094,21 +2095,10 @@ class _MusicSidebar extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
             child: Row(
               children: [
-                _MusicHoverable(
-                  scaleFactor: 1.08,
-                  child: IconButton(
-                    tooltip: 'Back to Home (Esc)',
-                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.08),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
-                      ),
-                      padding: const EdgeInsets.all(10),
-                    ),
-                    onPressed: () => Navigator.maybePop(context),
-                  ),
+                FloatingBackButton(
+                  tooltip: 'Back to Home (Esc)',
+                  icon: Icons.arrow_back_rounded,
+                  onPressed: () => Navigator.maybePop(context),
                 ),
                 const SizedBox(width: 10),
                 Container(
@@ -2404,21 +2394,10 @@ class _MusicTopHeader extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _MusicHoverable(
-              scaleFactor: 1.08,
-              child: IconButton(
-                tooltip: 'Back to Home (Esc)',
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                ),
-                onPressed: () => Navigator.maybePop(context),
-              ),
+            FloatingBackButton(
+              tooltip: 'Back to Home (Esc)',
+              icon: Icons.arrow_back_rounded,
+              onPressed: () => Navigator.maybePop(context),
             ),
             SizedBox(width: isMobile ? 8 : 12),
             Expanded(

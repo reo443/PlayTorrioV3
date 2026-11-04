@@ -17,6 +17,7 @@ import '../../services/discord/discord_rpc_service.dart';
 import '../../services/player/player_settings.dart';
 import '../../widgets/audiobook/audiobook_interactive_physics_button.dart';
 import '../../widgets/audiobook/audiobook_waveform_seekbar.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../settings/appearance/audiobook_player_studio_page.dart';
 
 class AudiobookPlayerScreen extends StatefulWidget {
@@ -675,11 +676,10 @@ class _AudiobookPlayerScreenState extends State<AudiobookPlayerScreen> with Sing
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20, vertical: 8),
       child: Row(
         children: [
-          _PlayerIconButton(
+          FloatingBackButton(
             icon: isDesktop ? Icons.close_rounded : Icons.arrow_back_ios_new_rounded,
-            palette: palette,
-            size: isMobile ? 20 : 24,
-            onTap: () => Navigator.pop(context),
+            tooltip: isDesktop ? 'Close' : 'Back',
+            onPressed: () => Navigator.pop(context),
           ),
           SizedBox(width: isMobile ? 8 : 14),
           Expanded(
