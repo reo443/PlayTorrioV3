@@ -224,12 +224,12 @@ class _PlayerSeekBarState extends State<PlayerSeekBar> {
                           width: trackWidth * activeFraction,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF7C5CFF), Color(0xFF9D84FF)],
+                              colors: [PlayerTheme.ink, PlayerTheme.inkMuted],
                             ),
                             borderRadius: BorderRadius.circular(999),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF7C5CFF).withValues(alpha: 0.5),
+                                color: PlayerTheme.ink.withValues(alpha: 0.35),
                                 blurRadius: 6,
                                 offset: const Offset(0, 1),
                               ),
@@ -255,7 +255,7 @@ class _PlayerSeekBarState extends State<PlayerSeekBar> {
                                   offset: const Offset(0, 2),
                                 ),
                                 BoxShadow(
-                                  color: const Color(0xFF7C5CFF).withValues(alpha: 0.8),
+                                  color: PlayerTheme.ink.withValues(alpha: 0.6),
                                   blurRadius: 4,
                                   spreadRadius: 1,
                                 ),

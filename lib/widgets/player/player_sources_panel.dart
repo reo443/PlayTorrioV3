@@ -14,6 +14,7 @@ import '../../services/anime/anime_scraper_service.dart';
 import '../../services/anime_arabic/anime_arabic_service.dart';
 import '../../services/anime_arabic/anime_arabic_extractor.dart';
 import '../../utils/stream/stream_ids.dart';
+import '../../theme/playtorrio_tokens.dart';
 import 'player_glass.dart';
 
 enum SourceFilter { all, torrent, debrid, direct }
@@ -61,6 +62,7 @@ class PlayerSourcesPanel extends StatefulWidget {
 }
 
 class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
+  PlayTorrioTokens get _tokens => PlayTorrioTokens.of(context);
   final List<StreamSource> _sources = [];
   bool _isLoading = false;
   StreamSubscription<StreamSource>? _streamSub;
@@ -426,14 +428,14 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: PlayerTheme.accent.withValues(alpha: 0.25),
+                          color: _tokens.accent.withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(5),
-                          border: Border.all(color: PlayerTheme.accent.withValues(alpha: 0.50)),
+                          border: Border.all(color: _tokens.accent.withValues(alpha: 0.50)),
                         ),
                         child: Text(
                           'S$sNum : E$eNum',
-                          style: const TextStyle(
-                            color: Color(0xFF9D84FF),
+                          style: TextStyle(
+                            color: _tokens.accentSecondary,
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.4,
@@ -534,12 +536,12 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? PlayerTheme.accent
+              ? _tokens.accent
               : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? PlayerTheme.accent
+                ? _tokens.accent
                 : Colors.white.withValues(alpha: 0.15),
           ),
         ),
@@ -612,12 +614,12 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(
+          SizedBox(
             width: 32,
             height: 32,
             child: CircularProgressIndicator(
               strokeWidth: 2.8,
-              valueColor: AlwaysStoppedAnimation<Color>(PlayerTheme.accent),
+              valueColor: AlwaysStoppedAnimation<Color>(_tokens.accent),
             ),
           ),
           const SizedBox(height: 16),
@@ -668,7 +670,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('Rescrape Sources'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: PlayerTheme.accent,
+                backgroundColor: _tokens.accent,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -712,7 +714,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
                 icon: const Icon(Icons.refresh_rounded, size: 16),
                 label: const Text('Show all'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: PlayerTheme.accent,
+                  backgroundColor: _tokens.accent,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -739,12 +741,12 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(PlayerTheme.accent),
+                    valueColor: AlwaysStoppedAnimation<Color>(_tokens.accent),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -838,7 +840,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
         ? const Color(0xFF34D399)
         : isTorrent
             ? const Color(0xFFFBBF24)
-            : const Color(0xFF9D84FF);
+            : _tokens.accentSecondary;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredIndex = index),
@@ -857,14 +859,14 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isHovered
-                    ? PlayerTheme.accent.withValues(alpha: 0.80)
+                    ? _tokens.accent.withValues(alpha: 0.80)
                     : Colors.white.withValues(alpha: 0.10),
                 width: isHovered ? 1.4 : 1.0,
               ),
               boxShadow: [
                 if (isHovered)
                   BoxShadow(
-                    color: PlayerTheme.accent.withValues(alpha: 0.25),
+                    color: _tokens.accent.withValues(alpha: 0.25),
                     blurRadius: 14,
                     offset: const Offset(0, 3),
                   ),
@@ -906,7 +908,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
                               ),
                               child: Text(
                                 resolution,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w800,
@@ -938,16 +940,16 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                               margin: const EdgeInsets.only(right: 6),
                               decoration: BoxDecoration(
-                                color: PlayerTheme.accent.withValues(alpha: 0.18),
+                                color: _tokens.accent.withValues(alpha: 0.18),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: PlayerTheme.accent.withValues(alpha: 0.35),
+                                  color: _tokens.accent.withValues(alpha: 0.35),
                                 ),
                               ),
                               child: Text(
                                 StreamSource.formatBitrate(bitrateKbps),
-                                style: const TextStyle(
-                                  color: Color(0xFF9D84FF),
+                                style: TextStyle(
+                                  color: _tokens.accentSecondary,
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -1046,7 +1048,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
                 Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: (isHovered ? PlayerTheme.accent : Colors.white.withValues(alpha: 0.08)),
+                    color: (isHovered ? _tokens.accent : Colors.white.withValues(alpha: 0.08)),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -1075,7 +1077,7 @@ class _PlayerSourcesPanelState extends State<PlayerSourcesPanel> {
   Color _getResolutionColor(String res) {
     switch (res) {
       case '4K':
-        return const Color(0xFF8B5CF6);
+        return _tokens.accent;
       case '1080P':
         return const Color(0xFF10B981);
       case '720P':
