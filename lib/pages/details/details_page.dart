@@ -16,6 +16,7 @@ import '../../services/cloudstream/cloudstream_manager.dart';
 import '../../services/stream/auto_play_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../utils/format/media_format.dart';
+import '../../utils/details/episode_visibility.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/app_dialog.dart';
 import '../../widgets/ui/app_error_state.dart';
@@ -684,6 +685,16 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         : 0.0;
     final contentMaxWidth = isDesktop ? 1440.0 : double.infinity;
     final tokens = PlayTorrioTokens.of(context);
+    final showEpisodes = shouldShowEpisodes(
+      videos: meta.videos,
+      tmdbSeasons: _tmdbSeasons,
+      currentSeasonEpisodes: _currentSeasonEpisodes,
+    );
+    final showSeasonTabs = shouldShowSeasonTabs(
+      videos: meta.videos,
+      isTmdb: _isTmdb,
+      tmdbSeasons: _tmdbSeasons,
+    );
 
     return Stack(
       children: [
@@ -721,8 +732,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                             _buildCastRow(meta),
                             const SizedBox(height: _Space.xl),
                           ],
-                          if (meta.videos.isNotEmpty) ...[
-                            if (meta.videos.map((v) => v.season).where((s) => s != null).toSet().length > 1) ...[
+                          if (showEpisodes) ...[
+                            if (showSeasonTabs) ...[
                               _buildSeasonSelector(meta),
                               const SizedBox(height: _Space.lg),
                             ] else ...[
