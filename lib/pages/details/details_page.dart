@@ -18,6 +18,11 @@ import '../../utils/navigation/route_transitions.dart';
 import '../../utils/format/media_format.dart';
 import '../../widgets/ui/app_button.dart';
 import '../../widgets/ui/app_dialog.dart';
+import '../../widgets/ui/app_error_state.dart';
+import '../../theme/playtorrio_tokens.dart';
+import '../../theme/app_avatar_colors.dart';
+import '../../theme/app_overlay_colors.dart';
+import '../../theme/app_semantic_colors.dart';
 import '../discover/discover_page.dart';
 import '../person/person_page.dart';
 import '../player/player_screen.dart';
@@ -33,22 +38,10 @@ class _Space {
   static const xxl = 48.0;
 }
 
-class _Palette {
-  static const bg = Color(0xFF0B0D12);
-  static const surface = Color(0xFF15171F);
-  static const accent = Color(0xFFE50914);
-  static const accentDim = Color(0xFF9A0710);
-  static const gold = Color(0xFFFFC107);
-
-  static const avatarPairs = [
-    [Color(0xFF3A1C71), Color(0xFFD76D77)],
-    [Color(0xFF11998E), Color(0xFF38EF7D)],
-    [Color(0xFF1F4037), Color(0xFF99F2C8)],
-    [Color(0xFF2C3E50), Color(0xFF4CA1AF)],
-    [Color(0xFF614385), Color(0xFF516395)],
-    [Color(0xFF232526), Color(0xFF6E6E6E)],
-  ];
-}
+// The darker end of the Play CTA gradient: the accent mixed with the page
+// background, so it darkens on every palette without a colour literal.
+Color _accentDim(PlayTorrioTokens tokens) =>
+    Color.alphaBlend(tokens.bgPrimary.withValues(alpha: 0.45), tokens.accent);
 
 class DetailsPage extends StatefulWidget {
   final Movie movie;
@@ -645,12 +638,13 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    final tokens = PlayTorrioTokens.of(context);
     final isBlackBg =
         HomePageSettings.detailsBackground.value == DetailsBackground.black;
     return Scaffold(
-      backgroundColor: isBlackBg ? Colors.black : _Palette.bg,
+      backgroundColor: isBlackBg ? AppOverlayColors.pureBlack : tokens.bgPrimary,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: _Palette.accent))
+          ? Center(child: CircularProgressIndicator(color: tokens.accent))
           : _detail == null
               ? _buildError()
               : _buildContent(context),
@@ -659,19 +653,10 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
   Widget _buildError() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.broken_image_rounded, size: 64, color: Colors.white24),
-          const SizedBox(height: _Space.md),
-          const Text('Details unavailable.', style: TextStyle(color: Colors.white54, fontSize: 18)),
-          const SizedBox(height: _Space.lg),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.white10, foregroundColor: Colors.white),
-            child: const Text('Go Back'),
-          )
-        ],
+      child: AppErrorState(
+        title: 'Details unavailable.',
+        retryLabel: 'Go Back',
+        onRetry: () => Navigator.pop(context),
       ),
     );
   }
@@ -698,6 +683,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         ? (posterTop + posterHeight * 0.85).clamp(0.0, screenSize.height * 0.62)
         : 0.0;
     final contentMaxWidth = isDesktop ? 1440.0 : double.infinity;
+    final tokens = PlayTorrioTokens.of(context);
 
     return Stack(
       children: [
@@ -801,14 +787,14 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                             const SizedBox(height: _Space.xl),
                           ] else if (_isFetchingSimilar) ...[
                             _buildSectionHeader('Similar Content'),
-                            const Center(
+                            Center(
                               child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 40),
+                                padding: const EdgeInsets.symmetric(vertical: 40),
                                 child: SizedBox(
                                   width: 24, height: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    color: _Palette.accent,
+                                    color: tokens.accent,
                                   ),
                                 ),
                               ),
@@ -832,12 +818,12 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                icon: Icon(Icons.arrow_back_ios_new_rounded, color: tokens.textPrimary, size: 20),
                 onPressed: () => Navigator.pop(context),
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.1),
+                  backgroundColor: tokens.surface.withValues(alpha: 0.55),
                   padding: const EdgeInsets.all(12),
-                  side: BorderSide(color: Colors.white.withOpacity(0.12)),
+                  side: BorderSide(color: tokens.borderStrong),
                 ),
               ),
             ),
@@ -889,6 +875,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildBackdrop(String bgUrl) {
+    final tokens = PlayTorrioTokens.of(context);
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -899,36 +886,36 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         ),
         // horizontal wash — darkens the poster side so the image never fights
         // the poster's edges, while the title side keeps its colour
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [_Palette.bg, Color(0x991A1D26), Colors.transparent],
-              stops: [0.0, 0.42, 0.82],
+              colors: [tokens.bgPrimary, tokens.bgSecondary.withValues(alpha: 0.60), Colors.transparent],
+              stops: const [0.0, 0.42, 0.82],
             ),
           ),
         ),
         // bottom fade — the band dissolves into the page background instead of
         // ending on a hard edge
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.transparent, Color(0x661A1D26), _Palette.bg],
-              stops: [0.0, 0.55, 1.0],
+              colors: [Colors.transparent, tokens.bgSecondary.withValues(alpha: 0.40), tokens.bgPrimary],
+              stops: const [0.0, 0.55, 1.0],
             ),
           ),
         ),
         // top cap so the back button always has contrast
-        const DecoratedBox(
+        DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Colors.black45, Colors.transparent],
-              stops: [0.0, 0.22],
+              colors: [tokens.bgPrimary.withValues(alpha: 0.45), Colors.transparent],
+              stops: const [0.0, 0.22],
             ),
           ),
         ),
@@ -944,6 +931,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   // already in the metadata line, so it's dropped to avoid repeating itself.
   // -------------------------------------------------------------------------
   Widget _buildDesktopLayout(MovieDetail meta, String? posterUrl) {
+    final tokens = PlayTorrioTokens.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -960,8 +948,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                       // subtle accent-tinted glow behind the poster, on top
                       // of the usual drop shadow, so it reads as "lit" rather
                       // than just floating on black
-                      BoxShadow(color: _Palette.accent.withOpacity(0.18), blurRadius: 46, spreadRadius: -6),
-                      BoxShadow(color: Colors.black.withOpacity(0.55), blurRadius: 30, offset: const Offset(0, 14)),
+                      BoxShadow(color: tokens.accent.withValues(alpha: 0.18), blurRadius: 46, spreadRadius: -6),
+                      BoxShadow(color: tokens.bgPrimary.withValues(alpha: 0.55), blurRadius: 30, offset: const Offset(0, 14)),
                     ],
                   ),
                   child: ClipRRect(
@@ -971,7 +959,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                       child: CachedNetworkImage(
                         imageUrl: posterUrl,
                         fit: BoxFit.cover,
-                        errorWidget: (_, __, ___) => const ColoredBox(color: _Palette.surface),
+                        errorWidget: (_, __, ___) => ColoredBox(color: tokens.surface),
                       ),
                     ),
                   ),
@@ -1007,6 +995,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildMobileLayout(MovieDetail meta, String? posterUrl) {
+    final tokens = PlayTorrioTokens.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1018,8 +1007,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
-                    BoxShadow(color: _Palette.accent.withOpacity(0.16), blurRadius: 28, spreadRadius: -4),
-                    BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 16, offset: const Offset(0, 8)),
+                    BoxShadow(color: tokens.accent.withValues(alpha: 0.16), blurRadius: 28, spreadRadius: -4),
+                    BoxShadow(color: tokens.bgPrimary.withValues(alpha: 0.40), blurRadius: 16, offset: const Offset(0, 8)),
                   ],
                 ),
                 child: ClipRRect(
@@ -1072,6 +1061,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildTextTitle(String text, bool isDesktop) {
+    final tokens = PlayTorrioTokens.of(context);
     return Text(
       text,
       style: TextStyle(
@@ -1079,8 +1069,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         fontWeight: FontWeight.w800,
         height: 1.1,
         letterSpacing: -1.0,
-        color: Colors.white,
-        shadows: [Shadow(color: Colors.black.withOpacity(0.7), blurRadius: 20, offset: const Offset(0, 6))],
+        color: tokens.textPrimary,
+        shadows: [Shadow(color: tokens.bgPrimary.withValues(alpha: 0.7), blurRadius: 20, offset: const Offset(0, 6))],
       ),
     );
   }
@@ -1089,6 +1079,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   // the old boxed "Quick Facts" panel — same information, but styled as a
   // lightweight row instead of a card that left dead space under the poster.
   Widget _buildGenreChips(List<String> genres) {
+    final tokens = PlayTorrioTokens.of(context);
     return Wrap(
       spacing: _Space.xs,
       runSpacing: _Space.xs,
@@ -1112,11 +1103,11 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
+                      color: tokens.surfaceElevated,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.12)),
+                      border: Border.all(color: tokens.borderSubtle),
                     ),
-                    child: Text(g, style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    child: Text(g, style: TextStyle(color: tokens.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600)),
                   ),
                 ),
               );
@@ -1127,20 +1118,21 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildMetadataRow(MovieDetail meta) {
+    final tokens = PlayTorrioTokens.of(context);
     final List<Widget> items = [];
 
     if (meta.year != null && meta.year!.isNotEmpty) {
-      items.add(Text(meta.year!, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)));
+      items.add(Text(meta.year!, style: TextStyle(color: tokens.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)));
     }
 
     if (_isSeries) {
       final seasonCount = meta.videos.map((v) => v.season).where((s) => s != null).toSet().length;
       if (seasonCount > 0) {
         items.add(Text('$seasonCount Season${seasonCount > 1 ? "s" : ""}',
-            style: const TextStyle(color: Colors.white70, fontSize: 14)));
+            style: TextStyle(color: tokens.textSecondary, fontSize: 14)));
       }
     } else if (meta.runtime != null && meta.runtime!.isNotEmpty) {
-      items.add(Text(formatRuntime(meta.runtime)!, style: const TextStyle(color: Colors.white70, fontSize: 14)));
+      items.add(Text(formatRuntime(meta.runtime)!, style: TextStyle(color: tokens.textSecondary, fontSize: 14)));
     }
 
     if (meta.imdbRating != null && meta.imdbRating!.isNotEmpty) {
@@ -1148,16 +1140,16 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12),
+            color: tokens.surfaceElevated,
             borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
+            border: Border.all(color: tokens.borderStrong),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.star_rounded, color: _Palette.gold, size: 14),
+              const Icon(Icons.star_rounded, color: AppSemanticColors.rating, size: 14),
               const SizedBox(width: 4),
-              Text(formatRating(meta.imdbRating)!, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(formatRating(meta.imdbRating)!, style: TextStyle(color: tokens.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -1165,16 +1157,16 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     }
 
     if (meta.genres.isNotEmpty) {
-      items.add(Text(meta.genres.take(3).join(' · '), style: const TextStyle(color: Colors.white70, fontSize: 14)));
+      items.add(Text(meta.genres.take(3).join(' · '), style: TextStyle(color: tokens.textSecondary, fontSize: 14)));
     }
 
     final List<Widget> spaced = [];
     for (int i = 0; i < items.length; i++) {
       spaced.add(items[i]);
       if (i < items.length - 1) {
-        spaced.add(const Padding(
-          padding: EdgeInsets.symmetric(horizontal: _Space.sm),
-          child: Text('•', style: TextStyle(color: Colors.white30, fontSize: 16)),
+        spaced.add(Padding(
+          padding: const EdgeInsets.symmetric(horizontal: _Space.sm),
+          child: Text('•', style: TextStyle(color: tokens.textTertiary, fontSize: 16)),
         ));
       }
     }
@@ -1183,6 +1175,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildPlayButton({required bool fullWidth}) {
+    final tokens = PlayTorrioTokens.of(context);
     final resolving = _isResolvingPlayback;
     return _HoverButton(
       onTap: resolving
@@ -1198,25 +1191,25 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         width: fullWidth ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [_Palette.accent, _Palette.accentDim]),
+          gradient: LinearGradient(colors: [tokens.accent, _accentDim(tokens)]),
           borderRadius: BorderRadius.circular(8),
-          boxShadow: [BoxShadow(color: _Palette.accent.withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: tokens.accent.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 4))],
         ),
         child: Row(
           mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (resolving)
-              const SizedBox(
+              SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: tokens.onAccent,
                 ),
               )
             else
-              const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+              Icon(Icons.play_arrow_rounded, color: tokens.onAccent, size: 24),
             const SizedBox(width: 6),
             Text(
               resolving
@@ -1224,7 +1217,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                   : (_isCollection
                       ? 'Play First Movie'
                       : (_isSeries ? 'Play Episodes' : 'Play Movie')),
-              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700),
+              style: TextStyle(color: tokens.onAccent, fontSize: 15, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -1236,6 +1229,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     return ValueListenableBuilder<List<MyListItem>>(
       valueListenable: MyListService.items,
       builder: (context, items, _) {
+        final tokens = PlayTorrioTokens.of(context);
         final inList = _detail != null &&
             MyListService.isInList(
               MyListItem.fromMovieDetail(
@@ -1256,13 +1250,13 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               color: inList
-                  ? const Color(0xFF7C5CFF).withOpacity(0.18)
-                  : Colors.white.withOpacity(0.08),
+                  ? tokens.accent.withValues(alpha: 0.18)
+                  : tokens.surfaceElevated,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: inList
-                    ? const Color(0xFF7C5CFF).withOpacity(0.35)
-                    : Colors.white.withOpacity(0.14),
+                    ? tokens.accent.withValues(alpha: 0.35)
+                    : tokens.borderStrong,
               ),
             ),
             child: Row(
@@ -1271,14 +1265,14 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
               children: [
                 Icon(
                   inList ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                  color: inList ? const Color(0xFF7C5CFF) : Colors.white,
+                  color: inList ? tokens.accent : tokens.textPrimary,
                   size: 22,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   inList ? 'In Library' : 'Library',
                   style: TextStyle(
-                    color: inList ? const Color(0xFF7C5CFF) : Colors.white,
+                    color: inList ? tokens.accent : tokens.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1308,7 +1302,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildSynopsis(String text) {
-    const style = TextStyle(color: Colors.white70, fontSize: 15, height: 1.55, letterSpacing: 0.2);
+    final tokens = PlayTorrioTokens.of(context);
+    final style = TextStyle(color: tokens.textSecondary, fontSize: 15, height: 1.55, letterSpacing: 0.2);
     const maxLines = 3;
 
     return LayoutBuilder(
@@ -1345,7 +1340,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                 onTap: () => setState(() => _isSynopsisExpanded = !_isSynopsisExpanded),
                 child: Text(
                   _isSynopsisExpanded ? 'Show less' : 'Read more',
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: tokens.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -1356,9 +1351,10 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildSectionHeader(String title) {
+    final tokens = PlayTorrioTokens.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: _Space.md),
-      child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.3)),
+      child: Text(title, style: TextStyle(color: tokens.textPrimary, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: -0.3)),
     );
   }
 
@@ -1366,6 +1362,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     final members = meta.castMembers.isNotEmpty
         ? meta.castMembers
         : meta.cast.map((n) => CastMember(name: n)).toList();
+    final tokens = PlayTorrioTokens.of(context);
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringCast = true),
       onExit: (_) => setState(() => _isHoveringCast = false),
@@ -1392,7 +1389,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                     final initials = name.isNotEmpty
                         ? name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join('').toUpperCase()
                         : '?';
-                    final pair = _Palette.avatarPairs[name.hashCode.abs() % _Palette.avatarPairs.length];
+                    final pair = AppAvatarColors.gradients[name.hashCode.abs() % AppAvatarColors.gradients.length];
 
                     Widget initialsCircle() => DecoratedBox(
                           decoration: BoxDecoration(
@@ -1400,7 +1397,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                             gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: pair),
                           ),
                           child: Center(
-                            child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                            child: Text(initials, style: TextStyle(color: tokens.textPrimary, fontSize: 24, fontWeight: FontWeight.bold)),
                           ),
                         );
 
@@ -1429,7 +1426,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                     height: 76,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
+                                      border: Border.all(color: tokens.borderSubtle, width: 1.5),
                                     ),
                                     clipBehavior: Clip.antiAlias,
                                     child: imageUrl == null
@@ -1450,7 +1447,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.2),
+                            style: TextStyle(color: tokens.textSecondary, fontSize: 12, height: 1.2),
                           ),
                           if (member.character != null && member.character!.isNotEmpty)
                             Text(
@@ -1458,7 +1455,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                               textAlign: TextAlign.center,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10.5, height: 1.2),
+                              style: TextStyle(color: tokens.textTertiary, fontSize: 10.5, height: 1.2),
                             ),
                         ],
                       ),
@@ -1491,6 +1488,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
         : meta.videos.map((v) => v.season).where((s) => s != null).toSet().toList().cast<int>();
     seasons.sort();
 
+    final tokens = PlayTorrioTokens.of(context);
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringSeasons = true),
       onExit: (_) => setState(() => _isHoveringSeasons = false),
@@ -1525,14 +1523,14 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                     padding: const EdgeInsets.symmetric(horizontal: 22),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.07),
+                      color: isSelected ? tokens.textPrimary : tokens.surfaceElevated,
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: isSelected ? Colors.white : Colors.white.withOpacity(0.1)),
+                      border: Border.all(color: isSelected ? tokens.textPrimary : tokens.borderSubtle),
                     ),
                     child: Text(
                       'Season $season',
                       style: TextStyle(
-                        color: isSelected ? Colors.black : Colors.white,
+                        color: isSelected ? tokens.surface : tokens.textPrimary,
                         fontSize: 15,
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                       ),
@@ -1563,6 +1561,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     final isDesktop = _isDesktop();
     final cardWidth = isDesktop ? 300.0 : 230.0;
     final fadeWidth = isDesktop ? 60.0 : 40.0;
+    final tokens = PlayTorrioTokens.of(context);
 
     return MouseRegion(
       key: key,
@@ -1582,10 +1581,10 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    _canScrollEpisodesLeft ? Colors.transparent : Colors.black,
-                    Colors.black,
-                    Colors.black,
-                    _canScrollEpisodesRight ? Colors.transparent : Colors.black,
+                    _canScrollEpisodesLeft ? Colors.transparent : tokens.bgPrimary,
+                    tokens.bgPrimary,
+                    tokens.bgPrimary,
+                    _canScrollEpisodesRight ? Colors.transparent : tokens.bgPrimary,
                   ],
                   stops: [
                     0.0,
@@ -1630,8 +1629,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                         colors: [
-                          _Palette.bg,
-                          _Palette.bg.withValues(alpha: 0.0),
+                          tokens.bgPrimary,
+                          tokens.bgPrimary.withValues(alpha: 0.0),
                         ],
                       ),
                     ),
@@ -1657,8 +1656,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                         begin: Alignment.centerRight,
                         end: Alignment.centerLeft,
                         colors: [
-                          _Palette.bg,
-                          _Palette.bg.withValues(alpha: 0.0),
+                          tokens.bgPrimary,
+                          tokens.bgPrimary.withValues(alpha: 0.0),
                         ],
                       ),
                     ),
@@ -1685,6 +1684,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     final isDesktop = _isDesktop();
     final cardWidth = isDesktop ? 150.0 : 120.0;
     final fadeWidth = isDesktop ? 60.0 : 40.0;
+    final tokens = PlayTorrioTokens.of(context);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringRelated = true),
@@ -1707,10 +1707,10 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        _canScrollRelatedLeft ? Colors.transparent : Colors.black,
-                        Colors.black,
-                        Colors.black,
-                        _canScrollRelatedRight ? Colors.transparent : Colors.black,
+                        _canScrollRelatedLeft ? Colors.transparent : tokens.bgPrimary,
+                        tokens.bgPrimary,
+                        tokens.bgPrimary,
+                        _canScrollRelatedRight ? Colors.transparent : tokens.bgPrimary,
                       ],
                       stops: [
                         0.0,
@@ -1746,7 +1746,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                               aspectRatio: 2 / 3,
                               child: item.poster != null
                                   ? CachedNetworkImage(imageUrl: item.poster!, fit: BoxFit.cover)
-                                  : const ColoredBox(color: _Palette.surface),
+                                  : ColoredBox(color: tokens.surface),
                             ),
                           ),
                         ),
@@ -1767,8 +1767,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                             colors: [
-                              _Palette.bg,
-                              _Palette.bg.withValues(alpha: 0.0),
+                              tokens.bgPrimary,
+                              tokens.bgPrimary.withValues(alpha: 0.0),
                             ],
                           ),
                         ),
@@ -1794,8 +1794,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                             begin: Alignment.centerRight,
                             end: Alignment.centerLeft,
                             colors: [
-                              _Palette.bg,
-                              _Palette.bg.withValues(alpha: 0.0),
+                              tokens.bgPrimary,
+                              tokens.bgPrimary.withValues(alpha: 0.0),
                             ],
                           ),
                         ),
@@ -1823,6 +1823,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
     final cardWidth = isDesktop ? 160.0 : 130.0;
     final cardHeight = cardWidth * 1.5 + 64; // poster + text area
     final fadeWidth = isDesktop ? 60.0 : 40.0;
+    final tokens = PlayTorrioTokens.of(context);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHoveringSimilar = true),
@@ -1845,10 +1846,10 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        _canScrollSimilarLeft ? Colors.transparent : Colors.black,
-                        Colors.black,
-                        Colors.black,
-                        _canScrollSimilarRight ? Colors.transparent : Colors.black,
+                        _canScrollSimilarLeft ? Colors.transparent : tokens.bgPrimary,
+                        tokens.bgPrimary,
+                        tokens.bgPrimary,
+                        _canScrollSimilarRight ? Colors.transparent : tokens.bgPrimary,
                       ],
                       stops: [
                         0.0,
@@ -1888,16 +1889,16 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                               imageUrl: item.poster!,
                                               fit: BoxFit.cover,
                                               errorWidget: (_, __, ___) => Container(
-                                                color: _Palette.surface,
-                                                child: const Center(
-                                                  child: Icon(Icons.movie_rounded, color: Colors.white24, size: 36),
+                                                color: tokens.surface,
+                                                child: Center(
+                                                  child: Icon(Icons.movie_rounded, color: tokens.textTertiary, size: 36),
                                                 ),
                                               ),
                                             )
                                           : Container(
-                                              color: _Palette.surface,
-                                              child: const Center(
-                                                child: Icon(Icons.movie_rounded, color: Colors.white24, size: 36),
+                                              color: tokens.surface,
+                                              child: Center(
+                                                child: Icon(Icons.movie_rounded, color: tokens.textTertiary, size: 36),
                                               ),
                                             ),
                                     ),
@@ -1910,18 +1911,18 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withOpacity(0.75),
+                                          color: tokens.bgPrimary.withValues(alpha: 0.75),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Icon(Icons.star_rounded, color: _Palette.gold, size: 13),
+                                            const Icon(Icons.star_rounded, color: AppSemanticColors.rating, size: 13),
                                             const SizedBox(width: 3),
                                             Text(
                                               double.parse(item.imdbRating!).toStringAsFixed(1),
-                                              style: const TextStyle(
-                                                color: Colors.white,
+                                              style: TextStyle(
+                                                color: tokens.textPrimary,
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w700,
                                               ),
@@ -1938,8 +1939,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                 item.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: tokens.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1953,8 +1954,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                                 ].join(' · '),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white38,
+                                style: TextStyle(
+                                  color: tokens.textTertiary,
                                   fontSize: 12,
                                 ),
                               ),
@@ -1978,8 +1979,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                             colors: [
-                              _Palette.bg,
-                              _Palette.bg.withValues(alpha: 0.0),
+                              tokens.bgPrimary,
+                              tokens.bgPrimary.withValues(alpha: 0.0),
                             ],
                           ),
                         ),
@@ -2005,8 +2006,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                             begin: Alignment.centerRight,
                             end: Alignment.centerLeft,
                             colors: [
-                              _Palette.bg,
-                              _Palette.bg.withValues(alpha: 0.0),
+                              tokens.bgPrimary,
+                              tokens.bgPrimary.withValues(alpha: 0.0),
                             ],
                           ),
                         ),
@@ -2030,6 +2031,7 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   }
 
   Widget _buildScrollArrow(IconData icon, VoidCallback onTap, bool isVisible) {
+    final tokens = PlayTorrioTokens.of(context);
     return Center(
       child: AnimatedOpacity(
         opacity: isVisible ? 1.0 : 0.0,
@@ -2046,11 +2048,11 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
+                    color: tokens.bgPrimary.withValues(alpha: 0.6),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    border: Border.all(color: tokens.borderStrong),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 18),
+                  child: Icon(icon, color: tokens.textPrimary, size: 18),
                 ),
               ),
             ),
@@ -2085,6 +2087,7 @@ class _EpisodeCardState extends State<_EpisodeCard> {
   Widget build(BuildContext context) {
     final ep = widget.episode;
     final imgUrl = ep.thumbnail ?? widget.fallbackImageUrl;
+    final tokens = PlayTorrioTokens.of(context);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -2098,11 +2101,11 @@ class _EpisodeCardState extends State<_EpisodeCard> {
           curve: Curves.easeOutCubic,
           child: Container(
             decoration: BoxDecoration(
-              color: _Palette.surface,
+              color: tokens.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _hovered ? Colors.white.withOpacity(0.22) : Colors.white.withOpacity(0.04)),
+              border: Border.all(color: _hovered ? tokens.borderStrong : tokens.borderSubtle),
               boxShadow: _hovered
-                  ? [BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 18, offset: const Offset(0, 8))]
+                  ? [BoxShadow(color: tokens.bgPrimary.withValues(alpha: 0.4), blurRadius: 18, offset: const Offset(0, 8))]
                   : [],
             ),
             child: ClipRRect(
@@ -2119,16 +2122,16 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                           CachedNetworkImage(
                             imageUrl: imgUrl,
                             fit: BoxFit.cover,
-                            errorWidget: (context, url, error) => const ColoredBox(color: Color(0xFF1B1E27)),
+                            errorWidget: (context, url, error) => ColoredBox(color: tokens.surfaceElevated),
                           )
                         else
-                          const ColoredBox(color: Color(0xFF1B1E27)),
+                          ColoredBox(color: tokens.surfaceElevated),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black.withOpacity(0.75)],
+                              colors: [Colors.transparent, tokens.bgPrimary.withValues(alpha: 0.75)],
                               stops: const [0.5, 1.0],
                             ),
                           ),
@@ -2140,11 +2143,11 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                             child: Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: tokens.textPrimary,
                                 shape: BoxShape.circle,
-                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10)],
+                                boxShadow: [BoxShadow(color: tokens.bgPrimary.withValues(alpha: 0.5), blurRadius: 10)],
                               ),
-                              child: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 24),
+                              child: Icon(Icons.play_arrow_rounded, color: tokens.surface, size: 24),
                             ),
                           ),
                         ),
@@ -2161,7 +2164,7 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                           children: [
                             Text(
                               widget.isCollection ? 'PART ${ep.episode ?? "?"}' : 'EP ${ep.episode ?? "?"}',
-                              style: const TextStyle(color: _Palette.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                              style: TextStyle(color: tokens.accent, fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                             const Spacer(),
                             if (ep.released != null && ep.released!.length >= 4)
@@ -2169,7 +2172,7 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                                 widget.isCollection
                                     ? ep.released!.substring(0, 4)
                                     : (ep.released!.length >= 10 ? ep.released!.substring(0, 10) : ep.released!),
-                                style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                style: TextStyle(color: tokens.textTertiary, fontSize: 11),
                               ),
                           ],
                         ),
@@ -2178,7 +2181,7 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                           ep.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13.5),
+                          style: TextStyle(color: tokens.textPrimary, fontWeight: FontWeight.w600, fontSize: 13.5),
                         ),
                         if (ep.overview != null) ...[
                           const SizedBox(height: 3),
@@ -2186,7 +2189,7 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                             ep.overview!,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white54, fontSize: 11.5, height: 1.3),
+                            style: TextStyle(color: tokens.textSecondary, fontSize: 11.5, height: 1.3),
                           ),
                         ],
                       ],

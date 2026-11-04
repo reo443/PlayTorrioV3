@@ -32,6 +32,7 @@ const List<String> migratedFiles = [
   'lib/pages/discover/discover_page.dart',
   'lib/pages/person/person_page.dart',
   'lib/pages/home/home_page.dart',
+  'lib/pages/details/details_page.dart',
 ];
 
 /// Matches a `Color(0x…)` literal or a `Colors.<name>` reference, without
