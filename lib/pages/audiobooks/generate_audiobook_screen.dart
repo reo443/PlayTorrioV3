@@ -14,6 +14,7 @@ import '../../services/audiobook/epub_splitter.dart';
 import '../../services/audiobook/paper2audio_service.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/sub_page_app_bar.dart';
 import 'audiobook_player_screen.dart';
 
 /// Worker for running EPUB splitting and word analysis off the UI thread via `compute`.
@@ -450,20 +451,14 @@ class _GenerateAudiobookScreenState extends State<GenerateAudiobookScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFF090C14),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E131F).withValues(alpha: 0.9),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
+      appBar: SubPageAppBar(
+        title: 'Audiobook Studio & Generator',
+        titleLeading: Icon(
+          Icons.auto_stories_rounded,
+          color: palette.primaryColor,
+          size: 22,
         ),
-        title: const Row(
-          children: [
-            Icon(Icons.auto_stories_rounded, color: Color(0xFF7C5CFF), size: 22),
-            SizedBox(width: 10),
-            Text('Audiobook Studio & Generator', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-          ],
-        ),
+        topInset: MediaQuery.paddingOf(context).top,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: palette.primaryColor,

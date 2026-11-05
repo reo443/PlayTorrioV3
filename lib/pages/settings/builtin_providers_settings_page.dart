@@ -3,6 +3,7 @@ import '../../services/scraper/builtin_providers_settings_service.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../widgets/settings/settings_controls.dart';
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/sub_page_app_bar.dart';
 
 class BuiltinProvidersSettingsPage extends StatefulWidget {
   const BuiltinProvidersSettingsPage({super.key});
@@ -46,17 +47,9 @@ class _BuiltinProvidersSettingsPageState extends State<BuiltinProvidersSettingsP
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor.withValues(alpha: 0.85),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Built-in Providers',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
-        ),
+      appBar: SubPageAppBar(
+        title: 'Built-in Providers',
+        topInset: MediaQuery.paddingOf(context).top,
         actions: [
           ListenableBuilder(
             listenable: _service,

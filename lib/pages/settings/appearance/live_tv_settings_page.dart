@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../services/theme/app_theme_service.dart';
 import '../../../services/home/home_page_settings.dart';
 import '../../../services/iptv/iptv_settings.dart';
+import '../../../widgets/common/sub_page_app_bar.dart';
 import '../../../widgets/settings/settings_controls.dart';
 
 class LiveTvSettingsPage extends StatefulWidget {
@@ -18,17 +19,9 @@ class _LiveTvSettingsPageState extends State<LiveTvSettingsPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Live TV & Sports UI',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
-        ),
+      appBar: SubPageAppBar(
+        title: 'Live TV & Sports UI',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
         child: ConstrainedBox(

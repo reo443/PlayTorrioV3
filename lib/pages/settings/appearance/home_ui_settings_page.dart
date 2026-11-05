@@ -7,6 +7,7 @@ import '../../../services/my_list/my_list_service.dart';
 import '../../../services/simkl/simkl_service.dart';
 import '../../../services/trakt/trakt_service.dart';
 import '../../../widgets/common/animated_ambient_background.dart';
+import '../../../widgets/common/sub_page_app_bar.dart';
 import '../../../widgets/settings/settings_controls.dart';
 import 'custom_background_settings_page.dart';
 
@@ -31,28 +32,10 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
   Widget _buildPage(int myListCount) {
     return Scaffold(
       backgroundColor: AppThemeService.currentPalette.value.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Appearance',
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
-            ),
-            SizedBox(height: 1),
-            Text(
-              'Personalize your app',
-              style: TextStyle(fontSize: 11.5, color: Color(0xFF9299AB)),
-            ),
-          ],
-        ),
+      appBar: SubPageAppBar(
+        title: 'Appearance',
+        subtitle: 'Personalize your app',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
         child: ConstrainedBox(

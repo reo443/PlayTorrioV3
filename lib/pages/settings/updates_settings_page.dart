@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../services/updater/app_updater_service.dart';
+import '../../widgets/common/sub_page_app_bar.dart';
 import '../../widgets/updater/update_dialog.dart';
 
 class UpdatesSettingsPage extends StatefulWidget {
@@ -61,17 +62,9 @@ class _UpdatesSettingsPageState extends State<UpdatesSettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'App Updates & System',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
-        ),
+      appBar: SubPageAppBar(
+        title: 'App Updates & System',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
         child: ConstrainedBox(

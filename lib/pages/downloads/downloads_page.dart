@@ -9,6 +9,7 @@ import '../../services/theme/app_theme_service.dart';
 import '../../services/download/download_service.dart';
 import '../../utils/platform/open_file_location_helper.dart';
 import '../../utils/download/download_path_helper.dart';
+import '../../widgets/common/sub_page_app_bar.dart';
 import '../player/player_screen.dart';
 
 class DownloadsPage extends StatefulWidget {
@@ -118,42 +119,23 @@ class _DownloadsPageState extends State<DownloadsPage> with SingleTickerProvider
       builder: (context, palette, _) {
         return Scaffold(
           backgroundColor: palette.scaffoldBackgroundColor,
-          appBar: AppBar(
-            backgroundColor: palette.appBarBackgroundColor,
-            elevation: 0,
-            surfaceTintColor: Colors.transparent,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 20),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: palette.primaryColor,
-                    borderRadius: BorderRadius.circular(2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: palette.primaryColor.withValues(alpha: 0.5),
-                        blurRadius: 8,
-                      ),
-                    ],
+          appBar: SubPageAppBar(
+            title: 'Downloads',
+            titleLeading: Container(
+              width: 4,
+              height: 20,
+              decoration: BoxDecoration(
+                color: palette.primaryColor,
+                borderRadius: BorderRadius.circular(2),
+                boxShadow: [
+                  BoxShadow(
+                    color: palette.primaryColor.withValues(alpha: 0.5),
+                    blurRadius: 8,
                   ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'Downloads',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
+            topInset: MediaQuery.paddingOf(context).top,
             actions: [
               IconButton(
                 icon: const Icon(Icons.folder_open_rounded, color: Colors.white, size: 22),

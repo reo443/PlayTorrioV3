@@ -8,6 +8,7 @@ import '../../models/cloudstream/cloudstream_source.dart';
 import '../../services/addon/addon_manager.dart';
 import '../../services/cloudstream/cloudstream_manager.dart';
 import '../../services/theme/app_theme_service.dart';
+import '../../widgets/common/sub_page_app_bar.dart';
 import '../../widgets/settings/settings_controls.dart';
 import '../../services/cloudstream/runtime/cloudstream_downloader.dart';
 import 'cloudstream_marketplace_modal.dart';
@@ -653,17 +654,9 @@ class _AddonsSettingsPageState extends State<AddonsSettingsPage> {
 
     return Scaffold(
       backgroundColor: AppThemeService.currentPalette.value.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Addons & Extensions',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
-        ),
+      appBar: SubPageAppBar(
+        title: 'Addons & Extensions',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
         child: ConstrainedBox(

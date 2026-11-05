@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/iptv/iptv_models.dart';
 import '../../services/iptv/hardcoded_channels.dart';
 import '../../widgets/iptv/iptv_channel_card.dart';
-import '../../widgets/common/floating_back_button.dart';
+import '../../widgets/common/sub_page_app_bar.dart';
 import 'iptv_channel_sheet.dart';
 
 class IptvSearchPage extends StatefulWidget {
@@ -107,15 +107,9 @@ class _IptvSearchPageState extends State<IptvSearchPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Center(
-          child: FloatingBackButton(
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        title: Container(
+      appBar: SubPageAppBar(
+        topInset: MediaQuery.paddingOf(context).top,
+        titleWidget: Container(
           height: 44,
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.08),

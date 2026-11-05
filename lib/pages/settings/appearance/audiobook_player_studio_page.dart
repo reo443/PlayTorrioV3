@@ -8,6 +8,7 @@ import '../../../services/theme/app_theme_service.dart';
 import '../../../services/audiobook/audiobook_settings.dart';
 import '../../../widgets/audiobook/audiobook_interactive_physics_button.dart';
 import '../../../widgets/audiobook/audiobook_waveform_seekbar.dart';
+import '../../../widgets/common/sub_page_app_bar.dart';
 import '../../../widgets/settings/settings_controls.dart';
 
 class AudiobookPlayerStudioPage extends StatefulWidget {
@@ -71,52 +72,30 @@ class _AudiobookPlayerStudioPageState extends State<AudiobookPlayerStudioPage> w
 
     return Scaffold(
       backgroundColor: const Color(0xFF07090E),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: SubPageAppBar(
         title: screenW < 600
-            ? const Text(
-                'Player Studio',
-                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
-              )
-            : Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [palette.primaryColor, palette.accentColor],
-                      ),
-                    ),
-                    child: const Icon(Icons.dashboard_customize_rounded, color: Colors.white, size: 18),
+            ? 'Player Studio'
+            : 'Custom Audiobook Player Studio',
+        subtitle: screenW < 600
+            ? null
+            : 'Drag components, transform seekbars, customize button physics',
+        titleLeading: screenW < 600
+            ? null
+            : Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [palette.primaryColor, palette.accentColor],
                   ),
-                  const SizedBox(width: 12),
-                  const Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Custom Audiobook Player Studio',
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.3),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          'Drag components, transform seekbars, customize button physics',
-                          style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.normal),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
+                child: const Icon(
+                  Icons.dashboard_customize_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
               ),
+        topInset: MediaQuery.paddingOf(context).top,
         actions: [
           if (screenW < 520)
             IconButton(

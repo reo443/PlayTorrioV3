@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../widgets/common/sub_page_app_bar.dart';
+
 class AboutSettingsPage extends StatelessWidget {
   const AboutSettingsPage({super.key});
 
@@ -8,17 +10,9 @@ class AboutSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'About PlayTorrio',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
-        ),
+      appBar: SubPageAppBar(
+        title: 'About PlayTorrio',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
         child: ConstrainedBox(

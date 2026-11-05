@@ -29,6 +29,7 @@ import '../../services/backup/backup_restore_service.dart';
 import '../../services/home/home_page_settings.dart';
 
 import '../../widgets/common/animated_ambient_background.dart';
+import '../../widgets/common/sub_page_app_bar.dart';
 import '../../widgets/settings/settings_controls.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -318,17 +319,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017).withValues(alpha: 0.85),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Settings',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
-        ),
+      appBar: SubPageAppBar(
+        title: 'Settings',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: AnimatedAmbientBackground(
         child: Center(

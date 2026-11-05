@@ -6,6 +6,7 @@ import '../../../services/home/home_page_settings.dart';
 import '../../../widgets/audiobook/audiobook_interactive_physics_button.dart';
 import '../../../widgets/audiobook/audiobook_waveform_seekbar.dart';
 import '../../../widgets/common/animated_ambient_background.dart';
+import '../../../widgets/common/sub_page_app_bar.dart';
 import '../../../widgets/settings/settings_controls.dart';
 import 'audiobook_player_studio_page.dart';
 
@@ -29,17 +30,9 @@ class _AudiobookSettingsPageState extends State<AudiobookSettingsPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Audiobook UI & Player Studio',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
-        ),
+      appBar: SubPageAppBar(
+        title: 'Audiobook UI & Player Studio',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
         child: ConstrainedBox(

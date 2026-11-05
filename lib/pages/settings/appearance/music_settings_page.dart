@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../services/theme/app_theme_service.dart';
 import '../../../services/home/home_page_settings.dart';
 import '../../../services/music/music_settings.dart';
+import '../../../widgets/common/sub_page_app_bar.dart';
 import '../../../widgets/music/music_waveform_seekbar.dart';
 import '../../../widgets/settings/settings_controls.dart';
 import 'music_player_studio_page.dart';
@@ -23,18 +24,9 @@ class _MusicSettingsPageState extends State<MusicSettingsPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1017),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Music UI & Player Atmosphere',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
-        ),
-        elevation: 0,
+      appBar: SubPageAppBar(
+        title: 'Music UI & Player Atmosphere',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
         child: ConstrainedBox(

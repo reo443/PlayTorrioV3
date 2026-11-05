@@ -7,6 +7,7 @@ import '../../services/theme/glass_settings.dart';
 import '../../services/iptv/iptv_settings.dart';
 import '../../services/manga/manga_settings.dart';
 import '../../services/music/music_settings.dart';
+import '../../widgets/common/sub_page_app_bar.dart';
 import 'appearance/audiobook_settings_page.dart';
 import 'appearance/custom_background_settings_page.dart';
 import 'appearance/dock_settings_page.dart';
@@ -35,17 +36,9 @@ class _AppearanceSettingsPageState extends State<AppearanceSettingsPage> {
   Widget _buildPage(BuildContext context) {
     return Scaffold(
       backgroundColor: AppThemeService.currentPalette.value.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Appearance & Interface',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
-        ),
+      appBar: SubPageAppBar(
+        title: 'Appearance & Interface',
+        topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
         child: ConstrainedBox(

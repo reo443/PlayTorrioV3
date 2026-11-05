@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../services/theme/app_theme_service.dart';
 import '../../../services/theme/dock_settings.dart';
 import '../../../widgets/common/app_liquid_dock.dart';
+import '../../../widgets/common/sub_page_app_bar.dart';
 import '../../../widgets/settings/settings_controls.dart';
 
 class DockSettingsPage extends StatefulWidget {
@@ -23,17 +24,9 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
   Widget _buildPage(BuildContext context) {
     return Scaffold(
       backgroundColor: AppThemeService.currentPalette.value.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppThemeService.currentPalette.value.appBarBackgroundColor,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Navigation',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
-        ),
+      appBar: SubPageAppBar(
+        title: 'Navigation',
+        topInset: MediaQuery.paddingOf(context).top,
         actions: [
           TextButton.icon(
             onPressed: () async {
