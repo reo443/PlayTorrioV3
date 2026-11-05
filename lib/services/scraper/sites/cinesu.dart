@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../stream_scraper.dart';
 import '../../../models/stream/stream_model.dart';
+import 'source_liveness.dart';
 import 'tmdb_helper.dart';
 
 /// Pure-Dart CineSu Stream Scraper for PlayTorrioHTTP.
@@ -114,19 +115,23 @@ class CineSuScraper extends StreamScraper {
         'Origin': 'https://cine.su',
       };
 
-      yield StreamSource(
-        name: 'PlayTorrioHTTP',
-        addonName: 'PlayTorrioHTTP',
-        title: 'CineSu · Direct Master · 1080p',
-        description: 'CineSu Master HLS Stream',
-        url: streamUrl,
-        headers: headers,
-        behaviorHints: {
-          'notWebReady': false,
-          'proxyHeaders': {
-            'request': headers,
-          },
-        },
+      yield* filterLiveSources(
+        Stream.value(
+          StreamSource(
+            name: 'PlayTorrioHTTP',
+            addonName: 'PlayTorrioHTTP',
+            title: 'CineSu · Direct Master · 1080p',
+            description: 'CineSu Master HLS Stream',
+            url: streamUrl,
+            headers: headers,
+            behaviorHints: {
+              'notWebReady': false,
+              'proxyHeaders': {
+                'request': headers,
+              },
+            },
+          ),
+        ),
       );
     } catch (e) {
       if (kDebugMode) debugPrint('[CineSuScraper] error: $e');

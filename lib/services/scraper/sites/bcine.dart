@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../stream_scraper.dart';
 import '../../../models/stream/stream_model.dart';
+import 'source_liveness.dart';
 import 'tmdb_helper.dart';
 
 /// Pure-Dart Bcine Stream Scraper for PlayTorrioHTTP.
@@ -141,19 +142,23 @@ class BcineScraper extends StreamScraper {
         'Origin': 'https://bcine.ru',
       };
 
-      yield StreamSource(
-        name: 'PlayTorrioHTTP',
-        addonName: 'PlayTorrioHTTP',
-        title: 'Bcine · Direct Master · 1080p',
-        description: 'Bcine Direct Master HLS Stream',
-        url: directHls,
-        headers: directHeaders,
-        behaviorHints: {
-          'notWebReady': false,
-          'proxyHeaders': {
-            'request': directHeaders,
-          },
-        },
+      yield* filterLiveSources(
+        Stream.value(
+          StreamSource(
+            name: 'PlayTorrioHTTP',
+            addonName: 'PlayTorrioHTTP',
+            title: 'Bcine · Direct Master · 1080p',
+            description: 'Bcine Direct Master HLS Stream',
+            url: directHls,
+            headers: directHeaders,
+            behaviorHints: {
+              'notWebReady': false,
+              'proxyHeaders': {
+                'request': directHeaders,
+              },
+            },
+          ),
+        ),
       );
 
       // 2. Multi-server streams
@@ -190,19 +195,23 @@ class BcineScraper extends StreamScraper {
                       'Referer': 'https://1embed.cc/',
                     };
 
-                    yield StreamSource(
-                      name: 'PlayTorrioHTTP',
-                      addonName: 'PlayTorrioHTTP',
-                      title: 'Bcine · $srvName · 1080p',
-                      description: 'Bcine $srvName HLS Stream',
-                      url: sUrl,
-                      headers: reqHeaders,
-                      behaviorHints: {
-                        'notWebReady': false,
-                        'proxyHeaders': {
-                          'request': reqHeaders,
-                        },
-                      },
+                    yield* filterLiveSources(
+                      Stream.value(
+                        StreamSource(
+                          name: 'PlayTorrioHTTP',
+                          addonName: 'PlayTorrioHTTP',
+                          title: 'Bcine · $srvName · 1080p',
+                          description: 'Bcine $srvName HLS Stream',
+                          url: sUrl,
+                          headers: reqHeaders,
+                          behaviorHints: {
+                            'notWebReady': false,
+                            'proxyHeaders': {
+                              'request': reqHeaders,
+                            },
+                          },
+                        ),
+                      ),
                     );
                   }
                 }

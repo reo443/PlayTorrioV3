@@ -12,7 +12,7 @@ void main() {
   HttpOverrides.global = _AllowAllHttpOverrides();
 
   group('Chunk 3 Vyla Scrapers Tests', () {
-    test('Bcine scraper generates master HLS for Fight Club', () async {
+    test('Bcine never emits the dead fabricated master URL', () async {
       final scraper = BcineScraper();
       final stream = scraper.scrapeStream(
         type: 'movie',
@@ -25,9 +25,17 @@ void main() {
       for (final s in sources) {
         print('  -> ${s.title} (${s.url})');
       }
-      expect(sources, isNotEmpty);
-      expect(sources.first.url, startsWith('http'));
-      expect(sources.first.addonName, 'PlayTorrioHTTP');
+      // The provider used to fabricate a master playlist on this host that
+      // answers 403 for every request. It must be probed out, not yielded.
+      expect(
+        sources.where((s) => s.url?.contains('glendale-plumbing.com') ?? false),
+        isEmpty,
+        reason: 'dead fabricated master URL must never reach the player',
+      );
+      for (final s in sources) {
+        expect(s.url, startsWith('http'));
+        expect(s.addonName, 'PlayTorrioHTTP');
+      }
     }, timeout: const Timeout(Duration(seconds: 30)));
 
     test('LookMovie scraper queries for Fight Club', () async {

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../stream_scraper.dart';
 import '../../../models/stream/stream_model.dart';
+import 'source_liveness.dart';
 import 'tmdb_helper.dart';
 
 /// Pure-Dart CineSrc Stream Scraper for PlayTorrioHTTP.
@@ -113,19 +114,23 @@ class CineSrcScraper extends StreamScraper {
         'Origin': 'https://cinesrc.st',
       };
 
-      yield StreamSource(
-        name: 'PlayTorrioHTTP',
-        addonName: 'PlayTorrioHTTP',
-        title: 'CineSrc · Direct Master · 1080p',
-        description: 'CineSrc Direct Master HLS Stream',
-        url: streamUrl,
-        headers: headers,
-        behaviorHints: {
-          'notWebReady': false,
-          'proxyHeaders': {
-            'request': headers,
-          },
-        },
+      yield* filterLiveSources(
+        Stream.value(
+          StreamSource(
+            name: 'PlayTorrioHTTP',
+            addonName: 'PlayTorrioHTTP',
+            title: 'CineSrc · Direct Master · 1080p',
+            description: 'CineSrc Direct Master HLS Stream',
+            url: streamUrl,
+            headers: headers,
+            behaviorHints: {
+              'notWebReady': false,
+              'proxyHeaders': {
+                'request': headers,
+              },
+            },
+          ),
+        ),
       );
     } catch (e) {
       if (kDebugMode) debugPrint('[CineSrcScraper] error: $e');
