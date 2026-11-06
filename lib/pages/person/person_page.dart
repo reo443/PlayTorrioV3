@@ -6,7 +6,7 @@ import '../../services/metadata/tmdb_service.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/playtorrio_tokens.dart';
-import '../../widgets/common/page_top_bar.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../widgets/movie/movie_card.dart';
 import '../../widgets/ui/app_empty_state.dart';
 import '../../widgets/ui/app_error_state.dart';
@@ -88,14 +88,9 @@ class _PersonPageState extends State<PersonPage> {
         children: [
           Positioned.fill(child: _buildBody(headerHeight, bottomInset)),
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: PageTopBar(
-              topPadding: topPadding,
-              title: 'Person',
-              showBack: true,
-            ),
+            top: topPadding + AppSpacing.xs,
+            left: AppSpacing.md,
+            child: const FloatingBackButton(),
           ),
         ],
       ),
