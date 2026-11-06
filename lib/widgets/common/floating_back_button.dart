@@ -1,9 +1,6 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
-import '../../services/theme/glass_settings.dart';
-import '../../theme/playtorrio_tokens.dart';
+import 'glass_circle_button.dart';
 
 /// The app's one back affordance.
 ///
@@ -17,9 +14,9 @@ import '../../theme/playtorrio_tokens.dart';
 /// has a way back and a root page never shows a dead control. Pass
 /// [showWhenCannotPop] for the rare screen that wants the control regardless.
 ///
-/// Glass is optional: with effects disabled it falls back to an opaque
-/// elevated surface (spec 6.8), so the button never depends on the shader.
-class FloatingBackButton extends StatefulWidget {
+/// The disc itself lives in [GlassCircleButton], shared with the floating page
+/// actions, so back, search and the other top-level controls stay one shape.
+class FloatingBackButton extends StatelessWidget {
   const FloatingBackButton({
     super.key,
     this.onPressed,
@@ -41,121 +38,15 @@ class FloatingBackButton extends StatefulWidget {
   final bool showWhenCannotPop;
 
   @override
-  State<FloatingBackButton> createState() => _FloatingBackButtonState();
-}
-
-class _FloatingBackButtonState extends State<FloatingBackButton> {
-  bool _hovered = false;
-  bool _pressed = false;
-
-  @override
   Widget build(BuildContext context) {
     final canPop = ModalRoute.of(context)?.canPop ?? false;
-    if (!canPop && !widget.showWhenCannotPop) return const SizedBox.shrink();
+    if (!canPop && !showWhenCannotPop) return const SizedBox.shrink();
 
-    final tokens = PlayTorrioTokens.of(context);
-    final scale = _pressed ? 0.92 : (_hovered ? 1.04 : 1.0);
-
-    return Semantics(
-      button: true,
-      label: widget.tooltip,
-      child: Tooltip(
-        message: widget.tooltip,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          onEnter: (_) => setState(() => _hovered = true),
-          onExit: (_) => setState(() => _hovered = false),
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTapDown: (_) => setState(() => _pressed = true),
-            onTapUp: (_) => setState(() => _pressed = false),
-            onTapCancel: () => setState(() => _pressed = false),
-            onTap: widget.onPressed ?? () => Navigator.of(context).maybePop(),
-            child: SizedBox(
-              width: 48,
-              height: 48,
-              child: Center(
-                child: AnimatedScale(
-                  scale: scale,
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeOutCubic,
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: GlassSettings.enabled,
-                    builder: (context, glass, _) => _disc(
-                      tokens: tokens,
-                      glass: glass,
-                      diameter: widget.size,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _disc({
-    required PlayTorrioTokens tokens,
-    required bool glass,
-    required double diameter,
-  }) {
-    final rim = Border.all(
-      color: glass
-          ? tokens.textPrimary.withValues(alpha: 0.18)
-          : tokens.borderStrong,
-    );
-    final glow = [
-      BoxShadow(
-        color: tokens.bgPrimary.withValues(alpha: 0.45),
-        blurRadius: 18,
-        offset: const Offset(0, 6),
-      ),
-      if (_hovered)
-        BoxShadow(
-          color: tokens.accent.withValues(alpha: 0.28),
-          blurRadius: 22,
-          spreadRadius: 1,
-        ),
-    ];
-
-    final icon = Icon(
-      widget.icon,
-      size: diameter * 0.41,
-      color: tokens.textPrimary,
-    );
-
-    if (!glass) {
-      return Container(
-        width: diameter,
-        height: diameter,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: tokens.surfaceElevated,
-          border: rim,
-          boxShadow: glow,
-        ),
-        child: Center(child: icon),
-      );
-    }
-
-    return Container(
-      width: diameter,
-      height: diameter,
-      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: glow),
-      // The rim sits on top of the blurred fill, otherwise the child paints
-      // over it and the edge disappears.
-      foregroundDecoration: BoxDecoration(shape: BoxShape.circle, border: rim),
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: ColoredBox(
-            color: tokens.surface.withValues(alpha: 0.55),
-            child: Center(child: icon),
-          ),
-        ),
-      ),
+    return GlassCircleButton(
+      icon: icon,
+      tooltip: tooltip,
+      onPressed: onPressed ?? () => Navigator.of(context).maybePop(),
+      size: size,
     );
   }
 }

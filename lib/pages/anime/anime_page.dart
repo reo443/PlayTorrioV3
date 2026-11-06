@@ -11,11 +11,12 @@ import '../../services/theme/app_theme_service.dart';
 import '../../services/theme/dock_settings.dart';
 import '../../services/theme/glass_settings.dart';
 import '../../utils/navigation/route_transitions.dart';
+import '../../theme/app_spacing.dart';
 import '../../widgets/anime/anime_slider_section.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/custom_scroll_track.dart';
-import '../../widgets/common/page_top_bar.dart';
+import '../../widgets/common/floating_page_actions.dart';
 import '../../widgets/home/continue_watching_slider.dart';
 import '../settings/settings_page.dart';
 import 'anime_details_page.dart';
@@ -290,15 +291,12 @@ class _AnimePageState extends State<AnimePage> {
         );
 
         final overlayChildren = <Widget>[
-          // Floating Glass App Bar (Home Page Style)
+          // ── Floating page actions ──
           Positioned(
             top: 0,
-            left: 0,
-            right: 0,
-            child: PageTopBar(
-              topPadding: topPadding,
-              title: 'Anime',
-              showBack: true,
+            right: AppSpacing.md,
+            child: FloatingPageActions(
+              topInset: topPadding,
               onSearchTap: () => _navigateToSearch(null),
             ),
           ),

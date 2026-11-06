@@ -9,10 +9,11 @@ import '../../services/theme/app_theme_service.dart';
 import '../../services/theme/dock_settings.dart';
 import '../../services/manga/manga_service.dart';
 import '../../services/manga/manga_settings.dart';
+import '../../theme/app_spacing.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/custom_scroll_track.dart';
-import '../../widgets/common/page_top_bar.dart';
+import '../../widgets/common/floating_page_actions.dart';
 import '../../widgets/common/slider_arrow.dart';
 import '../../widgets/manga/manga_card.dart';
 import '../../models/manga/manga_browse_filter.dart';
@@ -294,8 +295,8 @@ class _MangaPageState extends State<MangaPage> {
             backgroundWidget: _buildScrollableContent(),
             child: Stack(
               children: [
-                // Top App Bar / Search / Customize
-                _buildAppBar(),
+                // Floating page actions
+                _buildFloatingActions(),
 
                 // Custom Scroll Track (Desktop only)
                 if (_screenWidth > 800 && showScrollTrack)
@@ -335,7 +336,7 @@ class _MangaPageState extends State<MangaPage> {
       physics: const ClampingScrollPhysics(),
       slivers: [
         SliverToBoxAdapter(
-          child: SizedBox(height: 76.0 + topInset), // Spacer for top app bar
+          child: SizedBox(height: 56.0 + topInset), // Space for floating actions
         ),
 
         // ── Fresh-session first load: single clean loader until the
@@ -517,17 +518,14 @@ class _MangaPageState extends State<MangaPage> {
     );
   }
 
-  Widget _buildAppBar() {
+  Widget _buildFloatingActions() {
     final topInset = MediaQuery.paddingOf(context).top;
 
     return Positioned(
       top: 0,
-      left: 0,
-      right: 0,
-      child: PageTopBar(
-        topPadding: topInset,
-        title: 'Manga',
-        showBack: true,
+      right: AppSpacing.md,
+      child: FloatingPageActions(
+        topInset: topInset,
         onSearchTap: _navigateToSearch,
       ),
     );

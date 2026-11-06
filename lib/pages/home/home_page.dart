@@ -20,11 +20,12 @@ import '../../services/my_list/my_list_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../theme/app_semantic_colors.dart';
 import '../../theme/app_sponsor_colors.dart';
+import '../../theme/app_spacing.dart';
 import '../../theme/playtorrio_tokens.dart';
 import '../../widgets/common/animated_ambient_background.dart';
 import '../../widgets/common/custom_scroll_track.dart';
 import '../../widgets/common/error_view.dart';
-import '../../widgets/common/page_top_bar.dart';
+import '../../widgets/common/floating_page_actions.dart';
 import '../../widgets/home/continue_watching_slider.dart';
 import '../../widgets/movie/movie_slider_section.dart';
 import '../../widgets/home/support_dev_cards.dart';
@@ -362,7 +363,7 @@ class _HomePageState extends State<HomePage> {
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     if (!HomePageSettings.enableSpotlight.value) {
-                      return SizedBox(height: topPadding + 76);
+                      return SizedBox(height: topPadding + 56);
                     }
                     return _HeroCarousel(movies: _featuredMovies);
                   }
@@ -427,57 +428,51 @@ class _HomePageState extends State<HomePage> {
     final tokens = PlayTorrioTokens.of(context);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final overlayChildren = <Widget>[
-      // ── Floating glass app bar ──
+      // ── Floating page actions ──
       Positioned(
         top: 0,
-        left: 0,
-        right: 0,
-        child: PageTopBar(
-          topPadding: topPadding,
-          onSearchTap: () => _navigateToSearch(null),
-          trailing: [
-            // TV Shows Airing Calendar
-            ValueListenableBuilder<bool>(
-              valueListenable: HomePageSettings.enableCalendar,
-              builder: (context, calEnabled, _) {
-                if (!calEnabled) return const SizedBox.shrink();
-                return IconButton(
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(
-                    Icons.calendar_month_rounded,
-                    color: tokens.textSecondary,
-                    size: 20,
-                  ),
-                  tooltip: 'TV Airing Calendar',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TvCalendarPage()),
-                    );
-                  },
+        right: AppSpacing.md,
+        child: ValueListenableBuilder<bool>(
+          valueListenable: HomePageSettings.enableCalendar,
+          builder: (context, calEnabled, _) {
+            return ValueListenableBuilder<bool>(
+              valueListenable: WindowService.instance.isFullscreenNotifier,
+              builder: (context, isFullscreen, _) {
+                return FloatingPageActions(
+                  topInset: topPadding,
+                  onSearchTap: () => _navigateToSearch(null),
+                  actions: [
+                    // TV Shows Airing Calendar
+                    if (calEnabled)
+                      FloatingPageAction(
+                        icon: Icons.calendar_month_rounded,
+                        tooltip: 'TV Airing Calendar',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TvCalendarPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    // Fullscreen Toggle (Desktops only)
+                    if (WindowService.instance.isDesktop)
+                      FloatingPageAction(
+                        icon: isFullscreen
+                            ? Icons.fullscreen_exit_rounded
+                            : Icons.fullscreen_rounded,
+                        tooltip: isFullscreen
+                            ? 'Exit Fullscreen (F)'
+                            : 'Fullscreen (F)',
+                        isActive: isFullscreen,
+                        onTap: () => WindowService.instance.toggleFullscreen(),
+                      ),
+                  ],
                 );
               },
-            ),
-            // Fullscreen Toggle (Desktops only)
-            if (WindowService.instance.isDesktop)
-              ValueListenableBuilder<bool>(
-                valueListenable: WindowService.instance.isFullscreenNotifier,
-                builder: (context, isFullscreen, _) {
-                  return IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(
-                      isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
-                      color: isFullscreen
-                          ? tokens.accent
-                          : tokens.textSecondary,
-                      size: 22,
-                    ),
-                    tooltip: isFullscreen ? 'Exit Fullscreen (F)' : 'Fullscreen (F)',
-                    onPressed: () => WindowService.instance.toggleFullscreen(),
-                  );
-                },
-              ),
-          ],
+            );
+          },
         ),
       ),
 

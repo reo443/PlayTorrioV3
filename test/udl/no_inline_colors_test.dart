@@ -23,6 +23,8 @@ const List<String> migratedFiles = [
   'lib/widgets/common/liquid_dock.dart',
   'lib/widgets/common/custom_scroll_track.dart',
   'lib/widgets/common/floating_back_button.dart',
+  'lib/widgets/common/glass_circle_button.dart',
+  'lib/widgets/common/floating_page_actions.dart',
   'lib/widgets/common/sub_page_app_bar.dart',
   'lib/widgets/common/flag_icon.dart',
   'lib/widgets/search/magnet_files_view.dart',

@@ -10,10 +10,11 @@ import '../../services/metadata/metadata_service.dart';
 import '../../services/metadata/tmdb_service.dart';
 import '../../services/theme/app_theme_service.dart';
 import '../../services/theme/dock_settings.dart';
+import '../../theme/app_spacing.dart';
 import '../../theme/playtorrio_tokens.dart';
 import '../../widgets/common/app_liquid_dock.dart';
 import '../../widgets/common/error_view.dart';
-import '../../widgets/common/page_top_bar.dart';
+import '../../widgets/common/floating_page_actions.dart';
 import '../../widgets/discover/advanced_filter_sheet.dart';
 import '../../widgets/discover/filter_option_sheet.dart';
 import '../../widgets/movie/movie_card.dart';
@@ -476,15 +477,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
             ),
           ),
 
-          // ── Glass App Bar ──
+          // ── Floating page actions ──
           Positioned(
             top: 0,
-            left: 0,
-            right: 0,
-            child: PageTopBar(
-              topPadding: topPadding,
-              title: 'Discover',
-              showBack: true,
+            right: AppSpacing.md,
+            child: FloatingPageActions(
+              topInset: topPadding,
               onSearchTap: _navigateToSearch,
             ),
           ),
