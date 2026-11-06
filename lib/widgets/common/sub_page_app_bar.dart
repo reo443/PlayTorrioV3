@@ -27,9 +27,8 @@ import 'floating_back_button.dart';
 /// ```
 ///
 /// [topInset] is passed in rather than read from the context because
-/// [preferredSize] is evaluated without one — the same contract [PageTopBar]
-/// uses. Glass is optional: with effects disabled the bar paints the plain
-/// page colour (spec 6.8).
+/// [preferredSize] is evaluated without one. Glass is optional: with effects
+/// disabled the bar paints the plain page colour (spec 6.8).
 ///
 /// Three escape hatches keep the bar usable on pages with a bespoke header
 /// without forking it: [titleLeading] for a marker or icon before the title,

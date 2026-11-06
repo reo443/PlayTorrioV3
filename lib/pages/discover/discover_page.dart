@@ -460,7 +460,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     final sizing = MovieCardSizing.fromWidth(screenWidth);
 
-    // PageTopBar height: status bar + top pad 6 + row ~38 + bottom pad 10
+    // Room for the floating search disc above the control bar.
     final headerHeight = topPadding + 56;
 
     return Scaffold(

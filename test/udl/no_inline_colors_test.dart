@@ -8,7 +8,6 @@ const List<String> migratedFiles = [
   'lib/widgets/common/poster_skeleton.dart',
   'lib/widgets/common/error_view.dart',
   'lib/widgets/common/section_header.dart',
-  'lib/widgets/common/page_top_bar.dart',
   'lib/widgets/common/modern_toast.dart',
   'lib/widgets/movie/movie_card.dart',
   'lib/widgets/anime/anime_card.dart',
