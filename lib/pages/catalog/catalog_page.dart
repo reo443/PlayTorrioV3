@@ -4,8 +4,11 @@ import '../../models/movie/movie.dart';
 import '../../models/movie/movie_section.dart';
 import '../../services/metadata/metadata_service.dart';
 import '../../services/metadata/tmdb_service.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_typography.dart';
+import '../../theme/playtorrio_tokens.dart';
 import '../../widgets/common/error_view.dart';
-import '../../widgets/common/page_top_bar.dart';
+import '../../widgets/common/floating_back_button.dart';
 import '../../widgets/movie/movie_card.dart';
 
 class CatalogPage extends StatefulWidget {
@@ -161,75 +164,111 @@ class _CatalogPageState extends State<CatalogPage> {
 
   @override
   Widget build(BuildContext context) {
-    final topPadding = MediaQuery.of(context).padding.top;
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     final sizing = MovieCardSizing.fromWidth(MediaQuery.sizeOf(context).width);
-    final gridTopPadding = topPadding + kToolbarHeight + 40;
+    final tokens = PlayTorrioTokens.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080A0F),
+      backgroundColor: tokens.bgPrimary,
       body: Stack(
         children: [
           // ── Main Content Grid ──
           if (_items.isEmpty && _isLoading)
-            const Center(
-              child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
-            )
+            Center(child: CircularProgressIndicator(color: tokens.accent))
           else if (_items.isEmpty && _error != null)
             ErrorView(
               error: _error,
               onRetry: () => _loadItems(refresh: true),
             )
           else if (_items.isEmpty)
-            const Center(
+            Center(
               child: Text(
                 'No items found',
-                style: TextStyle(color: Colors.white54, fontSize: 16),
+                style: TextStyle(color: tokens.textSecondary, fontSize: 16),
               ),
             )
           else
-            GridView.builder(
-              controller: _scrollController,
-              padding: EdgeInsets.fromLTRB(
-                sizing.sidePadding,
-                gridTopPadding,
-                sizing.sidePadding,
-                40 + MediaQuery.paddingOf(context).bottom, // Bottom padding
-              ),
-              physics: const ClampingScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount:
-                    ((MediaQuery.sizeOf(context).width - sizing.sidePadding * 2 + sizing.spacing) /
-                            (sizing.cardWidth + sizing.spacing))
-                        .floor()
-                        .clamp(2, 10),
-                childAspectRatio: sizing.cardWidth / sizing.totalHeight,
-                crossAxisSpacing: sizing.spacing,
-                mainAxisSpacing: sizing.spacing,
-              ),
-              itemCount: _items.length + (_hasMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _items.length) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF7C5CFF)),
-                  );
-                }
-                return MovieCard(movie: _items[index]);
-              },
-            ),
+            _buildGrid(tokens, sizing, topPadding, bottomInset),
 
-          // ── Glass App Bar ──
+          // ── Floating back ──
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: PageTopBar(
-              topPadding: topPadding,
-              title: widget.section.title,
-              showBack: true,
-            ),
+            top: topPadding + AppSpacing.xs,
+            left: AppSpacing.md,
+            child: const FloatingBackButton(),
           ),
         ],
       ),
+    );
+  }
+
+  /// The grid plus the section title, which scrolls away with the content.
+  ///
+  /// There is no top bar on this page: the back control floats over the grid
+  /// and the title sits in the scroll view, so the artwork keeps the top of
+  /// the screen instead of losing it to a chrome strip.
+  Widget _buildGrid(
+    PlayTorrioTokens tokens,
+    MovieCardSizing sizing,
+    double topInset,
+    double bottomInset,
+  ) {
+    final columns =
+        ((MediaQuery.sizeOf(context).width - sizing.sidePadding * 2 + sizing.spacing) /
+                (sizing.cardWidth + sizing.spacing))
+            .floor()
+            .clamp(2, 10);
+
+    return CustomScrollView(
+      controller: _scrollController,
+      physics: const ClampingScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            sizing.sidePadding,
+            topInset + 56,
+            sizing.sidePadding,
+            AppSpacing.lg,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              widget.section.title,
+              style: AppTypography.screenTitle.copyWith(color: tokens.textPrimary),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            sizing.sidePadding,
+            0,
+            sizing.sidePadding,
+            40 + bottomInset,
+          ),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              childAspectRatio: sizing.cardWidth / sizing.totalHeight,
+              crossAxisSpacing: sizing.spacing,
+              mainAxisSpacing: sizing.spacing,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => MovieCard(movie: _items[index]),
+              childCount: _items.length,
+            ),
+          ),
+        ),
+        if (_hasMore)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Center(
+                child: CircularProgressIndicator(color: tokens.accent),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -26,6 +26,7 @@ const List<String> migratedFiles = [
   'lib/widgets/common/glass_circle_button.dart',
   'lib/widgets/common/floating_page_actions.dart',
   'lib/widgets/common/sub_page_app_bar.dart',
+  'lib/pages/catalog/catalog_page.dart',
   'lib/widgets/common/flag_icon.dart',
   'lib/widgets/search/magnet_files_view.dart',
   'lib/widgets/p2p/p2p_warning_dialog.dart',
