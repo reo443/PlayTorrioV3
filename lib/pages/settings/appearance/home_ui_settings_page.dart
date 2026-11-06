@@ -1446,63 +1446,6 @@ class _HomeUiSettingsPageState extends State<HomeUiSettingsPage> {
               );
             },
           ),
-
-          const SizedBox(height: 12),
-          Divider(color: Colors.white.withValues(alpha: 0.06), height: 1),
-          const SizedBox(height: 12),
-
-          // AI Recommendation Quiz
-          ValueListenableBuilder<bool>(
-            valueListenable: HomePageSettings.enableAiQuiz,
-            builder: (context, enabled, _) {
-              return Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF472B6).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Color(0xFFF472B6),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'AI Recommendation Quiz',
-                          style: TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Show AI Quiz button on Home & Search bars',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SettingsToggleSwitch(
-                    value: enabled,
-                    semanticsLabel: 'AI Recommendation Quiz',
-                    onChanged: (val) => HomePageSettings.setEnableAiQuiz(val),
-                  ),
-                ],
-              );
-            },
-          ),
         ],
       ),
     );

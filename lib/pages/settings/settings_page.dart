@@ -19,7 +19,6 @@ import 'trakt_settings_page.dart';
 import 'simkl_settings_page.dart';
 import 'updates_settings_page.dart';
 import 'about_settings_page.dart';
-import 'support_dev_settings_page.dart';
 import '../../services/player/player_settings.dart';
 import '../../services/p2p/p2p_settings_service.dart';
 import '../../services/scraper/builtin_providers_settings_service.dart';
@@ -367,23 +366,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
               const SizedBox(height: 12),
 
-              // Support Dev & Project (Dedicated Section)
-              ValueListenableBuilder<bool>(
-                valueListenable: HomePageSettings.enableSupportDev,
-                builder: (context, isSupportEnabled, _) {
-                  return _SettingsCategoryTile(
-                    icon: Icons.favorite_rounded,
-                    iconColor: const Color(0xFFFFB300),
-                    title: 'Support The Developer',
-                    subtitle: 'Sponsor the developer and toggle its cards',
-                    badgeText: isSupportEnabled ? 'Active' : 'Hidden',
-                    onTap: () => _navigateTo(const SupportDevSettingsPage()),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 12),
-
               // 2. Video & Anime4K Upscaling
               ValueListenableBuilder<Anime4KPreset>(
                 valueListenable: PlayerSettings.anime4kPreset,
@@ -488,27 +470,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     value: isCalEnabled,
                     onChanged: (val) async {
                       await HomePageSettings.setEnableCalendar(val);
-                    },
-                  );
-                },
-              ),
-
-              const SizedBox(height: 12),
-
-              // 6. AI Recommendation Quiz Toggle
-              ValueListenableBuilder<bool>(
-                valueListenable: HomePageSettings.enableAiQuiz,
-                builder: (context, isAiEnabled, _) {
-                  return _SettingsSwitchTile(
-                    icon: Icons.auto_awesome_rounded,
-                    iconColor: isAiEnabled ? const Color(0xFFF472B6) : Colors.white54,
-                    title: 'AI Recommendation Quiz',
-                    subtitle: isAiEnabled
-                        ? 'AI Taste Profile Quiz active on Home and Search bars'
-                        : 'AI quiz disabled and hidden across all pages',
-                    value: isAiEnabled,
-                    onChanged: (val) async {
-                      await HomePageSettings.setEnableAiQuiz(val);
                     },
                   );
                 },

@@ -4,24 +4,20 @@ import 'package:flutter/material.dart';
 import '../../models/movie/movie_section.dart';
 import '../../pages/calendar/tv_calendar_page.dart';
 import '../../pages/catalog/catalog_page.dart';
-import '../../services/home/home_page_settings.dart';
 import '../../theme/playtorrio_tokens.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../common/slider_arrow.dart';
-import '../home/support_dev_cards.dart';
 import './movie_card.dart';
 import '../common/section_header.dart';
 
 class MovieSliderSection extends StatefulWidget {
   final MovieSection section;
   final bool showCalendarButton;
-  final bool injectSupportCard;
 
   const MovieSliderSection({
     super.key,
     required this.section,
     this.showCalendarButton = false,
-    this.injectSupportCard = false,
   });
 
   @override
@@ -169,38 +165,20 @@ class _MovieSliderSectionState extends State<MovieSliderSection> {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  ValueListenableBuilder<bool>(
-                    valueListenable: HomePageSettings.enableSupportDev,
-                    builder: (context, supportDevEnabled, _) {
-                      final showSupport = widget.injectSupportCard &&
-                          supportDevEnabled &&
-                          widget.section.movies.isNotEmpty;
-                      final supportIndex = widget.section.movies.length >= 2 ? 2 : widget.section.movies.length;
-                      final totalCount = widget.section.movies.length + (showSupport ? 1 : 0);
-
-                      return ListView.separated(
-                        clipBehavior: Clip.none,
-                        controller: _scrollController,
-                        scrollDirection: Axis.horizontal,
-                        physics: const ClampingScrollPhysics(),
-                        padding: EdgeInsets.symmetric(horizontal: sizing.sidePadding),
-                        itemCount: totalCount,
-                        separatorBuilder: (context, index) {
-                          return SizedBox(width: sizing.spacing);
-                        },
-                        itemBuilder: (context, index) {
-                          if (showSupport && index == supportIndex) {
-                            return SizedBox(
-                              width: sizing.cardWidth,
-                              child: SupportSliderCard(cardWidth: sizing.cardWidth),
-                            );
-                          }
-                          final movieIdx = (showSupport && index > supportIndex) ? index - 1 : index;
-                          return SizedBox(
-                            width: sizing.cardWidth,
-                            child: MovieCard(movie: widget.section.movies[movieIdx]),
-                          );
-                        },
+                  ListView.separated(
+                    clipBehavior: Clip.none,
+                    controller: _scrollController,
+                    scrollDirection: Axis.horizontal,
+                    physics: const ClampingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: sizing.sidePadding),
+                    itemCount: widget.section.movies.length,
+                    separatorBuilder: (context, index) {
+                      return SizedBox(width: sizing.spacing);
+                    },
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        width: sizing.cardWidth,
+                        child: MovieCard(movie: widget.section.movies[index]),
                       );
                     },
                   ),

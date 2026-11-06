@@ -19,7 +19,6 @@ import '../../services/continue_watching/continue_watching_service.dart';
 import '../../services/my_list/my_list_service.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../theme/app_semantic_colors.dart';
-import '../../theme/app_sponsor_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/playtorrio_tokens.dart';
 import '../../widgets/common/animated_ambient_background.dart';
@@ -28,7 +27,6 @@ import '../../widgets/common/error_view.dart';
 import '../../widgets/common/floating_page_actions.dart';
 import '../../widgets/home/continue_watching_slider.dart';
 import '../../widgets/movie/movie_slider_section.dart';
-import '../../widgets/home/support_dev_cards.dart';
 import '../search/search_page.dart';
 import '../calendar/tv_calendar_page.dart';
 import '../settings/settings_page.dart';
@@ -376,7 +374,6 @@ class _HomePageState extends State<HomePage> {
                   final sectionIdx = index - 2;
                   return MovieSliderSection(
                     section: _sections[sectionIdx],
-                    injectSupportCard: sectionIdx == 0,
                   );
                 },
               ),
@@ -650,14 +647,11 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     super.dispose();
   }
 
-  bool get _showSupportSlide => HomePageSettings.enableSupportDev.value;
-  int get _supportSlideIndex => widget.movies.isNotEmpty ? 1 : 0;
-  int get _totalSlideCount => widget.movies.length + (_showSupportSlide ? 1 : 0);
+  int get _totalSlideCount => widget.movies.length;
 
   int? _movieIndexForSlide(int slideIndex) {
-    if (!_showSupportSlide) return slideIndex;
-    if (slideIndex == _supportSlideIndex) return null;
-    return slideIndex > _supportSlideIndex ? slideIndex - 1 : slideIndex;
+    if (slideIndex < 0 || slideIndex >= widget.movies.length) return null;
+    return slideIndex;
   }
 
   void _startTimer() {
@@ -756,8 +750,6 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     final heroHeight = _heroHeight(screenWidth, screenHeight);
     final tokens = PlayTorrioTokens.of(context);
     final totalSlides = _totalSlideCount;
-    final showSupport = _showSupportSlide;
-    final supportIdx = _supportSlideIndex;
 
     if (totalSlides == 0) {
       return SizedBox(height: heroHeight);
@@ -783,11 +775,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
               itemCount: totalSlides,
               onPageChanged: _onPageChanged,
               itemBuilder: (context, i) {
-                if (showSupport && i == supportIdx) {
-                  return SupportHeroSlide(screenWidth: screenWidth);
-                }
-                final movieIdx = _movieIndexForSlide(i)!;
-                final movie = widget.movies[movieIdx];
+                final movie = widget.movies[i];
                 final detail = _detailsCache[movie.id];
                 return _HeroSlide(
                   movie: movie,
@@ -807,12 +795,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(totalSlides, (i) {
                     final active = i == _index;
-                    final isSupportDot = showSupport && i == supportIdx;
-                    final dotColor = active
-                        ? (isSupportDot
-                              ? AppSponsorColors.gold
-                              : tokens.accent)
-                        : tokens.textTertiary;
+                    final dotColor = active ? tokens.accent : tokens.textTertiary;
                     return GestureDetector(
                       onTap: () => _goTo(i),
                       child: AnimatedContainer(
@@ -827,11 +810,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
                           boxShadow: active
                               ? [
                                   BoxShadow(
-                                    color:
-                                        (isSupportDot
-                                                ? AppSponsorColors.gold
-                                                : tokens.accent)
-                                            .withValues(alpha: 0.55),
+                                    color: tokens.accent.withValues(alpha: 0.55),
                                     blurRadius: 8,
                                   ),
                                 ]
