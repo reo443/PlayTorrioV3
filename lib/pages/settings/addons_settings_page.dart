@@ -14,6 +14,23 @@ import '../../services/cloudstream/runtime/cloudstream_downloader.dart';
 import 'cloudstream_marketplace_modal.dart';
 import 'cloudstream_repo_modal.dart';
 
+/// Label shown for an addon in this page.
+///
+/// The built-in sources keep `PlayTorrio` / `PlayTorrioHTTP` as their manifest
+/// names: those strings are routing keys and are persisted in continue-watching
+/// entries, so only the label shown to the user changes here.
+String _addonLabel(InstalledAddon addon) {
+  final id = addon.manifest.id;
+  if (id == 'builtin.playtorrio' || addon.baseUrl == 'builtin:playtorrio') {
+    return 'Torrio';
+  }
+  if (id == 'builtin.playtorriohttp' ||
+      addon.baseUrl == 'builtin:playtorriohttp') {
+    return 'TorrioHTTP';
+  }
+  return addon.manifest.name;
+}
+
 class AddonsSettingsPage extends StatefulWidget {
   const AddonsSettingsPage({super.key});
 
@@ -1596,6 +1613,7 @@ class _AddonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = addon.manifest;
+    final label = _addonLabel(addon);
     final isP2p = addon.manifest.id == 'builtin.playtorrio' || addon.baseUrl == 'builtin:playtorrio';
     final isHttp = addon.manifest.id == 'builtin.playtorriohttp' || addon.baseUrl == 'builtin:playtorriohttp';
     final isBuiltIn = isP2p || isHttp || addon.baseUrl.startsWith('builtin:');
@@ -1728,7 +1746,7 @@ class _AddonCard extends StatelessWidget {
 
         Widget switchWidget() => SettingsToggleSwitch(
               value: addon.enabled,
-              semanticsLabel: 'Enable ${addon.manifest.name}',
+              semanticsLabel: 'Enable ${_addonLabel(addon)}',
               onChanged: onToggle,
             );
 
@@ -1789,7 +1807,7 @@ class _AddonCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            m.name,
+                            label,
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -1838,7 +1856,7 @@ class _AddonCard extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  m.name,
+                                  label,
                                   style: const TextStyle(
                                     fontSize: 15.5,
                                     fontWeight: FontWeight.w700,
