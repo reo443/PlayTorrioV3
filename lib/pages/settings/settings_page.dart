@@ -286,7 +286,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final simklAuth = await SimklService.instance.isAuthenticated();
     final pkg = await PackageInfo.fromPlatform().catchError((_) => PackageInfo(
           appName: 'Torrio',
-          packageName: 'com.playtorrio',
+          packageName: 'com.example.torrio',
           version: '1.1.6',
           buildNumber: '17',
         ));
