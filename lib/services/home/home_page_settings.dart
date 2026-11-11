@@ -100,8 +100,8 @@ abstract final class HomePageSettings {
   static final ValueNotifier<bool> heroAutoRotate = ValueNotifier<bool>(true);
   static final ValueNotifier<int> heroRotateSeconds = ValueNotifier<int>(6);
   static final ValueNotifier<CardDensity> cardDensity =
-      ValueNotifier<CardDensity>(CardDensity.standard);
-  static final ValueNotifier<int> gridColumns = ValueNotifier<int>(0);
+      ValueNotifier<CardDensity>(CardDensity.compact);
+  static final ValueNotifier<int> gridColumns = ValueNotifier<int>(3);
   static final ValueNotifier<double> posterScale = ValueNotifier<double>(1.0);
   static final ValueNotifier<DetailsBackground> detailsBackground =
       ValueNotifier<DetailsBackground>(DetailsBackground.backdrop);
@@ -152,12 +152,15 @@ abstract final class HomePageSettings {
     final densityStr = prefs.getString(_keyCardDensity);
     cardDensity.value = CardDensity.values.firstWhere(
       (d) => d.name == densityStr,
-      orElse: () => CardDensity.standard,
+      orElse: () => CardDensity.compact,
     );
 
-    final savedGridColumns = prefs.getInt(_keyGridColumns) ?? 0;
-    gridColumns.value =
-        (savedGridColumns >= 2 && savedGridColumns <= 10) ? savedGridColumns : 0;
+    final savedGridColumns = prefs.getInt(_keyGridColumns);
+    gridColumns.value = savedGridColumns == null
+        ? 3
+        : ((savedGridColumns >= 2 && savedGridColumns <= 10)
+              ? savedGridColumns
+              : 0);
 
     posterScale.value =
         (prefs.getDouble(_keyPosterScale) ?? 1.0).clamp(0.6, 1.3);

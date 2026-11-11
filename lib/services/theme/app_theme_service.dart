@@ -29,6 +29,11 @@ class AppThemePalette {
 
 abstract final class AppThemeService {
   static const _storageKey = 'app_theme_id';
+  static const _defaultPaletteId = 'sapphire';
+
+  /// Palette used until the user picks another one.
+  static AppThemePalette get defaultPalette =>
+      palettes.firstWhere((p) => p.id == _defaultPaletteId);
 
   static const List<AppThemePalette> palettes = [
     AppThemePalette(
@@ -122,7 +127,7 @@ abstract final class AppThemeService {
   ];
 
   static final ValueNotifier<AppThemePalette> currentPalette =
-      ValueNotifier<AppThemePalette>(palettes[0]);
+      ValueNotifier<AppThemePalette>(defaultPalette);
 
   static Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
@@ -130,7 +135,7 @@ abstract final class AppThemeService {
     if (id != null) {
       final found = palettes.firstWhere(
         (p) => p.id == id,
-        orElse: () => palettes[0],
+        orElse: () => defaultPalette,
       );
       currentPalette.value = found;
     }
