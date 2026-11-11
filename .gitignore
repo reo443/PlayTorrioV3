@@ -54,3 +54,9 @@ app.*.map.json
 .env
 **/secrets.dart
 .gemini/
+
+# Brud Code workspace history
+.brud/
+
+# Superpowers session artifacts
+.superpowers/
