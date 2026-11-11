@@ -11,7 +11,7 @@ class AboutSettingsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF080A0F),
       appBar: SubPageAppBar(
-        title: 'About PlayTorrio',
+        title: 'About Torrio',
         topInset: MediaQuery.paddingOf(context).top,
       ),
       body: Center(
@@ -50,7 +50,7 @@ class AboutSettingsPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'PlayTorrio',
+                      'Torrio',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,

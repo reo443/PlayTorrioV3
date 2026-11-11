@@ -410,7 +410,7 @@ class _DebridSettingsPageState extends State<DebridSettingsPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'PlayTorrio will send requests to this provider when streaming.',
+                      'Torrio will send requests to this provider when streaming.',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.45),
                         fontSize: 12,

@@ -143,7 +143,7 @@ class _PlayTorrioAppState extends State<PlayTorrioApp>
       builder: (context, palette, _) {
         return MaterialApp(
           navigatorKey: navigatorKey,
-          title: 'PlayTorrio',
+          title: 'Torrio',
           debugShowCheckedModeBanner: false,
           theme: AppThemeService.createThemeData(palette),
           scrollBehavior: const MaterialScrollBehavior().copyWith(

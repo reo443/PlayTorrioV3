@@ -405,7 +405,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'Please enable "Install unknown apps" permission for PlayTorrio in Android settings.',
+                            'Please enable "Install unknown apps" permission for Torrio in Android settings.',
                           ),
                           duration: Duration(seconds: 5),
                           backgroundColor: AppSemanticColors.warning,
@@ -562,7 +562,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   Platform.isWindows
-                      ? 'Close PlayTorrio and run the installer to update.'
+                      ? 'Close Torrio and run the installer to update.'
                       : 'Make the file executable and run it:\nchmod +x "$fileName"\n./$fileName',
                   style: AppTypography.supporting.copyWith(
                     color: tokens.textSecondary,

@@ -555,7 +555,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'PlayTorrio',
+                  'Torrio',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: titleSize,

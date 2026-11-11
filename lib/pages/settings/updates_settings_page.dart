@@ -33,7 +33,7 @@ class _UpdatesSettingsPageState extends State<UpdatesSettingsPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('PlayTorrio is up to date!'),
+            content: Text('Torrio is up to date!'),
             backgroundColor: Color(0xFF7C5CFF),
             behavior: SnackBarBehavior.floating,
           ),
@@ -76,7 +76,7 @@ class _UpdatesSettingsPageState extends State<UpdatesSettingsPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Text(
-                  'Keep PlayTorrio up to date with the latest features, security patches, and performance improvements.',
+                  'Keep Torrio up to date with the latest features, security patches, and performance improvements.',
                   style: TextStyle(
                     fontSize: 13.5,
                     color: Colors.white.withValues(alpha: 0.5),
@@ -91,7 +91,7 @@ class _UpdatesSettingsPageState extends State<UpdatesSettingsPage> {
                 builder: (context, snapshot) {
                   final version = snapshot.hasData ? snapshot.data!.version : '1.1.6';
                   final buildNumber = snapshot.hasData ? snapshot.data!.buildNumber : '17';
-                  final appName = snapshot.hasData ? snapshot.data!.appName : 'PlayTorrio';
+                  final appName = snapshot.hasData ? snapshot.data!.appName : 'Torrio';
 
                   return Container(
                     padding: const EdgeInsets.all(18),

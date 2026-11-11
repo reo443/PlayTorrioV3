@@ -285,7 +285,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final traktAuth = await TraktService.instance.isAuthenticated();
     final simklAuth = await SimklService.instance.isAuthenticated();
     final pkg = await PackageInfo.fromPlatform().catchError((_) => PackageInfo(
-          appName: 'PlayTorrio',
+          appName: 'Torrio',
           packageName: 'com.playtorrio',
           version: '1.1.6',
           buildNumber: '17',
@@ -438,7 +438,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     iconColor: isP2p ? const Color(0xFFF59E0B) : Colors.white54,
                     title: 'Built-in P2P Torrent Source',
                     subtitle: isP2p
-                        ? 'PlayTorrio torrent swarms (Knaben, TorrentGalaxy) active'
+                        ? 'Torrio torrent swarms (Knaben, TorrentGalaxy) active'
                         : 'P2P disabled. Using only direct HTTP streaming (PlayTorrioHTTP)',
                     value: isP2p,
                     onChanged: (val) async {
@@ -547,11 +547,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
               const SizedBox(height: 12),
 
-              // 9. About PlayTorrio
+              // 9. About Torrio
               _SettingsCategoryTile(
                 icon: Icons.info_outline_rounded,
                 iconColor: Colors.white70,
-                title: 'About PlayTorrio',
+                title: 'About Torrio',
                 subtitle: 'Architecture, video engine, and credits',
                 onTap: () => _navigateTo(const AboutSettingsPage()),
               ),

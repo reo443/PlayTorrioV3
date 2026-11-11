@@ -178,7 +178,7 @@ class P2pWarningDialog extends StatelessWidget {
                                   tokens: tokens,
                                   icon: Icons.cloud_done_rounded,
                                   iconColor: AppSemanticColors.success,
-                                  title: 'PlayTorrio HTTP (Direct Stream)',
+                                  title: 'Torrio HTTP (Direct Stream)',
                                   subtitle: 'Safe direct HTTPS web streams. No torrenting or peer uploading.',
                                 ),
                                 Padding(
@@ -192,7 +192,7 @@ class P2pWarningDialog extends StatelessWidget {
                                   tokens: tokens,
                                   icon: Icons.hub_rounded,
                                   iconColor: AppSemanticColors.warning,
-                                  title: 'PlayTorrio (Torrent Engine)',
+                                  title: 'Torrio (Torrent Engine)',
                                   subtitle: 'P2P swarms (Knaben, TorrentGalaxy). Involves peer data sharing.',
                                 ),
                               ],
@@ -225,7 +225,7 @@ class P2pWarningDialog extends StatelessWidget {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'Would you like to turn off the built-in PlayTorrio P2P torrent source and use only direct HTTP streaming?',
+                                    'Would you like to turn off the built-in Torrio P2P torrent source and use only direct HTTP streaming?',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
