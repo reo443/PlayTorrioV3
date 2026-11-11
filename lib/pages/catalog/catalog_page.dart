@@ -213,11 +213,7 @@ class _CatalogPageState extends State<CatalogPage> {
     double topInset,
     double bottomInset,
   ) {
-    final columns =
-        ((MediaQuery.sizeOf(context).width - sizing.sidePadding * 2 + sizing.spacing) /
-                (sizing.cardWidth + sizing.spacing))
-            .floor()
-            .clamp(2, 10);
+    final gridMetrics = sizing.grid;
 
     return CustomScrollView(
       controller: _scrollController,
@@ -225,9 +221,9 @@ class _CatalogPageState extends State<CatalogPage> {
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            sizing.sidePadding,
+            gridMetrics.padding,
             topInset + 56,
-            sizing.sidePadding,
+            gridMetrics.padding,
             AppSpacing.lg,
           ),
           sliver: SliverToBoxAdapter(
@@ -241,15 +237,15 @@ class _CatalogPageState extends State<CatalogPage> {
         ),
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            sizing.sidePadding,
+            gridMetrics.padding,
             0,
-            sizing.sidePadding,
+            gridMetrics.padding,
             40 + bottomInset,
           ),
           sliver: SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              childAspectRatio: sizing.cardWidth / sizing.totalHeight,
+              crossAxisCount: gridMetrics.columns,
+              childAspectRatio: gridMetrics.aspectRatio,
               crossAxisSpacing: sizing.spacing,
               mainAxisSpacing: sizing.spacing,
             ),

@@ -482,15 +482,15 @@ class _MangaPageState extends State<MangaPage> {
         else
           SliverPadding(
             padding: EdgeInsets.symmetric(
-              horizontal: sizing.sidePadding,
+              horizontal: sizing.grid.padding,
               vertical: 8.0,
             ),
             sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: sizing.cardWidth + sizing.spacing * 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: sizing.grid.columns,
+                childAspectRatio: sizing.grid.aspectRatio,
                 mainAxisSpacing: 32.0,
                 crossAxisSpacing: sizing.spacing,
-                mainAxisExtent: sizing.totalHeight,
               ),
               delegate: SliverChildBuilderDelegate((context, index) {
                 return MangaCard(manga: _mangaList[index]);

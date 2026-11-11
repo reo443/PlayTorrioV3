@@ -166,21 +166,16 @@ class _PersonPageState extends State<PersonPage> {
     final tokens = PlayTorrioTokens.of(context);
     final screenWidth = MediaQuery.sizeOf(context).width;
     final sizing = MovieCardSizing.fromWidth(screenWidth);
-    final columns =
-        ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /
-                (sizing.cardWidth + sizing.spacing))
-            .floor()
-            .clamp(2, 10);
-    final cardAspectRatio = sizing.cardWidth / sizing.totalHeight;
+    final gridMetrics = sizing.grid;
 
     return CustomScrollView(
       physics: const ClampingScrollPhysics(),
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            sizing.sidePadding,
+            gridMetrics.padding,
             topOffset + AppSpacing.xl,
-            sizing.sidePadding,
+            gridMetrics.padding,
             0,
           ),
           sliver: SliverToBoxAdapter(child: _buildHeader(person, tokens)),
@@ -204,9 +199,9 @@ class _PersonPageState extends State<PersonPage> {
         else ...[
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
-              sizing.sidePadding,
+              gridMetrics.padding,
               AppSpacing.xxl,
-              sizing.sidePadding,
+              gridMetrics.padding,
               0,
             ),
             sliver: SliverToBoxAdapter(
@@ -220,15 +215,15 @@ class _PersonPageState extends State<PersonPage> {
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
-              sizing.sidePadding,
+              gridMetrics.padding,
               AppSpacing.md,
-              sizing.sidePadding,
+              gridMetrics.padding,
               AppSpacing.xxxl + bottomInset,
             ),
             sliver: SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                childAspectRatio: cardAspectRatio,
+                crossAxisCount: gridMetrics.columns,
+                childAspectRatio: gridMetrics.aspectRatio,
                 crossAxisSpacing: sizing.spacing,
                 mainAxisSpacing: sizing.spacing,
               ),

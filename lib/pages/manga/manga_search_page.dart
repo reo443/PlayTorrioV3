@@ -349,23 +349,20 @@ class _MangaSearchPageState extends State<MangaSearchPage> {
     return GridView.builder(
       padding: EdgeInsets.only(
         top: topPadding + kToolbarHeight + 20,
-        left: sizing.sidePadding,
-        right: sizing.sidePadding,
+        left: sizing.grid.padding,
+        right: sizing.grid.padding,
         bottom: 40 + MediaQuery.paddingOf(context).bottom,
       ),
       physics: const ClampingScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: sizing.cardWidth + sizing.spacing * 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: sizing.grid.columns,
+        childAspectRatio: sizing.grid.aspectRatio,
         mainAxisSpacing: 20.0,
         crossAxisSpacing: sizing.spacing,
-        mainAxisExtent: sizing.totalHeight,
       ),
       itemCount: results.length,
       itemBuilder: (context, index) {
-        return SizedBox(
-          width: sizing.cardWidth,
-          child: MangaCard(manga: results[index]),
-        );
+        return MangaCard(manga: results[index]);
       },
     );
   }

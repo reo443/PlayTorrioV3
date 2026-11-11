@@ -698,23 +698,19 @@ class _SearchPageState extends State<SearchPage> {
               builder: (context) {
                 final screenWidth = MediaQuery.sizeOf(context).width;
                 final sizing = MovieCardSizing.fromWidth(screenWidth);
-                final columns =
-                    ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /
-                            (sizing.cardWidth + sizing.spacing))
-                        .floor()
-                        .clamp(2, 10);
+                final gridMetrics = sizing.grid;
 
                 return GridView.builder(
                   padding: EdgeInsets.only(
                     top: topPadding + kToolbarHeight + 20,
-                    left: sizing.sidePadding,
-                    right: sizing.sidePadding,
+                    left: gridMetrics.padding,
+                    right: gridMetrics.padding,
                     bottom: 40 + MediaQuery.paddingOf(context).bottom,
                   ),
                   physics: const ClampingScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    childAspectRatio: sizing.cardWidth / sizing.totalHeight,
+                    crossAxisCount: gridMetrics.columns,
+                    childAspectRatio: gridMetrics.aspectRatio,
                     crossAxisSpacing: sizing.spacing,
                     mainAxisSpacing: sizing.spacing,
                   ),

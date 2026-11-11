@@ -5,6 +5,7 @@ import '../../models/movie/movie.dart';
 import '../../pages/details/details_page.dart';
 import '../../services/home/home_page_settings.dart';
 import '../../theme/playtorrio_tokens.dart';
+import '../../theme/poster_metrics.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../common/poster_skeleton.dart';
 import '../ui/app_chip.dart';
@@ -26,6 +27,7 @@ class MovieCardSizing {
   final double totalHeight;
   final double spacing;
   final double sidePadding;
+  final PosterGridMetrics grid;
 
   MovieCardSizing({
     required this.cardWidth,
@@ -33,46 +35,65 @@ class MovieCardSizing {
     required this.totalHeight,
     required this.spacing,
     required this.sidePadding,
+    required this.grid,
   });
 
   factory MovieCardSizing.fromWidth(double screenWidth, {bool useGridColumns = true}) {
     const spacing = 16.0;
     const sidePadding = 18.0;
 
+    // Width the grid lays out with. It stays at the pre-shrink size so the
+    // column count does not change; only the margins grow.
+    double referenceWidth;
     double cardWidth;
 
     final gridColumns = useGridColumns ? HomePageSettings.gridColumns.value : 0;
     if (gridColumns >= 2) {
-      cardWidth = (screenWidth - sidePadding * 2 - spacing * (gridColumns - 1)) /
-              gridColumns -
-          0.01;
-      if (cardWidth < 60) cardWidth = 60;
+      referenceWidth =
+          (screenWidth - sidePadding * 2 - spacing * (gridColumns - 1)) /
+                  gridColumns -
+              0.01;
+      if (referenceWidth < 60) referenceWidth = 60;
+      cardWidth = referenceWidth;
     } else {
       if (screenWidth < 360) {
-        cardWidth = 138;
+        referenceWidth = 138;
       } else if (screenWidth < 430) {
-        cardWidth = 152;
+        referenceWidth = 152;
       } else if (screenWidth < 700) {
-        cardWidth = 162;
+        referenceWidth = 162;
       } else if (screenWidth < 1000) {
-        cardWidth = 176;
+        referenceWidth = 176;
       } else if (screenWidth < 1400) {
-        cardWidth = 190;
+        referenceWidth = 190;
       } else {
-        cardWidth = 205;
+        referenceWidth = 205;
       }
 
       final density = HomePageSettings.cardDensity.value;
       if (density == CardDensity.compact) {
-        cardWidth *= 0.85;
+        referenceWidth *= 0.85;
       } else if (density == CardDensity.cinematic) {
-        cardWidth *= 1.20;
+        referenceWidth *= 1.20;
       }
+
+      cardWidth = referenceWidth * PosterMetrics.scale;
 
       if (!useGridColumns) {
         cardWidth *= HomePageSettings.posterScale.value;
       }
     }
+
+    final columns = gridColumns >= 2
+        ? gridColumns
+        : ((screenWidth - sidePadding * 2 + spacing) /
+                  (referenceWidth + spacing))
+              .floor()
+              .clamp(2, 10);
+    final gridPadding = PosterMetrics.gridPadding(screenWidth, sidePadding);
+    final cellWidth =
+        (screenWidth - gridPadding * 2 - spacing * (columns - 1)) / columns;
+    final cellHeight = cellWidth * 1.48 + 66;
 
     final posterHeight = cardWidth * 1.48;
     final totalHeight = posterHeight + 66;
@@ -83,6 +104,11 @@ class MovieCardSizing {
       totalHeight: totalHeight,
       spacing: spacing,
       sidePadding: sidePadding,
+      grid: (
+        columns: columns,
+        padding: gridPadding,
+        aspectRatio: cellWidth / cellHeight,
+      ),
     );
   }
 }

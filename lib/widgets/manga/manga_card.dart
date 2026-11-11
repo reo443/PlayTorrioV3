@@ -6,6 +6,7 @@ import '../../pages/manga/manga_details_page.dart';
 import '../../services/home/home_page_settings.dart';
 import '../../services/manga/manga_settings.dart';
 import '../../theme/playtorrio_tokens.dart';
+import '../../theme/poster_metrics.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../common/poster_skeleton.dart';
 
@@ -19,6 +20,7 @@ class MangaCardSizing {
   final double totalHeight;
   final double spacing;
   final double sidePadding;
+  final PosterGridMetrics grid;
 
   MangaCardSizing({
     required this.cardWidth,
@@ -26,6 +28,7 @@ class MangaCardSizing {
     required this.totalHeight,
     required this.spacing,
     required this.sidePadding,
+    required this.grid,
   });
 
   factory MangaCardSizing.fromWidth(double screenWidth, {MangaCardDensity density = MangaCardDensity.standard}) {
@@ -52,18 +55,37 @@ class MangaCardSizing {
       baseWidth *= 1.20;
     }
 
-    baseWidth *= HomePageSettings.posterScale.value;
-
-    final cardWidth = baseWidth;
+    // Rows shrink with PosterMetrics; grids keep this width for their column
+    // count and gain wider margins instead. posterScale stays part of the
+    // reference so the existing Manga setting keeps working.
+    final referenceWidth = baseWidth * HomePageSettings.posterScale.value;
+    final cardWidth = referenceWidth * PosterMetrics.scale;
     final posterHeight = cardWidth * 1.48;
     final totalHeight = posterHeight + 66;
+
+    const spacing = 16.0;
+    const sidePadding = 18.0;
+    final columns =
+        ((screenWidth - sidePadding * 2 + spacing) /
+                  (referenceWidth + spacing))
+              .floor()
+              .clamp(2, 10);
+    final gridPadding = PosterMetrics.gridPadding(screenWidth, sidePadding);
+    final cellWidth =
+        (screenWidth - gridPadding * 2 - spacing * (columns - 1)) / columns;
+    final cellHeight = cellWidth * 1.48 + 66;
 
     return MangaCardSizing(
       cardWidth: cardWidth,
       posterHeight: posterHeight,
       totalHeight: totalHeight,
-      spacing: 16,
-      sidePadding: 18,
+      spacing: spacing,
+      sidePadding: sidePadding,
+      grid: (
+        columns: columns,
+        padding: gridPadding,
+        aspectRatio: cellWidth / cellHeight,
+      ),
     );
   }
 }

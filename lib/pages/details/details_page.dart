@@ -22,6 +22,7 @@ import '../../widgets/ui/app_dialog.dart';
 import '../../widgets/ui/app_error_state.dart';
 import '../../widgets/common/floating_back_button.dart';
 import '../../theme/playtorrio_tokens.dart';
+import '../../theme/poster_metrics.dart';
 import '../../theme/app_avatar_colors.dart';
 import '../../theme/app_overlay_colors.dart';
 import '../../theme/app_semantic_colors.dart';
@@ -1683,7 +1684,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
   // gives people somewhere to go next instead of hitting a wall of black.
   Widget _buildRelatedRow(List<Movie> related) {
     final isDesktop = _isDesktop();
-    final cardWidth = isDesktop ? 150.0 : 120.0;
+    final cardWidth =
+        (isDesktop ? 150.0 : 120.0) * PosterMetrics.scale;
     final fadeWidth = isDesktop ? 60.0 : 40.0;
     final tokens = PlayTorrioTokens.of(context);
 
@@ -1821,7 +1823,8 @@ class _DetailsPageState extends State<DetailsPage> with SingleTickerProviderStat
 
   Widget _buildSimilarRow() {
     final isDesktop = _isDesktop();
-    final cardWidth = isDesktop ? 160.0 : 130.0;
+    final cardWidth =
+        (isDesktop ? 160.0 : 130.0) * PosterMetrics.scale;
     final cardHeight = cardWidth * 1.5 + 64; // poster + text area
     final fadeWidth = isDesktop ? 60.0 : 40.0;
     final tokens = PlayTorrioTokens.of(context);

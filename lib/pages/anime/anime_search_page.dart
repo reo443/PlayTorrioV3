@@ -367,35 +367,27 @@ class _AnimeSearchPageState extends State<AnimeSearchPage> {
   Widget _buildResultsGrid(double topPadding) {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final sizing = MovieCardSizing.fromWidth(screenWidth);
-    final columns =
-        ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /
-                (sizing.cardWidth + sizing.spacing))
-            .floor()
-            .clamp(2, 10);
+    final gridMetrics = sizing.grid;
 
     return GridView.builder(
       padding: EdgeInsets.only(
         top: topPadding + kToolbarHeight + 20,
-        left: sizing.sidePadding,
-        right: sizing.sidePadding,
+        left: gridMetrics.padding,
+        right: gridMetrics.padding,
         bottom: 40 + MediaQuery.paddingOf(context).bottom,
       ),
       physics: const ClampingScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        childAspectRatio: sizing.cardWidth / sizing.totalHeight,
+        crossAxisCount: gridMetrics.columns,
+        childAspectRatio: gridMetrics.aspectRatio,
         crossAxisSpacing: sizing.spacing,
         mainAxisSpacing: sizing.spacing,
       ),
       itemCount: _results.length,
       itemBuilder: (context, index) {
-        return SizedBox(
-          width: sizing.cardWidth,
-          child: AnimeCard(
-            anime: _results[index],
-            width: sizing.cardWidth,
-            onTap: () => _openDetails(_results[index]),
-          ),
+        return AnimeCard(
+          anime: _results[index],
+          onTap: () => _openDetails(_results[index]),
         );
       },
     );
