@@ -561,20 +561,26 @@ class _DiscoverPageState extends State<DiscoverPage> {
 
     final visibleItems = _visibleItems;
 
-    final gridMetrics = sizing.grid;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final columns =
+        ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /
+                (sizing.cardWidth + sizing.spacing))
+            .floor()
+            .clamp(2, 10);
+    final double cardAspectRatio = sizing.cardWidth / sizing.totalHeight;
 
     final grid = GridView.builder(
       controller: _scrollController,
       padding: EdgeInsets.fromLTRB(
-        gridMetrics.padding,
+        sizing.sidePadding,
         _isTmdbMode ? 14 : topOffset + 14,
-        gridMetrics.padding,
+        sizing.sidePadding,
         110 + bottomInset,
       ),
       physics: const ClampingScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: gridMetrics.columns,
-        childAspectRatio: gridMetrics.aspectRatio,
+        crossAxisCount: columns,
+        childAspectRatio: cardAspectRatio,
         crossAxisSpacing: sizing.spacing,
         mainAxisSpacing: sizing.spacing,
       ),
@@ -1157,19 +1163,25 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
     final allMovies = allMoviesMap.values.toList();
     final sizing = MovieCardSizing.fromWidth(MediaQuery.sizeOf(context).width);
-    final gridMetrics = sizing.grid;
+    final double cardAspectRatio = sizing.cardWidth / sizing.totalHeight;
 
     return GridView.builder(
       padding: EdgeInsets.fromLTRB(
-        gridMetrics.padding,
+        sizing.sidePadding,
         topPadding,
-        gridMetrics.padding,
+        sizing.sidePadding,
         110 + MediaQuery.paddingOf(context).bottom,
       ),
       physics: const ClampingScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: gridMetrics.columns,
-        childAspectRatio: gridMetrics.aspectRatio,
+        crossAxisCount:
+            ((MediaQuery.sizeOf(context).width -
+                        sizing.sidePadding * 2 +
+                        sizing.spacing) /
+                    (sizing.cardWidth + sizing.spacing))
+                .floor()
+                .clamp(2, 10),
+        childAspectRatio: cardAspectRatio,
         crossAxisSpacing: sizing.spacing,
         mainAxisSpacing: sizing.spacing,
       ),

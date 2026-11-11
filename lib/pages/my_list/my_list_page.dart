@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../models/my_list/my_list_item.dart';
 import '../../services/my_list/my_list_service.dart';
 import '../../services/home/home_page_settings.dart';
-import '../../theme/poster_metrics.dart';
 import '../../utils/navigation/route_transitions.dart';
 import '../../widgets/common/floating_back_button.dart';
 import '../details/details_page.dart';
@@ -182,10 +181,6 @@ class _MyListPageState extends State<MyListPage> {
                 final movieCount = allItems.where((i) => i.type == 'movie').length;
                 final seriesCount = allItems.where((i) => i.type == 'series' || i.type == 'anime').length;
                 final displayedItems = _getFilteredAndSortedItems(allItems);
-                final gridPadding = PosterMetrics.gridPadding(
-                  MediaQuery.sizeOf(context).width,
-                  16,
-                );
 
                 return Column(
                   children: [
@@ -203,9 +198,9 @@ class _MyListPageState extends State<MyListPage> {
                           ? _buildEmptyState(allItems.isEmpty)
                           : GridView.builder(
                               padding: EdgeInsets.fromLTRB(
-                                gridPadding,
+                                16,
                                 12,
-                                gridPadding,
+                                16,
                                 24 + MediaQuery.paddingOf(context).bottom,
                               ),
                               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

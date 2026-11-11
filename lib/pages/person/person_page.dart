@@ -166,16 +166,21 @@ class _PersonPageState extends State<PersonPage> {
     final tokens = PlayTorrioTokens.of(context);
     final screenWidth = MediaQuery.sizeOf(context).width;
     final sizing = MovieCardSizing.fromWidth(screenWidth);
-    final gridMetrics = sizing.grid;
+    final columns =
+        ((screenWidth - sizing.sidePadding * 2 + sizing.spacing) /
+                (sizing.cardWidth + sizing.spacing))
+            .floor()
+            .clamp(2, 10);
+    final cardAspectRatio = sizing.cardWidth / sizing.totalHeight;
 
     return CustomScrollView(
       physics: const ClampingScrollPhysics(),
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            gridMetrics.padding,
+            sizing.sidePadding,
             topOffset + AppSpacing.xl,
-            gridMetrics.padding,
+            sizing.sidePadding,
             0,
           ),
           sliver: SliverToBoxAdapter(child: _buildHeader(person, tokens)),
@@ -199,9 +204,9 @@ class _PersonPageState extends State<PersonPage> {
         else ...[
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
-              gridMetrics.padding,
+              sizing.sidePadding,
               AppSpacing.xxl,
-              gridMetrics.padding,
+              sizing.sidePadding,
               0,
             ),
             sliver: SliverToBoxAdapter(
@@ -215,15 +220,15 @@ class _PersonPageState extends State<PersonPage> {
           ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
-              gridMetrics.padding,
+              sizing.sidePadding,
               AppSpacing.md,
-              gridMetrics.padding,
+              sizing.sidePadding,
               AppSpacing.xxxl + bottomInset,
             ),
             sliver: SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: gridMetrics.columns,
-                childAspectRatio: gridMetrics.aspectRatio,
+                crossAxisCount: columns,
+                childAspectRatio: cardAspectRatio,
                 crossAxisSpacing: sizing.spacing,
                 mainAxisSpacing: sizing.spacing,
               ),
