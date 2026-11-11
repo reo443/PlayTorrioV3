@@ -100,7 +100,8 @@ class _DockSettingsPageState extends State<DockSettingsPage> {
                       builder: (context, enabledMap, _) {
                         return Column(
                           children: DockItemKey.values.map((item) {
-                            final isEnabled = enabledMap[item.key] ?? true;
+                            final isEnabled = enabledMap[item.key] ??
+                                DockSettings.defaultEnabledKeys.contains(item.key);
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 10),

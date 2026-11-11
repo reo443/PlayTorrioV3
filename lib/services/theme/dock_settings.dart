@@ -112,10 +112,24 @@ enum DockItemKey {
 abstract final class DockSettings {
   static const String _prefPrefix = 'dock_item_enabled_';
 
+  /// Items shown in the dock on a fresh install.
+  ///
+  /// Everything else (Books, Audiobooks, Music, Live TV, Addons, Downloads,
+  /// My List, Search) is still available from Settings > Navigation but starts
+  /// hidden. Home and Settings are non-removable and always on.
+  static const Set<String> defaultEnabledKeys = {
+    'home',
+    'discover',
+    'manga',
+    'anime',
+    'settings',
+  };
+
   /// Reactive notifier containing the map of enabled dock item keys.
   static final ValueNotifier<Map<String, bool>> enabledNotifier =
       ValueNotifier<Map<String, bool>>({
-    for (final item in DockItemKey.values) item.key: true,
+    for (final item in DockItemKey.values)
+      item.key: defaultEnabledKeys.contains(item.key),
   });
 
   /// Initialize and load saved state from SharedPreferences.
@@ -128,7 +142,8 @@ abstract final class DockSettings {
         // Home and Settings are strictly non-removable
         map[item.key] = true;
       } else {
-        map[item.key] = prefs.getBool('$_prefPrefix${item.key}') ?? true;
+        map[item.key] = prefs.getBool('$_prefPrefix${item.key}') ??
+            defaultEnabledKeys.contains(item.key);
       }
     }
 
@@ -138,7 +153,7 @@ abstract final class DockSettings {
   /// Check whether a specific item key is currently enabled.
   static bool isEnabled(String key) {
     if (key == 'home' || key == 'settings') return true;
-    return enabledNotifier.value[key] ?? true;
+    return enabledNotifier.value[key] ?? defaultEnabledKeys.contains(key);
   }
 
   /// Toggle or update the enabled status of an item.
@@ -154,7 +169,7 @@ abstract final class DockSettings {
     enabledNotifier.value = updated;
   }
 
-  /// Reset all dock item toggles to enabled default.
+  /// Reset all dock item toggles to the default set.
   static Future<void> resetToDefaults() async {
     final prefs = await SharedPreferences.getInstance();
     for (final item in DockItemKey.values) {
@@ -164,7 +179,10 @@ abstract final class DockSettings {
     }
 
     enabledNotifier.value = {
-      for (final item in DockItemKey.values) item.key: true,
+      for (final item in DockItemKey.values)
+        item.key: item.isRemovable
+            ? defaultEnabledKeys.contains(item.key)
+            : true,
     };
   }
 }
